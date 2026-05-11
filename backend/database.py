@@ -200,4 +200,19 @@ class ChatSession(Base):
     id = Column(Integer, primary_key=True, index=True)
     period_id = Column(Integer, ForeignKey("periods.id"))
     created_at = Column(DateTime, default=datetime.utcnow)
-    messages = relationship("Cha
+    messages = relationship("ChatMessage", back_populates="session")
+
+
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, ForeignKey("chat_sessions.id"))
+    role = Column(String)           # user / assistant
+    content = Column(Text)
+    evidence = Column(JSON)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    session = relationship("ChatSession", back_populates="messages")
+
+
+def init_db():
+    Base.metadata.create_all(bind=engine)
