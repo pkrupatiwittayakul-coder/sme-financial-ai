@@ -12,6 +12,21 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="SME Financial AI", version="2.0.0")
 
+import traceback
+from fastapi import Request
+from fastapi.responses import JSONResponse
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    """Return actual error in non-production for debugging."""
+    tb = traceback.format_exc()
+    return JSONResponse(
+        status_code=500,
+        content={"detail": str(exc), "type": type(exc).__name__, "traceback": tb[-1000:]},
+    )
+
+
+
 
 @app.on_event("startup")
 async def startup_event():
