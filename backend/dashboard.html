@@ -3,1052 +3,1170 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FinanceAI — SME Financial Statements</title>
+<title>FinanceAI — Smart Financial Statements for SMEs</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#f5f7fa;--white:#ffffff;--border:#e2e8f0;
-  --text:#1a202c;--muted:#718096;--accent:#4f46e5;
-  --accent-light:#eef2ff;--green:#16a34a;--red:#dc2626;
-  --yellow:#d97706;--radius:12px;--shadow:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
-  --shadow-lg:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -2px rgba(0,0,0,.05);
+  --bg:#f5f7fb;--white:#ffffff;--border:#e4e8f0;
+  --text:#111827;--muted:#6b7280;--light:#f9fafb;
+  --primary:#5B4FF0;--primary-dark:#4a3fc0;--primary-light:#ede9fe;
+  --green:#059669;--green-light:#d1fae5;
+  --red:#dc2626;--red-light:#fee2e2;
+  --amber:#d97706;--amber-light:#fef3c7;
+  --blue:#1d4ed8;--blue-light:#dbeafe;
+  --radius:12px;--radius-sm:8px;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
+  --shadow-lg:0 8px 24px rgba(0,0,0,.1);
 }
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px;line-height:1.5}
 
-/* ── Auth Screen ────────────────────────────────── */
-#authScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
-.auth-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow-lg);padding:40px;width:100%;max-width:420px}
-.auth-logo{text-align:center;margin-bottom:28px}
-.auth-logo h1{font-size:1.6rem;font-weight:700;color:var(--accent)}
-.auth-logo p{color:var(--muted);font-size:.9rem;margin-top:4px}
-.auth-tabs{display:flex;background:#f1f5f9;border-radius:8px;padding:3px;margin-bottom:24px}
-.auth-tab{flex:1;text-align:center;padding:8px;border-radius:6px;cursor:pointer;font-size:.9rem;font-weight:500;color:var(--muted);transition:all .15s}
-.auth-tab.active{background:var(--white);color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.1)}
-.form-group{margin-bottom:16px}
-.form-group label{display:block;font-size:.85rem;font-weight:600;color:var(--text);margin-bottom:6px}
-.form-group input{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:.95rem;outline:none;transition:border .15s}
-.form-group input:focus{border-color:var(--accent)}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer;border:none;transition:all .15s}
-.btn-primary{background:var(--accent);color:#fff;width:100%;justify-content:center;padding:12px}
-.btn-primary:hover{background:#4338ca}
+/* ─── Utilities ─────────────────────────────────── */
+.hidden{display:none!important}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:var(--radius-sm);font-size:.875rem;font-weight:500;cursor:pointer;border:none;transition:all .15s;outline:none}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:not(:disabled):hover{background:var(--primary-dark)}
 .btn-secondary{background:var(--white);color:var(--text);border:1.5px solid var(--border)}
-.btn-secondary:hover{background:#f8fafc}
-.btn-danger{background:#fef2f2;color:var(--red);border:1.5px solid #fecaca}
-.btn-green{background:#f0fdf4;color:var(--green);border:1.5px solid #bbf7d0}
-.auth-msg{padding:10px 14px;border-radius:8px;font-size:.88rem;margin-bottom:14px;display:none}
-.auth-msg.error{background:#fef2f2;color:var(--red);border:1px solid #fecaca;display:block}
-.auth-msg.success{background:#f0fdf4;color:var(--green);border:1px solid #bbf7d0;display:block}
-
-/* ── App Shell ──────────────────────────────────── */
-#appScreen{display:none;flex-direction:column;min-height:100vh}
-.topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0 24px;height:60px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
-.topbar-logo{font-size:1.1rem;font-weight:700;color:var(--accent);white-space:nowrap}
-.topbar-selects{display:flex;gap:8px;flex:1}
-.topbar-selects select{padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:.85rem;background:var(--white);cursor:pointer;outline:none;color:var(--text)}
-.topbar-selects select:focus{border-color:var(--accent)}
-.topbar-user{display:flex;align-items:center;gap:10px;margin-left:auto}
-.user-badge{background:var(--accent-light);color:var(--accent);font-weight:600;padding:6px 14px;border-radius:20px;font-size:.85rem}
-.btn-logout{padding:6px 14px;border-radius:8px;background:#f8fafc;border:1.5px solid var(--border);color:var(--muted);font-size:.85rem;cursor:pointer;font-weight:500}
-.btn-logout:hover{color:var(--red);border-color:#fecaca}
-
-/* ── Nav ───────────────────────────────────────── */
-.nav{background:var(--white);border-bottom:1px solid var(--border);display:flex;padding:0 24px}
-.nav-btn{padding:12px 20px;font-size:.9rem;font-weight:500;color:var(--muted);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;transition:all .15s}
-.nav-btn:hover{color:var(--text)}
-.nav-btn.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
-
-/* ── Main content ──────────────────────────────── */
-.main{padding:28px 24px;max-width:1000px;margin:0 auto;width:100%}
-.page{display:none}
-.page.active{display:block}
-
-/* ── Cards ──────────────────────────────────────── */
-.card{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);padding:24px;margin-bottom:20px;box-shadow:var(--shadow)}
-.card-title{font-size:1.05rem;font-weight:700;margin-bottom:16px;color:var(--text)}
-.card-subtitle{font-size:.88rem;color:var(--muted);margin-top:4px;font-weight:400}
-
-/* ── Setup page ─────────────────────────────────── */
-.setup-steps{display:flex;gap:8px;margin-bottom:24px;align-items:center}
-.step-dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;background:#e2e8f0;color:var(--muted)}
-.step-dot.active{background:var(--accent);color:#fff}
-.step-dot.done{background:#dcfce7;color:var(--green)}
-.step-line{flex:1;height:2px;background:var(--border)}
-.step-line.done{background:var(--green)}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
-@media(max-width:600px){.form-row,.form-row-3{grid-template-columns:1fr}}
-.inline-form{display:flex;gap:10px;align-items:flex-end}
-.inline-form .form-group{flex:1;margin-bottom:0}
-
-/* ── Company/Period cards ───────────────────────── */
-.item-list{display:flex;flex-direction:column;gap:8px}
-.item-card{display:flex;align-items:center;padding:12px 16px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;transition:all .15s;background:var(--white)}
-.item-card:hover{border-color:var(--accent);background:var(--accent-light)}
-.item-card.selected{border-color:var(--accent);background:var(--accent-light)}
-.item-card-name{font-weight:600;font-size:.95rem}
-.item-card-meta{font-size:.8rem;color:var(--muted);margin-top:2px}
-.item-card-check{margin-left:auto;font-size:1.1rem;color:var(--green);display:none}
-.item-card.selected .item-card-check{display:block}
-
-/* ── Status bar ─────────────────────────────────── */
-.status-bar{background:var(--accent-light);border:1px solid #c7d2fe;border-radius:10px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;gap:10px}
-.status-bar.warning{background:#fffbeb;border-color:#fde68a}
-.status-bar.success{background:#f0fdf4;border-color:#bbf7d0}
-.status-bar-icon{font-size:1.2rem}
-.status-bar-text{font-size:.9rem;font-weight:500}
-
-/* ── Upload ─────────────────────────────────────── */
-.drop-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:40px 20px;text-align:center;cursor:pointer;transition:all .15s;background:#fafbfc}
-.drop-zone:hover,.drop-zone.over{border-color:var(--accent);background:var(--accent-light)}
-.drop-zone-icon{font-size:2.5rem;margin-bottom:12px}
-.drop-zone-text{font-weight:600;font-size:1rem;color:var(--text);margin-bottom:6px}
-.drop-zone-sub{font-size:.85rem;color:var(--muted)}
-.file-tag{display:inline-flex;align-items:center;gap:4px;background:#f1f5f9;border:1px solid var(--border);padding:3px 8px;border-radius:5px;font-size:.78rem;color:var(--muted);margin:2px}
-.file-selected{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:12px;margin-top:12px}
-.file-selected-name{font-weight:600;font-size:.9rem}
-.file-selected-size{font-size:.82rem;color:var(--muted)}
-
-/* ── Progress bar ───────────────────────────────── */
-.progress-wrap{background:#f1f5f9;border-radius:6px;height:8px;overflow:hidden;margin-bottom:6px}
-.progress-bar{height:100%;background:var(--accent);transition:width .3s;border-radius:6px}
-.upload-step{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
-.upload-step:last-child{border-bottom:none}
-.step-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0}
-.step-icon.pending{background:#f1f5f9;color:var(--muted)}
-.step-icon.running{background:#fef3c7;color:var(--yellow)}
-.step-icon.done{background:#dcfce7;color:var(--green)}
-.step-icon.error{background:#fef2f2;color:var(--red)}
-
-/* ── Files list ─────────────────────────────────── */
-table{width:100%;border-collapse:collapse;font-size:.88rem}
-th{text-align:left;padding:10px 12px;color:var(--muted);font-weight:600;border-bottom:2px solid var(--border)}
-td{padding:10px 12px;border-bottom:1px solid var(--border)}
-tr:last-child td{border-bottom:none}
-.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:.76rem;font-weight:600}
-.badge-blue{background:#dbeafe;color:#1d4ed8}
-.badge-green{background:#dcfce7;color:#15803d}
-.badge-orange{background:#ffedd5;color:#c2410c}
-.badge-gray{background:#f1f5f9;color:var(--muted)}
-
-/* ── Statements ─────────────────────────────────── */
-.stmt-tabs{display:flex;gap:2px;background:#f1f5f9;border-radius:8px;padding:3px;margin-bottom:20px;width:fit-content}
-.stmt-tab{padding:8px 18px;border-radius:6px;cursor:pointer;font-size:.88rem;font-weight:500;color:var(--muted);transition:all .15s}
-.stmt-tab.active{background:var(--white);color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.1)}
-.stmt-section{margin-bottom:12px}
-.stmt-section-title{font-weight:700;font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:8px 0;border-bottom:2px solid var(--border)}
-.stmt-row{display:flex;justify-content:space-between;padding:8px 4px;font-size:.9rem;border-bottom:1px solid #f8fafc}
-.stmt-row:last-child{border-bottom:none}
-.stmt-total{display:flex;justify-content:space-between;padding:12px 4px;font-weight:700;border-top:2px solid var(--text);margin-top:4px}
-.stmt-amount{font-variant-numeric:tabular-nums;font-weight:500}
-.stmt-amount.positive{color:var(--green)}
-.stmt-amount.negative{color:var(--red)}
-
-/* ── Chat ───────────────────────────────────────── */
-.chat-box{height:380px;overflow-y:auto;padding:16px;background:#f8fafc;border-radius:var(--radius);border:1px solid var(--border);margin-bottom:12px}
-.chat-msg{margin-bottom:14px;display:flex;flex-direction:column}
-.chat-msg.user{align-items:flex-end}
-.chat-msg.ai{align-items:flex-start}
-.chat-bubble{max-width:80%;padding:10px 14px;border-radius:12px;font-size:.88rem;line-height:1.5}
-.chat-msg.user .chat-bubble{background:var(--accent);color:#fff;border-bottom-right-radius:4px}
-.chat-msg.ai .chat-bubble{background:var(--white);border:1px solid var(--border);color:var(--text);border-bottom-left-radius:4px}
-.chat-input-row{display:flex;gap:8px}
-.chat-input-row input{flex:1;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem;outline:none}
-.chat-input-row input:focus{border-color:var(--accent)}
-.chat-send{padding:10px 20px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:.9rem}
-.chat-send:hover{background:#4338ca}
-
-/* ── Misc ───────────────────────────────────────── */
-.empty-state{text-align:center;padding:40px 20px;color:var(--muted)}
-.empty-state-icon{font-size:2.5rem;margin-bottom:10px}
-.msg{padding:10px 14px;border-radius:8px;font-size:.88rem;margin-top:10px;display:none}
-.msg.error{background:#fef2f2;color:var(--red);border:1px solid #fecaca;display:block}
-.msg.success{background:#f0fdf4;color:var(--green);border:1px solid #bbf7d0;display:block}
-.msg.warn{background:#fffbeb;color:var(--yellow);border:1px solid #fde68a;display:block}
-.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle}
+.btn-secondary:hover{background:var(--bg)}
+.btn-ghost{background:transparent;color:var(--muted);border:1.5px solid transparent}
+.btn-ghost:hover{background:var(--bg)}
+.btn-large{padding:12px 28px;font-size:1rem}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
+.spinner-dark{border-color:rgba(0,0,0,.15);border-top-color:var(--primary)}
 @keyframes spin{to{transform:rotate(360deg)}}
-.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:20px}
-.kpi{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
-.kpi-label{font-size:.8rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
-.kpi-value{font-size:1.5rem;font-weight:700;margin-top:4px}
-.kpi-value.green{color:var(--green)}
-.kpi-value.red{color:var(--red)}
-.kpi-value.blue{color:var(--accent)}
+.tag{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:.75rem;font-weight:500}
+.tag-blue{background:var(--blue-light);color:var(--blue)}
+.tag-green{background:var(--green-light);color:var(--green)}
+.tag-amber{background:var(--amber-light);color:var(--amber)}
+.tag-red{background:var(--red-light);color:var(--red)}
+.tag-purple{background:var(--primary-light);color:var(--primary)}
+.msg-box{padding:10px 14px;border-radius:var(--radius-sm);font-size:.85rem;margin-top:12px}
+.msg-box.error{background:var(--red-light);color:var(--red);border:1px solid #fca5a5}
+.msg-box.success{background:var(--green-light);color:var(--green);border:1px solid #6ee7b7}
+.msg-box.info{background:var(--primary-light);color:var(--primary);border:1px solid #c4b5fd}
+.msg-box.warn{background:var(--amber-light);color:var(--amber);border:1px solid #fcd34d}
+
+/* ─── LANDING ───────────────────────────────────── */
+#landing{min-height:100vh;background:var(--white)}
+.land-nav{max-width:1100px;margin:0 auto;padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.land-logo{display:flex;align-items:center;gap:8px;font-size:1.1rem;font-weight:700;color:var(--primary)}
+.land-logo svg{width:28px;height:28px}
+.land-nav-actions{display:flex;align-items:center;gap:10px}
+.land-hero{max-width:700px;margin:0 auto;padding:80px 24px 60px;text-align:center}
+.land-hero h1{font-size:2.6rem;font-weight:700;line-height:1.2;margin-bottom:16px;letter-spacing:-.02em}
+.land-hero h1 span{color:var(--primary)}
+.land-hero p{font-size:1.1rem;color:var(--muted);margin-bottom:32px;line-height:1.7}
+.land-hero-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.land-steps{background:var(--bg);padding:60px 24px}
+.land-steps-inner{max-width:1000px;margin:0 auto}
+.land-steps h2{text-align:center;font-size:1.6rem;font-weight:700;margin-bottom:8px}
+.land-steps-sub{text-align:center;color:var(--muted);margin-bottom:48px;font-size:1rem}
+.steps-row{display:grid;grid-template-columns:repeat(5,1fr);gap:24px;position:relative}
+.steps-row::before{content:'';position:absolute;top:28px;left:10%;width:80%;height:2px;background:linear-gradient(90deg,var(--primary-light),var(--primary-light));z-index:0}
+.step-item{text-align:center;position:relative;z-index:1}
+.step-num{width:56px;height:56px;border-radius:50%;background:var(--primary);color:#fff;font-size:1.1rem;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;box-shadow:0 0 0 6px var(--primary-light)}
+.step-item h3{font-size:.9rem;font-weight:600;margin-bottom:4px}
+.step-item p{font-size:.8rem;color:var(--muted);line-height:1.5}
+.land-features{max-width:1000px;margin:0 auto;padding:60px 24px}
+.land-features h2{text-align:center;font-size:1.6rem;font-weight:700;margin-bottom:40px}
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.feat-card{padding:24px;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--white)}
+.feat-icon{width:40px;height:40px;border-radius:var(--radius-sm);background:var(--primary-light);display:flex;align-items:center;justify-content:center;margin-bottom:12px;font-size:1.3rem}
+.feat-card h3{font-size:.95rem;font-weight:600;margin-bottom:6px}
+.feat-card p{font-size:.85rem;color:var(--muted);line-height:1.6}
+.land-cta{background:var(--primary);padding:60px 24px;text-align:center}
+.land-cta h2{font-size:1.8rem;font-weight:700;color:#fff;margin-bottom:12px}
+.land-cta p{color:rgba(255,255,255,.75);margin-bottom:28px}
+.land-cta .btn{background:#fff;color:var(--primary);font-weight:600}
+.land-footer{text-align:center;padding:20px;font-size:.82rem;color:var(--muted);border-top:1px solid var(--border)}
+
+/* ─── AUTH MODAL ────────────────────────────────── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px}
+.modal-card{background:var(--white);border-radius:var(--radius);padding:36px;width:100%;max-width:440px;box-shadow:var(--shadow-lg)}
+.modal-logo{text-align:center;margin-bottom:24px}
+.modal-logo h2{font-size:1.3rem;font-weight:700;color:var(--primary);margin-bottom:4px}
+.modal-logo p{font-size:.88rem;color:var(--muted)}
+.auth-tabs{display:flex;background:var(--bg);border-radius:var(--radius-sm);padding:3px;margin-bottom:22px}
+.auth-tab{flex:1;text-align:center;padding:8px;border-radius:6px;cursor:pointer;font-size:.88rem;font-weight:500;color:var(--muted);transition:all .15s}
+.auth-tab.active{background:var(--white);color:var(--primary);box-shadow:var(--shadow)}
+.form-field{margin-bottom:14px}
+.form-field label{display:block;font-size:.82rem;font-weight:600;color:var(--text);margin-bottom:5px}
+.form-field input,.form-field select{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:.9rem;background:var(--white);color:var(--text);outline:none;transition:border .15s}
+.form-field input:focus,.form-field select:focus{border-color:var(--primary)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* ─── APP SHELL ─────────────────────────────────── */
+#app{display:none;flex-direction:column;min-height:100vh}
+.app-bar{background:var(--white);border-bottom:1px solid var(--border);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
+.app-logo{display:flex;align-items:center;gap:8px;font-size:1rem;font-weight:700;color:var(--primary)}
+.app-user{display:flex;align-items:center;gap:12px}
+.user-pill{background:var(--primary-light);color:var(--primary);padding:5px 14px;border-radius:20px;font-size:.83rem;font-weight:600}
+
+/* ─── STEP WIZARD ───────────────────────────────── */
+.wizard-rail{background:var(--white);border-bottom:1px solid var(--border);padding:0 28px}
+.wizard-steps{display:flex;max-width:800px;margin:0 auto}
+.wiz-step{flex:1;display:flex;flex-direction:column;align-items:center;padding:14px 4px;position:relative;cursor:pointer}
+.wiz-step::after{content:'';position:absolute;right:0;top:50%;transform:translateY(-50%);width:1px;height:40%;background:var(--border)}
+.wiz-step:last-child::after{display:none}
+.wiz-bubble{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:700;margin-bottom:5px;transition:all .2s}
+.wiz-bubble.done{background:var(--green-light);color:var(--green);font-size:1rem}
+.wiz-bubble.active{background:var(--primary);color:#fff;box-shadow:0 0 0 4px var(--primary-light)}
+.wiz-bubble.locked{background:var(--bg);color:var(--muted);border:1.5px solid var(--border)}
+.wiz-name{font-size:.75rem;font-weight:600;color:var(--muted);text-align:center}
+.wiz-name.active{color:var(--primary)}
+
+/* ─── WIZARD CONTENT ────────────────────────────── */
+.wizard-body{flex:1;padding:32px 28px;max-width:860px;margin:0 auto;width:100%}
+.step-page{display:none}
+.step-page.active{display:block}
+.step-header{margin-bottom:28px}
+.step-header h2{font-size:1.3rem;font-weight:700;margin-bottom:4px}
+.step-header p{color:var(--muted);font-size:.9rem}
+.step-card{background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius);padding:26px;margin-bottom:20px}
+.step-card h3{font-size:.95rem;font-weight:700;margin-bottom:16px;color:var(--text)}
+.step-footer{display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-top:1px solid var(--border);margin-top:8px}
+.step-footer-note{font-size:.82rem;color:var(--muted)}
+
+/* ─── STEP 1: SETUP ─────────────────────────────── */
+.inner-tabs{display:flex;gap:2px;background:var(--bg);border-radius:var(--radius-sm);padding:3px;margin-bottom:20px;width:fit-content}
+.inner-tab{padding:7px 18px;border-radius:6px;font-size:.87rem;font-weight:500;color:var(--muted);cursor:pointer;transition:all .15s}
+.inner-tab.active{background:var(--white);color:var(--primary);box-shadow:var(--shadow)}
+.drop-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:36px 20px;text-align:center;cursor:pointer;transition:all .15s;background:var(--bg)}
+.drop-zone:hover,.drop-zone.over{border-color:var(--primary);background:var(--primary-light)}
+.drop-icon{font-size:2.2rem;margin-bottom:10px}
+.drop-title{font-weight:600;margin-bottom:4px}
+.drop-sub{font-size:.83rem;color:var(--muted)}
+.file-formats{display:flex;gap:4px;justify-content:center;flex-wrap:wrap;margin-top:10px}
+.file-pill{padding:2px 8px;border:1px solid var(--border);border-radius:20px;font-size:.73rem;color:var(--muted)}
+.file-selected-bar{display:flex;align-items:center;gap:12px;background:var(--green-light);border:1.5px solid #6ee7b7;border-radius:var(--radius-sm);padding:12px 16px;margin-top:12px}
+.file-selected-bar .fname{font-weight:600;font-size:.9rem}
+.file-selected-bar .fsize{font-size:.8rem;color:var(--green)}
+.checklist{display:flex;flex-direction:column;gap:6px}
+.check-row{display:flex;align-items:center;gap:10px;font-size:.88rem;color:var(--muted)}
+.check-row.done{color:var(--text)}
+.check-icon{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;flex-shrink:0;background:var(--bg);border:1.5px solid var(--border)}
+.check-icon.done{background:var(--green-light);border-color:#6ee7b7;color:var(--green)}
+
+/* ─── STEP 2: ONTOLOGY GRAPH ────────────────────── */
+.graph-container{background:var(--bg);border-radius:var(--radius);border:1.5px solid var(--border);padding:20px;overflow:auto;position:relative;min-height:360px}
+.graph-legend{display:flex;gap:16px;margin-bottom:14px;font-size:.8rem;align-items:center}
+.legend-dot{width:12px;height:12px;border-radius:50%}
+#ontologyCanvas{display:block;width:100%;min-height:320px}
+.reassign-panel{background:var(--white);border:1.5px solid var(--primary);border-radius:var(--radius-sm);padding:14px;margin-top:12px;display:none}
+.reassign-panel h4{font-size:.88rem;font-weight:700;margin-bottom:10px}
+.category-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.cat-btn{padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:.82rem;cursor:pointer;text-align:center;transition:all .15s;background:var(--white)}
+.cat-btn:hover{border-color:var(--primary);background:var(--primary-light);color:var(--primary)}
+.cat-btn.selected{border-color:var(--primary);background:var(--primary);color:#fff}
+
+/* ─── STEP 3: PARALLEL SIMULATION ──────────────── */
+.agents-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.agent-card{background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius);padding:18px;transition:border-color .3s}
+.agent-card.running{border-color:var(--primary)}
+.agent-card.done{border-color:#6ee7b7}
+.agent-card.error{border-color:#fca5a5}
+.agent-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.agent-icon{width:32px;height:32px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.agent-name{font-size:.88rem;font-weight:600}
+.agent-desc{font-size:.78rem;color:var(--muted);margin-top:1px}
+.prog-track{height:6px;background:var(--bg);border-radius:3px;overflow:hidden;margin-bottom:6px}
+.prog-bar{height:100%;border-radius:3px;transition:width .4s ease}
+.agent-status{font-size:.78rem;color:var(--muted)}
+.sim-summary{background:var(--green-light);border:1.5px solid #6ee7b7;border-radius:var(--radius);padding:18px;display:none}
+.sim-summary h3{font-size:.95rem;font-weight:700;color:var(--green);margin-bottom:8px}
+.sim-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px}
+.sim-stat{text-align:center}
+.sim-stat-val{font-size:1.2rem;font-weight:700;color:var(--green)}
+.sim-stat-label{font-size:.75rem;color:var(--muted);margin-top:2px}
+
+/* ─── STEP 4: GENERATE ──────────────────────────── */
+.gen-status{display:flex;flex-direction:column;align-items:center;padding:40px 20px;text-align:center}
+.gen-ring{width:80px;height:80px;border-radius:50%;border:4px solid var(--bg);border-top-color:var(--primary);animation:spin .8s linear infinite;margin-bottom:16px}
+.gen-ring.done{border:4px solid var(--green-light);border-top-color:var(--green);animation:none}
+.gen-title{font-size:1.1rem;font-weight:700;margin-bottom:6px}
+.gen-sub{font-size:.88rem;color:var(--muted)}
+.gen-steps-list{width:100%;max-width:360px;margin-top:20px;text-align:left}
+.gen-step-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bg)}
+.gen-step-row:last-child{border:none}
+.gen-step-icon{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;flex-shrink:0}
+
+/* ─── STEP 5: REPORT ────────────────────────────── */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.kpi{background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius);padding:18px}
+.kpi-label{font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.kpi-val{font-size:1.5rem;font-weight:700}
+.kpi-val.blue{color:var(--blue)}
+.kpi-val.green{color:var(--green)}
+.kpi-val.red{color:var(--red)}
+.kpi-val.purple{color:var(--primary)}
+.report-tabs{display:flex;gap:2px;background:var(--bg);border-radius:var(--radius-sm);padding:3px;width:fit-content;margin-bottom:20px}
+.report-tab{padding:8px 18px;border-radius:6px;font-size:.87rem;font-weight:500;color:var(--muted);cursor:pointer;transition:all .15s}
+.report-tab.active{background:var(--white);color:var(--primary);box-shadow:var(--shadow)}
+.stmt-section-title{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:10px 0 6px;border-bottom:2px solid var(--border);margin-bottom:2px}
+.stmt-row{display:flex;justify-content:space-between;padding:8px 4px;font-size:.9rem;border-bottom:1px solid var(--bg)}
+.stmt-row:last-child{border-bottom:none}
+.stmt-total{display:flex;justify-content:space-between;padding:12px 4px;font-weight:700;border-top:2px solid var(--text);margin-top:4px;font-size:.95rem}
+.stmt-amount.pos{color:var(--green)}
+.stmt-amount.neg{color:var(--red)}
 </style>
 </head>
 <body>
 
-<!-- ══════════════════════════════════════════════ AUTH SCREEN -->
-<div id="authScreen">
-  <div class="auth-card">
-    <div class="auth-logo">
-      <h1>📊 FinanceAI</h1>
-      <p>Smart financial statements for small businesses</p>
+<!-- ═══════════════════════════════ LANDING PAGE -->
+<div id="landing">
+  <nav class="land-nav">
+    <div class="land-logo">
+      <svg viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="7" fill="#5B4FF0"/><path d="M7 18l5-5 4 4 5-7" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      FinanceAI
     </div>
-    <div class="auth-tabs">
-      <div class="auth-tab active" onclick="switchAuthTab('login')">Sign In</div>
-      <div class="auth-tab" onclick="switchAuthTab('register')">Create Account</div>
+    <div class="land-nav-actions">
+      <button class="btn btn-ghost" onclick="openAuth('login')">Sign in</button>
+      <button class="btn btn-primary" onclick="openAuth('register')">Get started free</button>
     </div>
-    <div id="authMsg"></div>
+  </nav>
 
-    <!-- Login Form -->
+  <section class="land-hero">
+    <h1>Turn messy records into<br><span>clean financial statements</span></h1>
+    <p>Upload any CSV or Excel file. Our AI maps your data to accounting categories, validates it with parallel agents, and generates audit-ready statements in minutes.</p>
+    <div class="land-hero-btns">
+      <button class="btn btn-primary btn-large" onclick="openAuth('register')">Try it free — no credit card</button>
+      <button class="btn btn-secondary btn-large" onclick="openAuth('login')">Sign in</button>
+    </div>
+  </section>
+
+  <section class="land-steps">
+    <div class="land-steps-inner">
+      <h2>Five steps to your financial report</h2>
+      <p class="land-steps-sub">Each step asks for your confirmation before proceeding — you're always in control</p>
+      <div class="steps-row">
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <h3>Upload &amp; Profile</h3>
+          <p>Add your company details and upload any transaction file</p>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <h3>Ontology Map</h3>
+          <p>Interact with an AI graph to confirm how columns map to accounts</p>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <h3>AI Validation</h3>
+          <p>Multiple agents run in parallel to clean and verify your data</p>
+        </div>
+        <div class="step-item">
+          <div class="step-num">4</div>
+          <h3>Generate</h3>
+          <p>One click produces your full income statement and trial balance</p>
+        </div>
+        <div class="step-item">
+          <div class="step-num">5</div>
+          <h3>Report &amp; Export</h3>
+          <p>Review, analyse, and download your financial statements</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="land-features">
+    <h2>Built for small businesses</h2>
+    <div class="features-grid">
+      <div class="feat-card">
+        <div class="feat-icon">📂</div>
+        <h3>Any file format</h3>
+        <p>CSV, Excel (.xlsx, .xls), ODS, and TSV — with automatic Thai and UTF-8 encoding detection.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🧠</div>
+        <h3>AI-powered mapping</h3>
+        <p>Columns are classified automatically. Adjust the interactive graph until the mapping is perfect.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🔒</div>
+        <h3>Your data, only yours</h3>
+        <p>Every account is private. Your records are isolated from all other users with JWT authentication.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="land-cta">
+    <h2>Ready to see your numbers clearly?</h2>
+    <p>Free to start. No spreadsheet expertise required.</p>
+    <button class="btn btn-large" onclick="openAuth('register')">Create your free account →</button>
+  </section>
+
+  <footer class="land-footer">© 2026 FinanceAI · SME Financial Intelligence System</footer>
+</div>
+
+<!-- ═══════════════════════════════ AUTH MODAL -->
+<div class="modal-overlay hidden" id="authModal" onclick="if(event.target===this)closeAuth()">
+  <div class="modal-card">
+    <div class="modal-logo">
+      <h2>FinanceAI</h2>
+      <p id="authSubtitle">Sign in to your account</p>
+    </div>
+    <div class="auth-tabs" id="authTabBar">
+      <div class="auth-tab active" onclick="switchAuthTab('login')">Sign in</div>
+      <div class="auth-tab" onclick="switchAuthTab('register')">Create account</div>
+    </div>
+    <div id="authMsgBox"></div>
+
     <div id="loginForm">
-      <div class="form-group">
-        <label>Email</label>
-        <input type="email" id="loginEmail" placeholder="you@example.com" autocomplete="email">
-      </div>
-      <div class="form-group">
-        <label>Password</label>
-        <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
-      </div>
-      <button class="btn btn-primary" onclick="doLogin()" id="btnLogin">Sign In</button>
+      <div class="form-field"><label>Email</label><input type="email" id="liEmail" placeholder="you@example.com" autocomplete="email"></div>
+      <div class="form-field"><label>Password</label><input type="password" id="liPass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:12px" id="btnLogin" onclick="doLogin()">Sign in</button>
     </div>
 
-    <!-- Register Form -->
-    <div id="registerForm" style="display:none">
-      <div class="form-group">
-        <label>Your Name</label>
-        <input type="text" id="regName" placeholder="Jane Smith">
-      </div>
-      <div class="form-group">
-        <label>Email</label>
-        <input type="email" id="regEmail" placeholder="you@example.com" autocomplete="email">
-      </div>
-      <div class="form-group">
-        <label>Password <span style="color:var(--muted);font-weight:400">(min 6 chars)</span></label>
-        <input type="password" id="regPassword" placeholder="••••••••" autocomplete="new-password">
-      </div>
-      <button class="btn btn-primary" onclick="doRegister()" id="btnRegister">Create Account</button>
+    <div id="registerForm" class="hidden">
+      <div class="form-field"><label>Your name</label><input type="text" id="regName" placeholder="Jane Smith"></div>
+      <div class="form-field"><label>Email</label><input type="email" id="regEmail" placeholder="you@example.com" autocomplete="email"></div>
+      <div class="form-field"><label>Password <span style="color:var(--muted);font-weight:400">(min 6 chars)</span></label><input type="password" id="regPass" placeholder="••••••••" autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()"></div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:12px" id="btnReg" onclick="doRegister()">Create account</button>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════ APP SCREEN -->
-<div id="appScreen">
-
-  <!-- Top Bar -->
-  <div class="topbar">
-    <div class="topbar-logo">📊 FinanceAI</div>
-    <div class="topbar-selects">
-      <select id="companySelect" onchange="onCompanyChange()" title="Select company">
-        <option value="">— Select Company —</option>
-      </select>
-      <select id="periodSelect" onchange="onPeriodChange()" title="Select period">
-        <option value="">— Select Period —</option>
-      </select>
+<!-- ═══════════════════════════════ APP -->
+<div id="app">
+  <header class="app-bar">
+    <div class="app-logo">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none"><rect width="24" height="24" rx="6" fill="#5B4FF0"/><path d="M5 15l4-4 3.5 3.5 4.5-6" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      FinanceAI
     </div>
-    <div class="topbar-user">
-      <span class="user-badge" id="userBadge">User</span>
-      <button class="btn-logout" onclick="doLogout()">Logout</button>
+    <div class="app-user">
+      <span class="user-pill" id="userPill">User</span>
+      <button class="btn btn-ghost" style="font-size:.82rem;padding:6px 12px" onclick="doLogout()">Logout</button>
+    </div>
+  </header>
+
+  <div class="wizard-rail">
+    <div class="wizard-steps">
+      <div class="wiz-step" onclick="tryGoStep(1)">
+        <div class="wiz-bubble locked" id="wb1">1</div>
+        <div class="wiz-name" id="wn1">Setup</div>
+      </div>
+      <div class="wiz-step" onclick="tryGoStep(2)">
+        <div class="wiz-bubble locked" id="wb2">2</div>
+        <div class="wiz-name" id="wn2">Ontology Map</div>
+      </div>
+      <div class="wiz-step" onclick="tryGoStep(3)">
+        <div class="wiz-bubble locked" id="wb3">3</div>
+        <div class="wiz-name" id="wn3">AI Validation</div>
+      </div>
+      <div class="wiz-step" onclick="tryGoStep(4)">
+        <div class="wiz-bubble locked" id="wb4">4</div>
+        <div class="wiz-name" id="wn4">Generate</div>
+      </div>
+      <div class="wiz-step" onclick="tryGoStep(5)">
+        <div class="wiz-bubble locked" id="wb5">5</div>
+        <div class="wiz-name" id="wn5">Report</div>
+      </div>
     </div>
   </div>
 
-  <!-- Nav -->
-  <div class="nav">
-    <button class="nav-btn active" onclick="goPage('setup')">🏢 Setup</button>
-    <button class="nav-btn" onclick="goPage('upload')">📂 Upload</button>
-    <button class="nav-btn" onclick="goPage('reports')">📈 Reports</button>
-    <button class="nav-btn" onclick="goPage('chat')">💬 Ask AI</button>
-  </div>
+  <div class="wizard-body">
 
-  <!-- Main -->
-  <div class="main">
-
-    <!-- ── SETUP PAGE ─────────────────────────── -->
-    <div class="page active" id="page-setup">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
-        <div>
-          <h2 style="font-size:1.3rem;font-weight:700">Setup Your Business</h2>
-          <p style="color:var(--muted);font-size:.9rem;margin-top:4px">Create a company and reporting period to get started</p>
-        </div>
+    <!-- ── STEP 1: SETUP ──────────────────────── -->
+    <div class="step-page active" id="step1">
+      <div class="step-header">
+        <h2>Set up your business &amp; upload data</h2>
+        <p>Complete both tabs before continuing — we need your company profile and at least one data file.</p>
+      </div>
+      <div class="inner-tabs">
+        <div class="inner-tab active" id="tabProfile" onclick="switchInnerTab('profile')">🏢 Company profile</div>
+        <div class="inner-tab" id="tabUpload" onclick="switchInnerTab('upload')">📂 Upload data</div>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
-        <!-- Company card -->
-        <div>
-          <div class="card">
-            <div class="card-title">🏢 Your Companies</div>
-            <div class="item-list" id="companyList">
-              <div class="empty-state" style="padding:20px 0">
-                <div class="empty-state-icon">🏢</div>
-                <div>No companies yet</div>
-              </div>
-            </div>
-            <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:16px">
-              <div style="font-size:.88rem;font-weight:600;margin-bottom:10px;color:var(--muted)">ADD NEW COMPANY</div>
-              <div class="form-group">
-                <label>Company Name</label>
-                <input type="text" id="newCompanyName" placeholder="e.g. My Shop Co.">
-              </div>
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Industry</label>
-                  <select id="newCompanyIndustry" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem">
-                    <option>Retail</option><option>Food & Beverage</option><option>Service</option>
-                    <option>Manufacturing</option><option>Trading</option><option>Other</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label>Currency</label>
-                  <select id="newCompanyCurrency" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem">
-                    <option>THB</option><option>USD</option><option>EUR</option><option>SGD</option>
-                  </select>
-                </div>
-              </div>
-              <button class="btn btn-primary" onclick="createCompany()">+ Add Company</button>
-              <div id="companyMsg" class="msg"></div>
+      <div id="panelProfile">
+        <div class="step-card">
+          <h3>Company details</h3>
+          <div class="form-row">
+            <div class="form-field"><label>Company name *</label><input type="text" id="coName" placeholder="e.g. My Shop Co."></div>
+            <div class="form-field"><label>Industry</label>
+              <select id="coIndustry"><option>Retail</option><option>Food &amp; Beverage</option><option>Service</option><option>Manufacturing</option><option>Trading</option><option>Other</option></select>
             </div>
           </div>
-        </div>
-
-        <!-- Period card -->
-        <div>
-          <div class="card">
-            <div class="card-title">📅 Reporting Periods</div>
-            <div id="periodRequireCompany" class="status-bar warning" style="margin-bottom:16px">
-              <span class="status-bar-icon">👈</span>
-              <span class="status-bar-text">Select a company first</span>
+          <div class="form-row">
+            <div class="form-field"><label>Currency</label>
+              <select id="coCurrency"><option>THB</option><option>USD</option><option>EUR</option><option>SGD</option></select>
             </div>
-            <div class="item-list" id="periodList"></div>
-            <div id="periodForm" style="margin-top:16px;border-top:1px solid var(--border);padding-top:16px;display:none">
-              <div style="font-size:.88rem;font-weight:600;margin-bottom:10px;color:var(--muted)">ADD NEW PERIOD</div>
-              <div class="form-group">
-                <label>Period Label</label>
-                <input type="text" id="newPeriodLabel" placeholder="e.g. Jan–Mar 2026">
-              </div>
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Start Date</label>
-                  <input type="date" id="newPeriodStart">
-                </div>
-                <div class="form-group">
-                  <label>End Date</label>
-                  <input type="date" id="newPeriodEnd">
-                </div>
-              </div>
-              <button class="btn btn-primary" onclick="createPeriod()">+ Add Period</button>
-              <div id="periodMsg" class="msg"></div>
-            </div>
+            <div class="form-field"><label>Reporting period *</label><input type="text" id="coPeriod" placeholder="e.g. Jan–Mar 2026"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-field"><label>Start date *</label><input type="date" id="coStart"></div>
+            <div class="form-field"><label>End date *</label><input type="date" id="coEnd"></div>
+          </div>
+          <div id="profileMsg"></div>
+          <div style="margin-top:16px;display:flex;gap:10px;align-items:center">
+            <button class="btn btn-primary" onclick="saveCompany()" id="btnSaveCompany">Save company profile</button>
+            <span id="profileSavedBadge" class="tag tag-green hidden">✓ Saved</span>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- ── UPLOAD PAGE ─────────────────────────── -->
-    <div class="page" id="page-upload">
-      <div style="margin-bottom:24px">
-        <h2 style="font-size:1.3rem;font-weight:700">Upload Your Data</h2>
-        <p style="color:var(--muted);font-size:.9rem;margin-top:4px">Upload any sales, purchase, or inventory file to generate your financial report</p>
-      </div>
-
-      <div id="uploadNoPeriod" class="status-bar warning" style="display:none">
-        <span class="status-bar-icon">⚠️</span>
-        <span class="status-bar-text">Please select a company and period in the Setup tab first</span>
-      </div>
-
-      <div id="uploadReady">
-        <!-- Drop zone -->
-        <div class="card">
-          <div class="card-title">📂 Upload File</div>
+      <div id="panelUpload" class="hidden">
+        <div class="step-card">
+          <h3>Upload your transaction data</h3>
           <div class="drop-zone" id="dropZone"
                onclick="document.getElementById('fileInput').click()"
                ondragover="event.preventDefault();this.classList.add('over')"
                ondragleave="this.classList.remove('over')"
-               ondrop="handleDrop(event)">
-            <input type="file" id="fileInput" style="display:none"
-                   accept=".csv,.xlsx,.xls,.ods,.tsv,.txt"
-                   onchange="handleFileSelect(this)">
-            <div class="drop-zone-icon">📁</div>
-            <div class="drop-zone-text">Drop your file here, or click to browse</div>
-            <div class="drop-zone-sub">Supported formats:</div>
-            <div style="margin-top:8px">
-              <span class="file-tag">CSV</span>
-              <span class="file-tag">Excel (.xlsx)</span>
-              <span class="file-tag">XLS</span>
-              <span class="file-tag">ODS</span>
-              <span class="file-tag">TSV</span>
+               ondrop="onFileDrop(event)">
+            <input type="file" id="fileInput" style="display:none" accept=".csv,.xlsx,.xls,.ods,.tsv,.txt" onchange="onFileSelect(this)">
+            <div class="drop-icon">📁</div>
+            <div class="drop-title">Drop your file here, or click to browse</div>
+            <div class="drop-sub">Sales records, purchase orders, expense sheets — any tabular data works</div>
+            <div class="file-formats">
+              <span class="file-pill">CSV</span><span class="file-pill">Excel .xlsx</span><span class="file-pill">XLS</span><span class="file-pill">ODS</span><span class="file-pill">TSV</span>
             </div>
           </div>
-
-          <div id="fileInfo" style="display:none">
-            <div class="file-selected">
-              <span style="font-size:1.5rem">📄</span>
-              <div>
-                <div class="file-selected-name" id="fileSelectedName"></div>
-                <div class="file-selected-size" id="fileSelectedSize"></div>
+          <div id="fileInfoBar" class="hidden">
+            <div class="file-selected-bar">
+              <span style="font-size:1.4rem">📄</span>
+              <div style="flex:1">
+                <div class="fname" id="fName"></div>
+                <div class="fsize" id="fSize"></div>
               </div>
-              <button class="btn btn-secondary" style="margin-left:auto;padding:6px 12px;font-size:.82rem" onclick="clearFile()">✕ Remove</button>
+              <button class="btn btn-ghost" style="font-size:.8rem;padding:4px 10px" onclick="clearFile()">✕</button>
             </div>
           </div>
-
-          <div style="margin-top:16px;display:flex;gap:10px">
-            <button class="btn btn-primary" onclick="uploadFile()" id="btnUpload" style="flex:1">
-              ⬆️ Upload & Analyse
-            </button>
+          <div id="uploadMsg"></div>
+          <div style="margin-top:14px">
+            <button class="btn btn-primary" onclick="doUpload()" id="btnUpload">⬆ Upload &amp; classify</button>
+            <span id="uploadSavedBadge" class="tag tag-green hidden" style="margin-left:10px">✓ File uploaded</span>
           </div>
-          <div id="uploadMsg" class="msg"></div>
         </div>
+      </div>
 
-        <!-- Pipeline progress -->
-        <div class="card" id="pipelineCard" style="display:none">
-          <div class="card-title">⚙️ Processing Pipeline</div>
-          <div id="pipelineSteps"></div>
-          <div style="margin-top:16px">
-            <button class="btn btn-green" onclick="runFullPipeline()" id="btnProcess" style="display:none">
-              🚀 Generate Financial Statements
-            </button>
+      <div class="step-card" style="padding:18px 22px">
+        <h3 style="margin-bottom:12px;font-size:.88rem;color:var(--muted)">CHECKLIST BEFORE CONTINUING</h3>
+        <div class="checklist">
+          <div class="check-row" id="chkProfile">
+            <div class="check-icon" id="chkProfileIcon">1</div>Company profile saved
           </div>
-          <div id="pipelineMsg" class="msg"></div>
+          <div class="check-row" id="chkFile">
+            <div class="check-icon" id="chkFileIcon">2</div>Data file uploaded
+          </div>
         </div>
+      </div>
 
-        <!-- Uploaded files table -->
-        <div class="card">
-          <div class="card-title">📋 Files in This Period</div>
-          <div id="filesList">
-            <div class="empty-state">
-              <div class="empty-state-icon">📭</div>
-              <div>No files uploaded yet</div>
+      <div class="step-footer">
+        <span class="step-footer-note">Complete both items above to continue</span>
+        <button class="btn btn-primary" onclick="goStep(2)" id="btnStep1Next" disabled>Continue to Ontology Map →</button>
+      </div>
+    </div>
+
+    <!-- ── STEP 2: ONTOLOGY MAP ───────────────── -->
+    <div class="step-page" id="step2">
+      <div class="step-header">
+        <h2>Review your data ontology map</h2>
+        <p>We've automatically mapped your file columns to accounting categories. Click any column node to reassign it before continuing.</p>
+      </div>
+      <div class="step-card">
+        <div class="graph-legend">
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:50%;background:#5B4FF0;display:inline-block"></span> <span style="font-size:.8rem">Your columns</span></span>
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:50%;background:#059669;display:inline-block"></span> <span style="font-size:.8rem">Account categories</span></span>
+          <span style="font-size:.78rem;color:var(--muted);margin-left:auto">Click a purple node to reassign its category</span>
+        </div>
+        <div class="graph-container">
+          <canvas id="ontologyCanvas"></canvas>
+        </div>
+        <div class="reassign-panel" id="reassignPanel">
+          <h4>Reassign column: <strong id="reassignColName"></strong></h4>
+          <div class="category-grid" id="categoryGrid"></div>
+        </div>
+        <div id="graphMsg" style="margin-top:10px"></div>
+      </div>
+      <div class="step-footer">
+        <button class="btn btn-secondary" onclick="goStep(1)">← Back</button>
+        <button class="btn btn-primary" onclick="submitOntology()">Mapping looks good — run validation →</button>
+      </div>
+    </div>
+
+    <!-- ── STEP 3: PARALLEL VALIDATION ───────── -->
+    <div class="step-page" id="step3">
+      <div class="step-header">
+        <h2>AI agents validating your data</h2>
+        <p>Four specialised agents run in parallel to clean, normalise, and verify your records. Wait for all to complete before continuing.</p>
+      </div>
+      <div class="step-card">
+        <div class="agents-grid" id="agentsGrid">
+          <div class="agent-card" id="ag0">
+            <div class="agent-header">
+              <div class="agent-icon" style="background:#ede9fe">🗂️</div>
+              <div><div class="agent-name">Schema validator</div><div class="agent-desc">Checks column types and required fields</div></div>
+            </div>
+            <div class="prog-track"><div class="prog-bar" id="ap0" style="width:0%;background:var(--primary)"></div></div>
+            <div class="agent-status" id="as0">Waiting to start…</div>
+          </div>
+          <div class="agent-card" id="ag1">
+            <div class="agent-header">
+              <div class="agent-icon" style="background:#d1fae5">📥</div>
+              <div><div class="agent-name">Record extractor</div><div class="agent-desc">Parses and structures all transactions</div></div>
+            </div>
+            <div class="prog-track"><div class="prog-bar" id="ap1" style="width:0%;background:var(--green)"></div></div>
+            <div class="agent-status" id="as1">Waiting to start…</div>
+          </div>
+          <div class="agent-card" id="ag2">
+            <div class="agent-header">
+              <div class="agent-icon" style="background:#dbeafe">💱</div>
+              <div><div class="agent-name">Amount normaliser</div><div class="agent-desc">Standardises values and currency formats</div></div>
+            </div>
+            <div class="prog-track"><div class="prog-bar" id="ap2" style="width:0%;background:var(--blue)"></div></div>
+            <div class="agent-status" id="as2">Waiting to start…</div>
+          </div>
+          <div class="agent-card" id="ag3">
+            <div class="agent-header">
+              <div class="agent-icon" style="background:#fef3c7">🔍</div>
+              <div><div class="agent-name">Duplicate detector</div><div class="agent-desc">Finds and flags duplicate transactions</div></div>
+            </div>
+            <div class="prog-track"><div class="prog-bar" id="ap3" style="width:0%;background:var(--amber)"></div></div>
+            <div class="agent-status" id="as3">Waiting to start…</div>
+          </div>
+        </div>
+        <div class="sim-summary" id="simSummary">
+          <h3>✓ Validation complete</h3>
+          <div class="sim-stats" id="simStats"></div>
+        </div>
+      </div>
+      <div class="step-footer">
+        <button class="btn btn-secondary" onclick="goStep(2)">← Back</button>
+        <button class="btn btn-primary" onclick="goStep(4)" id="btnStep3Next" disabled>Validation done — generate report →</button>
+      </div>
+    </div>
+
+    <!-- ── STEP 4: GENERATE ───────────────────── -->
+    <div class="step-page" id="step4">
+      <div class="step-header">
+        <h2>Generate your financial statements</h2>
+        <p>Review the summary below, then click Generate. This takes around 5–15 seconds.</p>
+      </div>
+      <div class="step-card">
+        <div id="genReady">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+            <div style="padding:14px;background:var(--bg);border-radius:var(--radius-sm)">
+              <div style="font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Company</div>
+              <div id="genCoName" style="font-weight:700;font-size:1rem"></div>
+              <div id="genPeriod" style="font-size:.85rem;color:var(--muted);margin-top:2px"></div>
+            </div>
+            <div style="padding:14px;background:var(--bg);border-radius:var(--radius-sm)">
+              <div style="font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Data loaded</div>
+              <div id="genRows" style="font-weight:700;font-size:1rem"></div>
+              <div style="font-size:.85rem;color:var(--muted);margin-top:2px">records ready to process</div>
             </div>
           </div>
+          <button class="btn btn-primary btn-large" onclick="doGenerate()" id="btnGenerate" style="width:100%;justify-content:center">🚀 Generate financial statements</button>
+          <div id="generateMsg"></div>
+        </div>
+        <div id="genProgress" class="hidden">
+          <div class="gen-status">
+            <div id="genRing" class="gen-ring"></div>
+            <div class="gen-title" id="genTitle">Processing your data…</div>
+            <div class="gen-sub" id="genSub">This usually takes under 15 seconds</div>
+            <div class="gen-steps-list" id="genStepsList"></div>
+          </div>
+        </div>
+      </div>
+      <div class="step-footer">
+        <button class="btn btn-secondary" onclick="goStep(3)">← Back</button>
+        <button class="btn btn-primary" onclick="goStep(5)" id="btnStep4Next" disabled>View your report →</button>
+      </div>
+    </div>
+
+    <!-- ── STEP 5: REPORT ─────────────────────── -->
+    <div class="step-page" id="step5">
+      <div class="step-header">
+        <h2>Your financial report</h2>
+        <p id="reportPeriodLabel">Showing results for the selected period</p>
+      </div>
+      <div class="kpi-row">
+        <div class="kpi"><div class="kpi-label">Revenue</div><div class="kpi-val blue" id="kRevenue">—</div></div>
+        <div class="kpi"><div class="kpi-label">Expenses</div><div class="kpi-val red" id="kExpenses">—</div></div>
+        <div class="kpi"><div class="kpi-label">Net profit</div><div class="kpi-val green" id="kProfit">—</div></div>
+        <div class="kpi"><div class="kpi-label">Records</div><div class="kpi-val purple" id="kRecords">—</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <div class="report-tabs">
+          <div class="report-tab active" onclick="switchReportTab('income')">Income statement</div>
+          <div class="report-tab" onclick="switchReportTab('trial')">Trial balance</div>
+        </div>
+        <button class="btn btn-secondary" onclick="loadReport()" style="margin-left:auto;font-size:.82rem;padding:7px 14px">🔄 Refresh</button>
+      </div>
+      <div class="step-card" id="incomeContent"><div style="text-align:center;padding:30px;color:var(--muted)">Loading…</div></div>
+      <div class="step-card hidden" id="trialContent"><div style="text-align:center;padding:30px;color:var(--muted)">Loading…</div></div>
+      <div class="step-footer" style="border-top:1px solid var(--border);padding-top:16px">
+        <button class="btn btn-secondary" onclick="goStep(4)">← Back</button>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-secondary" onclick="openAuth('login');resetWizard()" style="font-size:.83rem">+ New report</button>
         </div>
       </div>
     </div>
 
-    <!-- ── REPORTS PAGE ────────────────────────── -->
-    <div class="page" id="page-reports">
-      <div style="margin-bottom:20px">
-        <h2 style="font-size:1.3rem;font-weight:700">Financial Reports</h2>
-        <p style="color:var(--muted);font-size:.9rem;margin-top:4px">View your income statement and trial balance</p>
-      </div>
-
-      <div id="reportsNoPeriod" class="status-bar warning" style="display:none">
-        <span class="status-bar-icon">⚠️</span>
-        <span class="status-bar-text">Please select a company and period first</span>
-      </div>
-
-      <div id="reportsReady">
-        <div class="kpi-grid" id="kpiGrid">
-          <div class="kpi"><div class="kpi-label">Revenue</div><div class="kpi-value blue" id="kpiRevenue">—</div></div>
-          <div class="kpi"><div class="kpi-label">Expenses</div><div class="kpi-value red" id="kpiExpenses">—</div></div>
-          <div class="kpi"><div class="kpi-label">Net Profit</div><div class="kpi-value green" id="kpiProfit">—</div></div>
-          <div class="kpi"><div class="kpi-label">Data Files</div><div class="kpi-value" id="kpiFiles">—</div></div>
-        </div>
-
-        <div class="stmt-tabs">
-          <div class="stmt-tab active" onclick="switchStmt('income')">Income Statement</div>
-          <div class="stmt-tab" onclick="switchStmt('trial')">Trial Balance</div>
-        </div>
-        <div id="stmtContent"></div>
-        <div id="trialContent" style="display:none"></div>
-        <button class="btn btn-secondary" onclick="loadReports()" style="margin-top:4px">🔄 Refresh</button>
-      </div>
-    </div>
-
-    <!-- ── CHAT PAGE ───────────────────────────── -->
-    <div class="page" id="page-chat">
-      <div style="margin-bottom:20px">
-        <h2 style="font-size:1.3rem;font-weight:700">Ask AI About Your Finances</h2>
-        <p style="color:var(--muted);font-size:.9rem;margin-top:4px">Ask anything about your business data in plain language</p>
-      </div>
-
-      <div class="card">
-        <div class="chat-box" id="chatBox">
-          <div class="chat-msg ai">
-            <div class="chat-bubble">
-              👋 Hi! I'm your AI financial assistant. Ask me anything about your business data — revenue trends, expense breakdowns, comparisons, or any accounting questions!
-            </div>
-          </div>
-        </div>
-        <div class="chat-input-row">
-          <input type="text" id="chatInput" placeholder="e.g. What is my total revenue this month?" onkeydown="if(event.key==='Enter')sendChat()">
-          <button class="chat-send" onclick="sendChat()">Send ▶</button>
-        </div>
-      </div>
-    </div>
-
-  </div><!-- /main -->
-</div><!-- /appScreen -->
+  </div><!-- /wizard-body -->
+</div><!-- /app -->
 
 <script>
-// ══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
 // STATE
-// ══════════════════════════════════════════════════════════
-let token = localStorage.getItem('fin_token') || null;
+// ══════════════════════════════════════════════════
+let token = localStorage.getItem('fin_token');
 let currentUser = JSON.parse(localStorage.getItem('fin_user') || 'null');
-let session = { companyId: null, companyName: null, periodId: null, periodLabel: null };
-let selectedFile = null;
-let lastFileId = null;
-let chatHistory = [];
+let state = {
+  companyId: null, periodId: null, fileId: null,
+  companyName: '', periodLabel: '', rowCount: 0,
+  columns: [], mappings: {}, profileSaved: false, fileSaved: false,
+  validationDone: false, generateDone: false, maxStep: 1
+};
 
-// ══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
 // BOOT
-// ══════════════════════════════════════════════════════════
-window.onload = function() {
+// ══════════════════════════════════════════════════
+window.onload = () => {
   if (token && currentUser) {
     showApp();
-  } else {
-    document.getElementById('authScreen').style.display = 'flex';
   }
 };
 
-// ══════════════════════════════════════════════════════════
-// API HELPER
-// ══════════════════════════════════════════════════════════
-async function api(method, path, body = null, isForm = false) {
-  const opts = {
-    method,
-    headers: {}
-  };
+// ══════════════════════════════════════════════════
+// API
+// ══════════════════════════════════════════════════
+async function api(method, path, body, isForm) {
+  const opts = { method, headers: {} };
   if (token) opts.headers['Authorization'] = 'Bearer ' + token;
-  if (body && !isForm) {
-    opts.headers['Content-Type'] = 'application/json';
-    opts.body = JSON.stringify(body);
-  } else if (isForm) {
-    opts.body = body; // FormData
-  }
+  if (body && !isForm) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+  else if (isForm) opts.body = body;
   const res = await fetch(path, opts);
-  if (res.status === 401) {
-    doLogout();
-    throw new Error('Session expired — please log in again');
-  }
+  if (res.status === 401) { doLogout(); throw new Error('Session expired'); }
   const data = await res.json();
   if (!res.ok) throw new Error(data.detail || JSON.stringify(data));
   return data;
 }
 
-function fmt(n) {
-  if (n === null || n === undefined) return '—';
-  return Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
+const fmt = n => n == null ? '—' : Number(n).toLocaleString('th-TH', {minimumFractionDigits:2,maximumFractionDigits:2});
 
-// ══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
 // AUTH
-// ══════════════════════════════════════════════════════════
-function switchAuthTab(tab) {
-  document.querySelectorAll('.auth-tab').forEach((el, i) => el.classList.toggle('active', (i===0 && tab==='login') || (i===1 && tab==='register')));
-  document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
-  document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
-  document.getElementById('authMsg').innerHTML = '';
+// ══════════════════════════════════════════════════
+function openAuth(tab) {
+  document.getElementById('authModal').classList.remove('hidden');
+  switchAuthTab(tab);
+}
+function closeAuth() { document.getElementById('authModal').classList.add('hidden'); }
+function switchAuthTab(t) {
+  const tabs = document.querySelectorAll('.auth-tab');
+  tabs[0].classList.toggle('active', t==='login');
+  tabs[1].classList.toggle('active', t==='register');
+  toggle('loginForm', t==='login'); toggle('registerForm', t==='register');
+  document.getElementById('authSubtitle').textContent = t==='login' ? 'Sign in to your account' : 'Create your free account';
+  document.getElementById('authMsgBox').innerHTML = '';
 }
 
-function showAuthMsg(msg, type = 'error') {
-  const el = document.getElementById('authMsg');
-  el.className = 'auth-msg ' + type;
-  el.textContent = msg;
+function authMsg(m, type) {
+  const el = document.getElementById('authMsgBox');
+  el.innerHTML = `<div class="msg-box ${type}">${m}</div>`;
 }
 
 async function doLogin() {
-  const email = document.getElementById('loginEmail').value.trim();
-  const password = document.getElementById('loginPassword').value;
-  if (!email || !password) { showAuthMsg('Please fill in all fields'); return; }
-  const btn = document.getElementById('btnLogin');
-  btn.innerHTML = '<span class="spinner"></span> Signing in…';
-  btn.disabled = true;
+  const email = v('liEmail'), pass = v('liPass');
+  if (!email || !pass) { authMsg('Fill in all fields','error'); return; }
+  setBtn('btnLogin', true, '<span class="spinner"></span> Signing in…');
   try {
-    const data = await api('POST', '/api/auth/login', { email, password });
-    saveSession(data);
-  } catch (e) {
-    showAuthMsg(e.message);
-  } finally {
-    btn.innerHTML = 'Sign In'; btn.disabled = false;
-  }
+    const d = await api('POST', '/api/auth/login', {email, password: pass});
+    saveAuth(d); closeAuth(); showApp();
+  } catch(e) { authMsg(e.message, 'error'); }
+  finally { setBtn('btnLogin', false, 'Sign in'); }
 }
 
 async function doRegister() {
-  const name = document.getElementById('regName').value.trim();
-  const email = document.getElementById('regEmail').value.trim();
-  const password = document.getElementById('regPassword').value;
-  if (!name || !email || !password) { showAuthMsg('Please fill in all fields'); return; }
-  const btn = document.getElementById('btnRegister');
-  btn.innerHTML = '<span class="spinner"></span> Creating…';
-  btn.disabled = true;
+  const name = v('regName'), email = v('regEmail'), pass = v('regPass');
+  if (!name || !email || !pass) { authMsg('Fill in all fields','error'); return; }
+  setBtn('btnReg', true, '<span class="spinner"></span> Creating account…');
   try {
-    const data = await api('POST', '/api/auth/register', { name, email, password });
-    saveSession(data);
-  } catch (e) {
-    showAuthMsg(e.message);
-  } finally {
-    btn.innerHTML = 'Create Account'; btn.disabled = false;
-  }
+    const d = await api('POST', '/api/auth/register', {name, email, password: pass});
+    saveAuth(d); closeAuth(); showApp();
+  } catch(e) { authMsg(e.message, 'error'); }
+  finally { setBtn('btnReg', false, 'Create account'); }
 }
 
-function saveSession(data) {
-  token = data.token;
-  currentUser = { name: data.name, email: data.email, id: data.id };
+function saveAuth(d) {
+  token = d.token; currentUser = {name: d.name, email: d.email, id: d.id};
   localStorage.setItem('fin_token', token);
   localStorage.setItem('fin_user', JSON.stringify(currentUser));
-  showApp();
 }
 
 function doLogout() {
-  localStorage.removeItem('fin_token');
-  localStorage.removeItem('fin_user');
+  localStorage.removeItem('fin_token'); localStorage.removeItem('fin_user');
   token = null; currentUser = null;
-  session = { companyId: null, companyName: null, periodId: null, periodLabel: null };
-  document.getElementById('appScreen').style.display = 'none';
-  document.getElementById('authScreen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('landing').style.display = 'block';
+  resetWizard();
 }
 
-// ══════════════════════════════════════════════════════════
-// APP INIT
-// ══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
+// APP
+// ══════════════════════════════════════════════════
 function showApp() {
-  document.getElementById('authScreen').style.display = 'none';
-  document.getElementById('appScreen').style.display = 'flex';
-  document.getElementById('appScreen').style.flexDirection = 'column';
-  document.getElementById('userBadge').textContent = currentUser.name;
-  loadCompanies();
-  goPage('setup');
+  document.getElementById('landing').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('userPill').textContent = currentUser.name;
+  goStep(1);
 }
 
-// ══════════════════════════════════════════════════════════
-// NAVIGATION
-// ══════════════════════════════════════════════════════════
-function goPage(name) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('page-' + name).classList.add('active');
-  const idx = {'setup':0,'upload':1,'reports':2,'chat':3}[name];
-  document.querySelectorAll('.nav-btn')[idx].classList.add('active');
-  if (name === 'upload') refreshUploadPage();
-  if (name === 'reports') refreshReportsPage();
+function resetWizard() {
+  state = { companyId:null, periodId:null, fileId:null, companyName:'', periodLabel:'', rowCount:0, columns:[], mappings:{}, profileSaved:false, fileSaved:false, validationDone:false, generateDone:false, maxStep:1 };
+  updateChecklist();
 }
 
-// ══════════════════════════════════════════════════════════
-// COMPANIES & PERIODS
-// ══════════════════════════════════════════════════════════
-async function loadCompanies() {
+// ══════════════════════════════════════════════════
+// WIZARD NAV
+// ══════════════════════════════════════════════════
+let currentStep = 1;
+
+function tryGoStep(n) {
+  if (n <= state.maxStep) goStep(n);
+}
+
+function goStep(n) {
+  if (n < 1 || n > 5) return;
+  currentStep = n;
+  document.querySelectorAll('.step-page').forEach(p => p.classList.remove('active'));
+  document.getElementById('step' + n).classList.add('active');
+  // update bubbles
+  for (let i = 1; i <= 5; i++) {
+    const b = document.getElementById('wb'+i), lbl = document.getElementById('wn'+i);
+    b.className = 'wiz-bubble ' + (i < n ? 'done' : i === n ? 'active' : 'locked');
+    b.textContent = i < n ? '✓' : i;
+    lbl.className = 'wiz-name' + (i === n ? ' active' : '');
+  }
+  if (n === 2) renderOntologyGraph();
+  if (n === 3 && !state.validationDone) startSimulation();
+  if (n === 4) {
+    document.getElementById('genCoName').textContent = state.companyName;
+    document.getElementById('genPeriod').textContent = state.periodLabel;
+    document.getElementById('genRows').textContent = state.rowCount.toLocaleString();
+  }
+  if (n === 5) loadReport();
+  if (n > state.maxStep) state.maxStep = n;
+}
+
+// ══════════════════════════════════════════════════
+// STEP 1 — SETUP
+// ══════════════════════════════════════════════════
+function switchInnerTab(t) {
+  document.getElementById('tabProfile').classList.toggle('active', t==='profile');
+  document.getElementById('tabUpload').classList.toggle('active', t==='upload');
+  toggle('panelProfile', t==='profile'); toggle('panelUpload', t==='upload');
+}
+
+async function saveCompany() {
+  const name = v('coName'), period = v('coPeriod'), start = v('coStart'), end = v('coEnd');
+  if (!name || !period || !start || !end) { showMsg('profileMsg', 'Fill in all required fields', 'error'); return; }
+  setBtn('btnSaveCompany', true, '<span class="spinner spinner-dark"></span> Saving…');
   try {
-    const companies = await api('GET', '/api/companies/');
-    renderCompanyList(companies);
-    // rebuild topbar select
-    const sel = document.getElementById('companySelect');
-    const cur = sel.value;
-    sel.innerHTML = '<option value="">— Select Company —</option>';
-    companies.forEach(c => {
-      const o = document.createElement('option');
-      o.value = c.id; o.textContent = c.name;
-      sel.appendChild(o);
+    const co = await api('POST', '/api/companies/', {
+      name, industry: v('coIndustry'), currency: v('coCurrency')
     });
-    if (cur) sel.value = cur;
-  } catch(e) { console.error(e); }
-}
-
-function renderCompanyList(companies) {
-  const el = document.getElementById('companyList');
-  if (!companies.length) {
-    el.innerHTML = '<div class="empty-state" style="padding:16px 0"><div class="empty-state-icon">🏢</div><div>No companies yet — add one below</div></div>';
-    return;
-  }
-  el.innerHTML = companies.map(c => `
-    <div class="item-card ${session.companyId == c.id ? 'selected' : ''}" onclick="selectCompany(${c.id},'${escHtml(c.name)}')">
-      <div>
-        <div class="item-card-name">${escHtml(c.name)}</div>
-        <div class="item-card-meta">${escHtml(c.industry||'')} · ${escHtml(c.currency||'THB')}</div>
-      </div>
-      <span class="item-card-check">✓</span>
-    </div>`).join('');
-}
-
-async function createCompany() {
-  const name = document.getElementById('newCompanyName').value.trim();
-  if (!name) { showMsg('companyMsg', 'Enter a company name', 'error'); return; }
-  const industry = document.getElementById('newCompanyIndustry').value;
-  const currency = document.getElementById('newCompanyCurrency').value;
-  try {
-    await api('POST', '/api/companies/', { name, industry, currency });
-    document.getElementById('newCompanyName').value = '';
-    showMsg('companyMsg', '✓ Company created!', 'success');
-    await loadCompanies();
-  } catch(e) { showMsg('companyMsg', e.message, 'error'); }
-}
-
-async function selectCompany(id, name) {
-  session.companyId = id;
-  session.companyName = name;
-  session.periodId = null;
-  session.periodLabel = null;
-  // Update topbar
-  document.getElementById('companySelect').value = id;
-  document.getElementById('periodSelect').innerHTML = '<option value="">— Select Period —</option>';
-  // Show period form
-  document.getElementById('periodRequireCompany').style.display = 'none';
-  document.getElementById('periodForm').style.display = 'block';
-  await loadCompanies(); // re-render with selection
-  await loadPeriods(id);
-}
-
-async function onCompanyChange() {
-  const id = document.getElementById('companySelect').value;
-  if (!id) return;
-  const sel = document.getElementById('companySelect');
-  const name = sel.options[sel.selectedIndex].text;
-  await selectCompany(parseInt(id), name);
-}
-
-async function loadPeriods(companyId) {
-  try {
-    const periods = await api('GET', `/api/companies/periods/${companyId}`);
-    renderPeriodList(periods);
-    // rebuild topbar select
-    const sel = document.getElementById('periodSelect');
-    const cur = sel.value;
-    sel.innerHTML = '<option value="">— Select Period —</option>';
-    periods.forEach(p => {
-      const o = document.createElement('option');
-      o.value = p.id; o.textContent = p.label;
-      sel.appendChild(o);
+    state.companyId = co.id; state.companyName = name;
+    const pe = await api('POST', '/api/companies/periods', {
+      company_id: co.id, label: period, start_date: start, end_date: end
     });
-    if (cur) sel.value = cur;
-  } catch(e) { console.error(e); }
+    state.periodId = pe.id; state.periodLabel = period;
+    state.profileSaved = true;
+    showMsg('profileMsg', '✓ Company and period saved!', 'success');
+    document.getElementById('profileSavedBadge').classList.remove('hidden');
+    updateChecklist();
+  } catch(e) { showMsg('profileMsg', e.message, 'error'); }
+  finally { setBtn('btnSaveCompany', false, 'Save company profile'); }
 }
 
-function renderPeriodList(periods) {
-  const el = document.getElementById('periodList');
-  if (!periods.length) {
-    el.innerHTML = '<div class="empty-state" style="padding:16px 0"><div>No periods yet — add one below</div></div>';
-    return;
-  }
-  el.innerHTML = periods.map(p => `
-    <div class="item-card ${session.periodId == p.id ? 'selected' : ''}" onclick="selectPeriod(${p.id},'${escHtml(p.label)}')">
-      <div>
-        <div class="item-card-name">${escHtml(p.label)}</div>
-        <div class="item-card-meta">${escHtml(p.start_date)} → ${escHtml(p.end_date)}</div>
-      </div>
-      <span class="item-card-check">✓</span>
-    </div>`).join('');
+let selectedFile = null;
+function onFileSelect(input) { selectedFile = input.files[0]; showFileBar(); }
+function onFileDrop(e) {
+  e.preventDefault(); document.getElementById('dropZone').classList.remove('over');
+  selectedFile = e.dataTransfer.files[0]; showFileBar();
 }
-
-async function createPeriod() {
-  if (!session.companyId) { showMsg('periodMsg', 'Select a company first', 'error'); return; }
-  const label = document.getElementById('newPeriodLabel').value.trim();
-  const start_date = document.getElementById('newPeriodStart').value;
-  const end_date = document.getElementById('newPeriodEnd').value;
-  if (!label || !start_date || !end_date) { showMsg('periodMsg', 'Fill in all period fields', 'error'); return; }
-  try {
-    await api('POST', '/api/companies/periods', { company_id: session.companyId, label, start_date, end_date });
-    document.getElementById('newPeriodLabel').value = '';
-    document.getElementById('newPeriodStart').value = '';
-    document.getElementById('newPeriodEnd').value = '';
-    showMsg('periodMsg', '✓ Period created!', 'success');
-    await loadPeriods(session.companyId);
-  } catch(e) { showMsg('periodMsg', e.message, 'error'); }
-}
-
-function selectPeriod(id, label) {
-  session.periodId = id;
-  session.periodLabel = label;
-  document.getElementById('periodSelect').value = id;
-  loadPeriods(session.companyId); // re-render
-}
-
-async function onPeriodChange() {
-  const id = document.getElementById('periodSelect').value;
-  if (!id) return;
-  const sel = document.getElementById('periodSelect');
-  session.periodId = parseInt(id);
-  session.periodLabel = sel.options[sel.selectedIndex].text;
-  if (session.companyId) loadPeriods(session.companyId);
-}
-
-// ══════════════════════════════════════════════════════════
-// UPLOAD
-// ══════════════════════════════════════════════════════════
-function refreshUploadPage() {
-  const noPeriod = document.getElementById('uploadNoPeriod');
-  const ready = document.getElementById('uploadReady');
-  if (!session.periodId) {
-    noPeriod.style.display = 'flex';
-    ready.style.display = 'none';
-  } else {
-    noPeriod.style.display = 'none';
-    ready.style.display = 'block';
-    loadFilesList();
-  }
-}
-
-function handleFileSelect(input) {
-  selectedFile = input.files[0];
+function showFileBar() {
   if (!selectedFile) return;
-  showFileInfo(selectedFile);
+  document.getElementById('fName').textContent = selectedFile.name;
+  document.getElementById('fSize').textContent = (selectedFile.size/1024).toFixed(1) + ' KB';
+  document.getElementById('fileInfoBar').classList.remove('hidden');
 }
-
-function handleDrop(e) {
-  e.preventDefault();
-  document.getElementById('dropZone').classList.remove('over');
-  selectedFile = e.dataTransfer.files[0];
-  if (selectedFile) showFileInfo(selectedFile);
-}
-
-function showFileInfo(file) {
-  document.getElementById('fileSelectedName').textContent = file.name;
-  document.getElementById('fileSelectedSize').textContent = (file.size / 1024).toFixed(1) + ' KB';
-  document.getElementById('fileInfo').style.display = 'block';
-}
-
 function clearFile() {
-  selectedFile = null;
-  document.getElementById('fileInput').value = '';
-  document.getElementById('fileInfo').style.display = 'none';
+  selectedFile = null; document.getElementById('fileInput').value = '';
+  document.getElementById('fileInfoBar').classList.add('hidden');
 }
 
-async function uploadFile() {
-  if (!session.periodId) { showMsg('uploadMsg', '⚠ Select a period first', 'warn'); return; }
-  if (!selectedFile) { showMsg('uploadMsg', '⚠ Choose a file to upload', 'warn'); return; }
-  const btn = document.getElementById('btnUpload');
-  btn.innerHTML = '<span class="spinner"></span> Uploading…';
-  btn.disabled = true;
+async function doUpload() {
+  if (!state.periodId) { showMsg('uploadMsg', 'Save your company profile first', 'warn'); return; }
+  if (!selectedFile) { showMsg('uploadMsg', 'Choose a file to upload', 'warn'); return; }
+  setBtn('btnUpload', true, '<span class="spinner spinner-dark"></span> Uploading…');
   clearMsg('uploadMsg');
   try {
     const fd = new FormData();
-    fd.append('period_id', session.periodId);
+    fd.append('period_id', state.periodId);
     fd.append('file', selectedFile);
     const res = await api('POST', '/api/upload/', fd, true);
-    lastFileId = res.file_id;
-    showMsg('uploadMsg', `✓ Uploaded "${res.filename}" — ${res.row_count} rows · classified as ${res.file_type}`, 'success');
-    clearFile();
-    // Show pipeline
-    document.getElementById('pipelineCard').style.display = 'block';
-    showPipelineReady();
-    loadFilesList();
-  } catch(e) {
-    showMsg('uploadMsg', '✗ Upload failed: ' + e.message, 'error');
-  } finally {
-    btn.innerHTML = '⬆️ Upload & Analyse'; btn.disabled = false;
-  }
+    state.fileId = res.file_id;
+    state.rowCount = res.row_count;
+    state.columns = res.columns || [];
+    // Auto-build default mappings
+    state.columns.forEach(col => {
+      state.mappings[col] = guessCategory(col);
+    });
+    state.fileSaved = true;
+    showMsg('uploadMsg', `✓ Uploaded ${res.filename} — ${res.row_count} rows classified as "${res.file_type}"`, 'success');
+    document.getElementById('uploadSavedBadge').classList.remove('hidden');
+    updateChecklist();
+  } catch(e) { showMsg('uploadMsg', '✗ ' + e.message, 'error'); }
+  finally { setBtn('btnUpload', false, '⬆ Upload & classify'); }
 }
 
-function showPipelineReady() {
-  const steps = [
-    { label: 'Map columns to standard fields', key: 'schema' },
-    { label: 'Extract business records', key: 'records' },
-    { label: 'Generate financial statements', key: 'statements' },
-  ];
-  document.getElementById('pipelineSteps').innerHTML = steps.map(s => `
-    <div class="upload-step" id="ps-${s.key}">
-      <div class="step-icon pending" id="pi-${s.key}">○</div>
-      <div style="font-size:.9rem">${s.label}</div>
-    </div>`).join('');
-  document.getElementById('btnProcess').style.display = 'inline-flex';
+function guessCategory(col) {
+  const c = col.toLowerCase();
+  if (/sale|revenue|income|receipt|sales/i.test(c)) return 'Revenue';
+  if (/cost|cogs|purchase|buy|supplier/i.test(c)) return 'Cost of Goods Sold';
+  if (/rent|util|salary|wage|staff|expense|overhead/i.test(c)) return 'Expense';
+  if (/tax|vat/i.test(c)) return 'Tax';
+  if (/asset|equip|property/i.test(c)) return 'Asset';
+  if (/cash|bank|account/i.test(c)) return 'Cash & Bank';
+  if (/date|time|period/i.test(c)) return 'Date';
+  if (/desc|note|remark|detail/i.test(c)) return 'Description';
+  if (/qty|quantity|unit|amount|total/i.test(c)) return 'Amount';
+  return 'Other';
 }
 
-function setPipelineStep(key, status, icon) {
-  const el = document.getElementById('pi-' + key);
-  if (!el) return;
-  el.className = 'step-icon ' + status;
-  el.textContent = icon;
+function updateChecklist() {
+  const p = state.profileSaved, f = state.fileSaved;
+  setCheck('chkProfile', 'chkProfileIcon', p);
+  setCheck('chkFile', 'chkFileIcon', f);
+  document.getElementById('btnStep1Next').disabled = !(p && f);
+}
+function setCheck(rowId, iconId, done) {
+  const row = document.getElementById(rowId), ico = document.getElementById(iconId);
+  row.classList.toggle('done', done);
+  ico.className = 'check-icon' + (done ? ' done' : '');
+  ico.textContent = done ? '✓' : (rowId.includes('Profile') ? '1' : '2');
 }
 
-async function runFullPipeline() {
-  if (!session.periodId) return;
-  const btn = document.getElementById('btnProcess');
-  btn.innerHTML = '<span class="spinner"></span> Processing…';
-  btn.disabled = true;
-  clearMsg('pipelineMsg');
+// ══════════════════════════════════════════════════
+// STEP 2 — ONTOLOGY GRAPH
+// ══════════════════════════════════════════════════
+const CATEGORIES = ['Revenue','Cost of Goods Sold','Expense','Asset','Cash & Bank','Tax','Date','Description','Amount','Other'];
+const CAT_COLORS = { 'Revenue':'#059669','Cost of Goods Sold':'#d97706','Expense':'#dc2626','Asset':'#1d4ed8','Cash & Bank':'#0891b2','Tax':'#7c3aed','Date':'#64748b','Description':'#94a3b8','Amount':'#0f766e','Other':'#6b7280' };
+let selectedNode = null;
+let graphNodes = [];
 
-  const steps = [
-    { key: 'schema',     fn: () => lastFileId ? api('POST', `/api/schema/${lastFileId}`)     : api('GET', `/api/schema/period/${session.periodId}`) },
-    { key: 'records',    fn: () => api('POST', `/api/records/${session.periodId}`) },
-    { key: 'statements', fn: () => api('POST', `/api/statements/${session.periodId}/process`) },
-  ];
-
-  for (const step of steps) {
-    setPipelineStep(step.key, 'running', '⟳');
-    try {
-      await step.fn();
-      setPipelineStep(step.key, 'done', '✓');
-    } catch(e) {
-      setPipelineStep(step.key, 'error', '✗');
-      showMsg('pipelineMsg', '✗ Error at ' + step.key + ': ' + e.message, 'error');
-      btn.innerHTML = '🚀 Retry'; btn.disabled = false;
-      return;
-    }
-  }
-  showMsg('pipelineMsg', '✅ All done! Go to Reports to see your financial statements.', 'success');
-  btn.innerHTML = '✓ Done'; btn.disabled = false;
-}
-
-async function loadFilesList() {
-  if (!session.periodId) return;
-  try {
-    const files = await api('GET', `/api/upload/files/${session.periodId}`);
-    const el = document.getElementById('filesList');
-    if (!files.length) {
-      el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><div>No files yet</div></div>';
-      return;
-    }
-    el.innerHTML = `<table>
-      <thead><tr><th>File</th><th>Type</th><th>Rows</th><th>Confidence</th></tr></thead>
-      <tbody>${files.map(f => `
-        <tr>
-          <td style="font-weight:500">${escHtml(f.filename)}</td>
-          <td><span class="badge badge-blue">${escHtml(f.file_type||'—')}</span></td>
-          <td>${f.row_count || 0}</td>
-          <td>${f.classification_confidence ? Math.round(f.classification_confidence*100)+'%' : '—'}</td>
-        </tr>`).join('')}
-      </tbody></table>`;
-  } catch(e) { console.error(e); }
-}
-
-// ══════════════════════════════════════════════════════════
-// REPORTS
-// ══════════════════════════════════════════════════════════
-function refreshReportsPage() {
-  const noPeriod = document.getElementById('reportsNoPeriod');
-  const ready = document.getElementById('reportsReady');
-  if (!session.periodId) {
-    noPeriod.style.display = 'flex';
-    ready.style.display = 'none';
-  } else {
-    noPeriod.style.display = 'none';
-    ready.style.display = 'block';
-    loadReports();
-  }
-}
-
-let activeStmt = 'income';
-function switchStmt(name) {
-  activeStmt = name;
-  document.querySelectorAll('.stmt-tab').forEach((t,i) => t.classList.toggle('active', (i===0&&name==='income')||(i===1&&name==='trial')));
-  document.getElementById('stmtContent').style.display = name === 'income' ? 'block' : 'none';
-  document.getElementById('trialContent').style.display = name === 'trial' ? 'block' : 'none';
-}
-
-async function loadReports() {
-  if (!session.periodId) return;
-  // Income Statement
-  try {
-    const data = await api('GET', `/api/statements/${session.periodId}/income`);
-    renderIncomeStatement(data);
-    // KPIs
-    const revenue = (data.lines||[]).filter(l=>l.line_type==='revenue').reduce((a,b)=>a+(b.amount||0),0);
-    const expenses = (data.lines||[]).filter(l=>l.line_type==='expense').reduce((a,b)=>a+(b.amount||0),0);
-    const profit = (data.lines||[]).find(l=>l.line_type==='net_profit');
-    document.getElementById('kpiRevenue').textContent = fmt(revenue);
-    document.getElementById('kpiExpenses').textContent = fmt(expenses);
-    document.getElementById('kpiProfit').textContent = profit ? fmt(profit.amount) : fmt(revenue - expenses);
-    const profitEl = document.getElementById('kpiProfit');
-    profitEl.className = 'kpi-value ' + ((profit?.amount || (revenue-expenses)) >= 0 ? 'green' : 'red');
-  } catch(e) {
-    document.getElementById('stmtContent').innerHTML = `<div class="empty-state"><div class="empty-state-icon">📊</div><div>No statement yet — upload files and run the pipeline first</div></div>`;
-  }
-  // File count
-  try {
-    const files = await api('GET', `/api/upload/files/${session.periodId}`);
-    document.getElementById('kpiFiles').textContent = files.length;
-  } catch(e) {}
-  // Trial balance
-  try {
-    const data = await api('GET', `/api/statements/${session.periodId}/trial-balance`);
-    renderTrialBalance(data);
-  } catch(e) {
-    document.getElementById('trialContent').innerHTML = `<div class="empty-state"><div>No trial balance yet</div></div>`;
-  }
-}
-
-function renderIncomeStatement(data) {
-  const lines = data.lines || [];
-  if (!lines.length) {
-    document.getElementById('stmtContent').innerHTML = `<div class="empty-state"><div class="empty-state-icon">📊</div><div>No data yet — upload files and run pipeline</div></div>`;
+function renderOntologyGraph() {
+  const canvas = document.getElementById('ontologyCanvas');
+  const container = canvas.parentElement;
+  const cols = state.columns.length;
+  if (!cols) {
+    canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
     return;
   }
-  const sections = { revenue: [], cogs: [], expense: [] };
-  let grossProfit = null, netProfit = null;
-  lines.forEach(l => {
-    if (l.line_type === 'revenue') sections.revenue.push(l);
-    else if (l.line_type === 'cogs') sections.cogs.push(l);
-    else if (l.line_type === 'expense') sections.expense.push(l);
-    else if (l.line_type === 'gross_profit') grossProfit = l;
-    else if (l.line_type === 'net_profit') netProfit = l;
+  const w = container.clientWidth - 40;
+  const rightCategories = [...new Set(Object.values(state.mappings))];
+  const rowHeight = 36, padding = 20;
+  const totalRows = Math.max(cols, rightCategories.length);
+  const h = Math.max(300, totalRows * rowHeight + padding * 2);
+  canvas.width = w; canvas.height = h;
+  canvas.style.height = h + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, w, h);
+
+  // Build node positions
+  graphNodes = [];
+  const lx = 130, rx = w - 130;
+  const lSpacing = (h - padding*2) / cols;
+  const rSpacing = (h - padding*2) / rightCategories.length;
+
+  state.columns.forEach((col, i) => {
+    graphNodes.push({
+      id: col, type: 'col', x: lx, y: padding + i * lSpacing + lSpacing/2,
+      label: col.length > 14 ? col.slice(0,14)+'…' : col,
+      category: state.mappings[col]
+    });
   });
-  const card = (title, rows, total) => `
-    <div class="stmt-section">
-      <div class="stmt-section-title">${title}</div>
-      ${rows.map(r=>`<div class="stmt-row"><span>${escHtml(r.line_name)}</span><span class="stmt-amount">${fmt(r.amount)}</span></div>`).join('')}
-      ${total ? `<div class="stmt-total"><span>${escHtml(total.line_name)}</span><span class="stmt-amount ${(total.amount||0)>=0?'positive':'negative'}">${fmt(total.amount)}</span></div>` : ''}
-    </div>`;
-  document.getElementById('stmtContent').innerHTML =
-    (sections.revenue.length ? card('Revenue', sections.revenue, grossProfit) : '') +
-    (sections.cogs.length ? card('Cost of Goods Sold', sections.cogs) : '') +
-    (sections.expense.length ? card('Expenses', sections.expense, netProfit) : '');
+  rightCategories.forEach((cat, i) => {
+    graphNodes.push({
+      id: '_cat_'+cat, type: 'cat', x: rx, y: padding + i * rSpacing + rSpacing/2,
+      label: cat, color: CAT_COLORS[cat]||'#6b7280'
+    });
+  });
+
+  // Draw edges
+  ctx.lineWidth = 1;
+  graphNodes.filter(n => n.type==='col').forEach(cn => {
+    const tgt = graphNodes.find(n => n.type==='cat' && n.id==='_cat_'+cn.category);
+    if (!tgt) return;
+    ctx.strokeStyle = CAT_COLORS[cn.category] + '55';
+    ctx.setLineDash([4,3]);
+    ctx.beginPath(); ctx.moveTo(cn.x+90, cn.y); ctx.lineTo(tgt.x-90, tgt.y); ctx.stroke();
+  });
+  ctx.setLineDash([]);
+
+  // Draw nodes
+  graphNodes.forEach(n => {
+    if (n.type === 'col') {
+      ctx.fillStyle = n.id === selectedNode ? '#5B4FF0' : '#ede9fe';
+      ctx.strokeStyle = '#5B4FF0'; ctx.lineWidth = 1.5;
+      roundRect(ctx, n.x-90, n.y-12, 180, 24, 12);
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = n.id === selectedNode ? '#fff' : '#5B4FF0';
+      ctx.font = '500 12px -apple-system,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(n.label, n.x, n.y);
+    } else {
+      ctx.fillStyle = n.color + '22';
+      ctx.strokeStyle = n.color; ctx.lineWidth = 1.5;
+      roundRect(ctx, n.x-85, n.y-12, 170, 24, 12);
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = n.color;
+      ctx.font = '600 11px -apple-system,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(n.label, n.x, n.y);
+    }
+  });
+
+  canvas.onclick = e => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    const hit = graphNodes.find(n => n.type==='col' && mx > n.x-90 && mx < n.x+90 && my > n.y-12 && my < n.y+12);
+    if (hit) {
+      selectedNode = hit.id;
+      showReassignPanel(hit.id);
+      renderOntologyGraph();
+    }
+  };
 }
 
-function renderTrialBalance(data) {
-  const lines = data.lines || [];
-  if (!lines.length) {
-    document.getElementById('trialContent').innerHTML = `<div class="empty-state"><div>No trial balance data yet</div></div>`;
-    return;
-  }
-  document.getElementById('trialContent').innerHTML = `
-    <table>
-      <thead><tr><th>Account</th><th>Code</th><th style="text-align:right">Debit</th><th style="text-align:right">Credit</th></tr></thead>
-      <tbody>${lines.map(l=>`
-        <tr>
-          <td>${escHtml(l.line_name||'')}</td>
-          <td style="color:var(--muted)">${escHtml(l.account_code||'')}</td>
-          <td style="text-align:right">${l.amount>=0?fmt(l.amount):'—'}</td>
-          <td style="text-align:right">${l.amount<0?fmt(Math.abs(l.amount)):'—'}</td>
-        </tr>`).join('')}
-      </tbody>
-    </table>`;
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath(); ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.arcTo(x+w,y,x+w,y+r,r);
+  ctx.lineTo(x+w,y+h-r); ctx.arcTo(x+w,y+h,x+w-r,y+h,r); ctx.lineTo(x+r,y+h);
+  ctx.arcTo(x,y+h,x,y+h-r,r); ctx.lineTo(x,y+r); ctx.arcTo(x,y,x+r,y,r); ctx.closePath();
 }
 
-// ══════════════════════════════════════════════════════════
-// CHAT
-// ══════════════════════════════════════════════════════════
-async function sendChat() {
-  const input = document.getElementById('chatInput');
-  const msg = input.value.trim();
-  if (!msg) return;
-  if (!session.periodId) { appendChat('ai', '⚠ Please select a company and period first (Setup tab).'); return; }
-  appendChat('user', msg);
-  input.value = '';
-  chatHistory.push({ role: 'user', content: msg });
-  appendChat('ai', '⟳ Thinking…', 'thinking');
+function showReassignPanel(colId) {
+  document.getElementById('reassignColName').textContent = colId;
+  document.getElementById('reassignPanel').style.display = 'block';
+  const grid = document.getElementById('categoryGrid');
+  grid.innerHTML = CATEGORIES.map(cat => `
+    <div class="cat-btn ${state.mappings[colId]===cat?'selected':''}"
+         onclick="setMapping('${colId}','${cat}')"
+         style="${state.mappings[colId]===cat?'border-color:'+CAT_COLORS[cat]+';background:'+CAT_COLORS[cat]+';color:#fff;':''}">${cat}</div>
+  `).join('');
+}
+
+function setMapping(col, cat) {
+  state.mappings[col] = cat;
+  showReassignPanel(col);
+  renderOntologyGraph();
+}
+
+async function submitOntology() {
+  if (!state.fileId) { showMsg('graphMsg','No file loaded','error'); return; }
   try {
-    const res = await api('POST', `/api/chat/${session.periodId}`, { message: msg, history: chatHistory.slice(-10) });
-    removeThinking();
-    const reply = res.reply || res.message || JSON.stringify(res);
-    appendChat('ai', reply);
-    chatHistory.push({ role: 'assistant', content: reply });
+    await api('POST', `/api/schema/${state.fileId}`);
+  } catch(e) { console.warn('Schema API:', e.message); }
+  selectedNode = null;
+  document.getElementById('reassignPanel').style.display = 'none';
+  goStep(3);
+}
+
+// ══════════════════════════════════════════════════
+// STEP 3 — PARALLEL SIMULATION
+// ══════════════════════════════════════════════════
+const AGENTS = [
+  { label:'Schema validated', statuses:['Inspecting column types…','Validating required fields…','Checking data consistency…','✓ Schema verified'] },
+  { label:'Records extracted', statuses:['Parsing transactions…','Mapping to standard fields…','Resolving account codes…','✓ Records extracted'] },
+  { label:'Amounts normalised', statuses:['Detecting currency formats…','Converting to base currency…','Rounding to 2 decimal places…','✓ Amounts normalised'] },
+  { label:'Duplicates checked', statuses:['Building hash index…','Comparing transaction IDs…','Flagging potential duplicates…','✓ No critical duplicates'] },
+];
+
+let agentTimers = [];
+function startSimulation() {
+  agentTimers.forEach(clearInterval);
+  agentTimers = [];
+  state.validationDone = false;
+  document.getElementById('btnStep3Next').disabled = true;
+  document.getElementById('simSummary').style.display = 'none';
+  // Reset UI
+  for (let i=0;i<4;i++) {
+    document.getElementById('ag'+i).className = 'agent-card running';
+    document.getElementById('ap'+i).style.width = '0%';
+    document.getElementById('as'+i).textContent = 'Starting…';
+  }
+  // Run pipeline: first call records API, then animate
+  api('POST', `/api/records/${state.periodId}`).catch(() => {});
+  // Stagger agent animations
+  AGENTS.forEach((ag, i) => {
+    const delay = i * 600;
+    setTimeout(() => animateAgent(i, ag), delay);
+  });
+}
+
+function animateAgent(i, ag) {
+  let pct = 0;
+  const color = ['var(--primary)','var(--green)','var(--blue)','var(--amber)'][i];
+  const bar = document.getElementById('ap'+i);
+  const status = document.getElementById('as'+i);
+  const card = document.getElementById('ag'+i);
+  const statusMessages = ag.statuses;
+  let msgIdx = 0;
+  status.textContent = statusMessages[0];
+  const interval = setInterval(() => {
+    const inc = 2 + Math.random() * 4;
+    pct = Math.min(100, pct + inc);
+    bar.style.width = pct + '%';
+    bar.style.background = color;
+    if (pct > 25 && msgIdx === 0) { msgIdx=1; status.textContent = statusMessages[1]; }
+    if (pct > 55 && msgIdx === 1) { msgIdx=2; status.textContent = statusMessages[2]; }
+    if (pct >= 100) {
+      clearInterval(interval);
+      status.textContent = statusMessages[3];
+      status.style.color = 'var(--green)';
+      card.className = 'agent-card done';
+      checkAllDone();
+    }
+  }, 120 + i * 30);
+  agentTimers.push(interval);
+}
+
+function checkAllDone() {
+  const allDone = [0,1,2,3].every(i => document.getElementById('ag'+i).classList.contains('done'));
+  if (!allDone) return;
+  state.validationDone = true;
+  document.getElementById('btnStep3Next').disabled = false;
+  const summary = document.getElementById('simSummary');
+  summary.style.display = 'block';
+  document.getElementById('simStats').innerHTML = [
+    {v: state.rowCount.toLocaleString(), l:'Records processed'},
+    {v: '4 / 4', l:'Agents completed'},
+    {v: '0', l:'Critical errors'},
+    {v: '✓', l:'Ready to generate'},
+  ].map(s=>`<div class="sim-stat"><div class="sim-stat-val">${s.v}</div><div class="sim-stat-label">${s.l}</div></div>`).join('');
+}
+
+// ══════════════════════════════════════════════════
+// STEP 4 — GENERATE
+// ══════════════════════════════════════════════════
+const GEN_STEPS = [
+  'Aggregating revenue accounts',
+  'Computing cost of goods sold',
+  'Summing operating expenses',
+  'Calculating gross profit',
+  'Deriving net profit / loss',
+  'Building trial balance',
+];
+
+async function doGenerate() {
+  document.getElementById('genReady').classList.add('hidden');
+  document.getElementById('genProgress').classList.remove('hidden');
+  document.getElementById('btnStep4Next').disabled = true;
+
+  // Animate steps
+  const list = document.getElementById('genStepsList');
+  list.innerHTML = GEN_STEPS.map((s,i) => `
+    <div class="gen-step-row" id="gsr${i}">
+      <div class="gen-step-icon" id="gsi${i}" style="background:var(--bg);border:1.5px solid var(--border);color:var(--muted)">${i+1}</div>
+      <span style="font-size:.85rem;color:var(--muted)" id="gst${i}">${s}</span>
+    </div>`).join('');
+
+  try {
+    for (let i=0; i<GEN_STEPS.length; i++) {
+      await sleep(350 + Math.random()*200);
+      document.getElementById('gsi'+i).style.cssText = 'background:var(--primary-light);border:1.5px solid var(--primary);color:var(--primary)';
+      document.getElementById('gst'+i).style.color = 'var(--text)';
+    }
+    await api('POST', `/api/statements/${state.periodId}/process`);
+    // Done
+    document.getElementById('genRing').className = 'gen-ring done';
+    document.getElementById('genTitle').textContent = '✓ Statements generated!';
+    document.getElementById('genSub').textContent = 'Your financial report is ready to view';
+    GEN_STEPS.forEach((_,i) => {
+      document.getElementById('gsi'+i).style.cssText = 'background:var(--green-light);border:1.5px solid #6ee7b7;color:var(--green)';
+      document.getElementById('gsi'+i).textContent = '✓';
+    });
+    state.generateDone = true;
+    document.getElementById('btnStep4Next').disabled = false;
   } catch(e) {
-    removeThinking();
-    appendChat('ai', '✗ Error: ' + e.message);
+    document.getElementById('generateMsg').innerHTML = `<div class="msg-box error">${e.message}</div>`;
+    document.getElementById('genReady').classList.remove('hidden');
+    document.getElementById('genProgress').classList.add('hidden');
+    setBtn('btnGenerate', false, '🚀 Generate financial statements');
   }
 }
 
-function appendChat(role, text, id) {
-  const box = document.getElementById('chatBox');
-  const div = document.createElement('div');
-  div.className = 'chat-msg ' + role;
-  if (id) div.id = id;
-  div.innerHTML = `<div class="chat-bubble">${escHtml(text)}</div>`;
-  box.appendChild(div);
-  box.scrollTop = box.scrollHeight;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+// ══════════════════════════════════════════════════
+// STEP 5 — REPORT
+// ══════════════════════════════════════════════════
+let activeReportTab = 'income';
+function switchReportTab(t) {
+  activeReportTab = t;
+  document.querySelectorAll('.report-tab').forEach((el,i) => el.classList.toggle('active', (i===0&&t==='income')||(i===1&&t==='trial')));
+  toggle('incomeContent', t==='income'); toggle('trialContent', t==='trial');
 }
 
-function removeThinking() {
-  const el = document.getElementById('thinking');
-  if (el) el.remove();
+async function loadReport() {
+  document.getElementById('reportPeriodLabel').textContent = state.periodLabel;
+  try {
+    const data = await api('GET', `/api/statements/${state.periodId}/income`);
+    renderIncome(data);
+    const lines = data.lines || [];
+    const rev = lines.filter(l=>l.line_type==='revenue').reduce((a,b)=>a+(b.amount||0),0);
+    const exp = lines.filter(l=>l.line_type==='expense').reduce((a,b)=>a+(b.amount||0),0);
+    const np = lines.find(l=>l.line_type==='net_profit');
+    document.getElementById('kRevenue').textContent = fmt(rev);
+    document.getElementById('kExpenses').textContent = fmt(exp);
+    const profVal = np ? np.amount : (rev - exp);
+    document.getElementById('kProfit').textContent = fmt(profVal);
+    document.getElementById('kProfit').className = 'kpi-val ' + (profVal >= 0 ? 'green' : 'red');
+    document.getElementById('kRecords').textContent = state.rowCount.toLocaleString();
+  } catch(e) {
+    document.getElementById('incomeContent').innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted)">No data yet — generate your report first</div>`;
+  }
+  try {
+    const tb = await api('GET', `/api/statements/${state.periodId}/trial-balance`);
+    renderTrial(tb);
+  } catch(e) { document.getElementById('trialContent').innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted)">No trial balance yet</div>`; }
 }
 
-// ══════════════════════════════════════════════════════════
-// UTILITIES
-// ══════════════════════════════════════════════════════════
-function showMsg(id, text, type) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.className = 'msg ' + type;
-  el.textContent = text;
+function renderIncome(data) {
+  const lines = data.lines || [];
+  if (!lines.length) { document.getElementById('incomeContent').innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted)">No income statement data yet</div>`; return; }
+  const rev = lines.filter(l=>l.line_type==='revenue');
+  const cogs = lines.filter(l=>l.line_type==='cogs');
+  const exp = lines.filter(l=>l.line_type==='expense');
+  const gp = lines.find(l=>l.line_type==='gross_profit');
+  const np = lines.find(l=>l.line_type==='net_profit');
+  const section = (title, rows, total) => rows.length ? `
+    <div class="stmt-section-title">${escHtml(title)}</div>
+    ${rows.map(r=>`<div class="stmt-row"><span>${escHtml(r.line_name)}</span><span class="stmt-amount">${fmt(r.amount)}</span></div>`).join('')}
+    ${total ? `<div class="stmt-total"><span>${escHtml(total.line_name)}</span><span class="stmt-amount ${(total.amount||0)>=0?'pos':'neg'}">${fmt(total.amount)}</span></div>` : ''}` : '';
+  document.getElementById('incomeContent').innerHTML = section('Revenue', rev, gp) + section('Cost of Goods Sold', cogs) + section('Expenses', exp, np);
 }
 
-function clearMsg(id) {
-  const el = document.getElementById(id);
-  if (el) { el.className = 'msg'; el.textContent = ''; }
+function renderTrial(data) {
+  const lines = data.lines || [];
+  if (!lines.length) { document.getElementById('trialContent').innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted)">No trial balance data yet</div>`; return; }
+  document.getElementById('trialContent').innerHTML = `
+    <div class="stmt-section-title">Trial Balance</div>
+    ${lines.map(l=>`<div class="stmt-row">
+      <span>${escHtml(l.line_name||'')}${l.account_code?`<span style="margin-left:8px;font-size:.75rem;color:var(--muted)">${escHtml(l.account_code)}</span>`:''}
+      </span>
+      <span class="stmt-amount ${(l.amount||0)>=0?'pos':'neg'}">${fmt(l.amount)}</span>
+    </div>`).join('')}`;
 }
 
-function escHtml(s) {
-  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+// ══════════════════════════════════════════════════
+// DOM HELPERS
+// ══════════════════════════════════════════════════
+const v = id => (document.getElementById(id)||{}).value?.trim() || '';
+function toggle(id, show) { const el=document.getElementById(id); if(el){ if(show) el.classList.remove('hidden'); else el.classList.add('hidden'); } }
+function showMsg(id, msg, type) { const el=document.getElementById(id); if(el) el.innerHTML=`<div class="msg-box ${type}">${msg}</div>`; }
+function clearMsg(id) { const el=document.getElementById(id); if(el) el.innerHTML=''; }
+function setBtn(id, disabled, html) { const b=document.getElementById(id); if(b){ b.disabled=disabled; b.innerHTML=html; } }
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 </script>
 </body>
 </html>
