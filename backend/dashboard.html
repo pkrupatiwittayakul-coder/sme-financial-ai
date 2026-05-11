@@ -3,1071 +3,1044 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FinanceAI — SME Financial Statements</title>
+<title>FinanceAI — SME Financial Intelligence</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#f5f7fa;--white:#ffffff;--border:#e2e8f0;
-  --text:#1a202c;--muted:#718096;--accent:#4f46e5;
-  --accent-light:#eef2ff;--green:#16a34a;--red:#dc2626;
-  --yellow:#d97706;--radius:12px;--shadow:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
-  --shadow-lg:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -2px rgba(0,0,0,.05);
+:root {
+  --brand:#4F46E5;--brand-light:#EEF2FF;--brand-dark:#3730A3;
+  --emerald:#059669;--emerald-light:#ECFDF5;
+  --amber:#D97706;--amber-light:#FFFBEB;
+  --red:#DC2626;--red-light:#FEF2F2;
+  --sky:#0284C7;--sky-light:#F0F9FF;
+  --violet:#7C3AED;
+  --bg:#F9FAFB;--surface:#FFFFFF;
+  --border:#E5E7EB;--border-subtle:#F3F4F6;
+  --text:#111827;--text-2:#374151;--text-3:#6B7280;--text-4:#9CA3AF;
+  --radius:12px;--radius-sm:8px;--radius-lg:16px;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
+  --shadow:0 4px 12px rgba(0,0,0,.08),0 1px 3px rgba(0,0,0,.04);
+  --shadow-lg:0 20px 48px rgba(0,0,0,.12),0 4px 12px rgba(0,0,0,.06);
 }
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 
-/* ── Auth Screen ────────────────────────────────── */
-#authScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
-.auth-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow-lg);padding:40px;width:100%;max-width:420px}
-.auth-logo{text-align:center;margin-bottom:28px}
-.auth-logo h1{font-size:1.6rem;font-weight:700;color:var(--accent)}
-.auth-logo p{color:var(--muted);font-size:.9rem;margin-top:4px}
-.auth-tabs{display:flex;background:#f1f5f9;border-radius:8px;padding:3px;margin-bottom:24px}
-.auth-tab{flex:1;text-align:center;padding:8px;border-radius:6px;cursor:pointer;font-size:.9rem;font-weight:500;color:var(--muted);transition:all .15s}
-.auth-tab.active{background:var(--white);color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.1)}
-.form-group{margin-bottom:16px}
-.form-group label{display:block;font-size:.85rem;font-weight:600;color:var(--text);margin-bottom:6px}
-.form-group input{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:.95rem;outline:none;transition:border .15s}
-.form-group input:focus{border-color:var(--accent)}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer;border:none;transition:all .15s}
-.btn-primary{background:var(--accent);color:#fff;width:100%;justify-content:center;padding:12px}
-.btn-primary:hover{background:#4338ca}
-.btn-secondary{background:var(--white);color:var(--text);border:1.5px solid var(--border)}
-.btn-secondary:hover{background:#f8fafc}
-.btn-danger{background:#fef2f2;color:var(--red);border:1.5px solid #fecaca}
-.btn-green{background:#f0fdf4;color:var(--green);border:1.5px solid #bbf7d0}
-.auth-msg{padding:10px 14px;border-radius:8px;font-size:.88rem;margin-bottom:14px;display:none}
-.auth-msg.error{background:#fef2f2;color:var(--red);border:1px solid #fecaca;display:block}
-.auth-msg.success{background:#f0fdf4;color:var(--green);border:1px solid #bbf7d0;display:block}
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-brand{background:var(--brand);color:white}.btn-brand:hover{background:var(--brand-dark)}
+.btn-outline{background:white;color:var(--text-2);border:1.5px solid var(--border)}.btn-outline:hover{border-color:var(--brand);color:var(--brand)}
+.btn-sm{padding:6px 12px;font-size:13px;border-radius:7px}
+.btn-lg{padding:12px 28px;font-size:16px;border-radius:10px}
+.btn-danger{background:var(--red-light);color:var(--red);border:1.5px solid #FECACA}.btn-danger:hover{background:#FEE2E2}
+.btn-full{width:100%;justify-content:center;padding:12px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
 
-/* ── App Shell ──────────────────────────────────── */
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:12px;font-weight:600}
+.badge-brand{background:var(--brand-light);color:var(--brand)}
+.badge-emerald{background:var(--emerald-light);color:var(--emerald)}
+.badge-amber{background:var(--amber-light);color:var(--amber)}
+.badge-red{background:var(--red-light);color:var(--red)}
+.badge-gray{background:#F3F4F6;color:var(--text-3)}
+
+/* ── FORMS ── */
+.form-label{font-size:13px;font-weight:600;color:var(--text-2);margin-bottom:6px;display:block}
+.form-input{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;color:var(--text);background:white;transition:border .15s}
+.form-input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(79,70,229,.1)}
+.form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+.form-hint{font-size:12px;color:var(--text-4);margin-top:2px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:600px){.form-grid{grid-template-columns:1fr}}
+
+/* ── MSG TOASTS ── */
+.msg-box{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px;display:none}
+.msg-box.error{background:var(--red-light);color:var(--red);border:1px solid #FECACA;display:block}
+.msg-box.success{background:var(--emerald-light);color:var(--emerald);border:1px solid #A7F3D0;display:block}
+.msg-box.info{background:var(--brand-light);color:var(--brand);border:1px solid #C7D2FE;display:block}
+
+/* ══════════════════════════════
+   AUTH SCREEN
+══════════════════════════════ */
+#authScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;background:linear-gradient(135deg,#EEF2FF 0%,#F9FAFB 100%)}
+.auth-wrap{display:flex;gap:0;background:white;border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);border:1px solid var(--border);overflow:hidden;width:100%;max-width:860px}
+.auth-panel{flex:1;padding:48px;background:linear-gradient(160deg,#4F46E5 0%,#7C3AED 100%);color:white}
+.auth-panel h2{font-size:26px;font-weight:800;line-height:1.2;letter-spacing:-.4px;margin-bottom:28px}
+.auth-feature{display:flex;gap:12px;align-items:flex-start;margin-bottom:18px}
+.auth-feature-icon{width:36px;height:36px;background:rgba(255,255,255,.15);border-radius:9px;display:grid;place-items:center;font-size:16px;flex-shrink:0}
+.auth-feature-text{font-size:14px;font-weight:600;margin-bottom:2px}
+.auth-feature-sub{font-size:13px;opacity:.7}
+.auth-card{width:380px;flex-shrink:0;padding:40px}
+.auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:28px}
+.auth-logo-icon{width:38px;height:38px;background:var(--brand);border-radius:10px;display:grid;place-items:center}
+.auth-logo-icon svg{width:20px;height:20px;fill:white}
+.auth-logo-text{font-size:19px;font-weight:800;color:var(--text);letter-spacing:-.3px}
+.auth-tabs{display:flex;background:var(--bg);border-radius:9px;padding:3px;margin-bottom:24px}
+.auth-tab{flex:1;text-align:center;padding:8px;border-radius:7px;font-size:14px;font-weight:600;color:var(--text-3);cursor:pointer;transition:all .15s}
+.auth-tab.active{background:white;color:var(--text);box-shadow:var(--shadow-sm)}
+
+/* ══════════════════════════════
+   APP SHELL
+══════════════════════════════ */
 #appScreen{display:none;flex-direction:column;min-height:100vh}
-.topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0 24px;height:60px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
-.topbar-logo{font-size:1.1rem;font-weight:700;color:var(--accent);white-space:nowrap}
-.topbar-selects{display:flex;gap:8px;flex:1}
-.topbar-selects select{padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:.85rem;background:var(--white);cursor:pointer;outline:none;color:var(--text)}
-.topbar-selects select:focus{border-color:var(--accent)}
-.topbar-user{display:flex;align-items:center;gap:10px;margin-left:auto}
-.user-badge{background:var(--accent-light);color:var(--accent);font-weight:600;padding:6px 14px;border-radius:20px;font-size:.85rem}
-.btn-logout{padding:6px 14px;border-radius:8px;background:#f8fafc;border:1.5px solid var(--border);color:var(--muted);font-size:.85rem;cursor:pointer;font-weight:500}
-.btn-logout:hover{color:var(--red);border-color:#fecaca}
+.topbar{background:white;border-bottom:1px solid var(--border);padding:0 28px;height:60px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow-sm)}
+.topbar-brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:16px;color:var(--brand);text-decoration:none;white-space:nowrap}
+.topbar-brand-icon{width:32px;height:32px;background:var(--brand);border-radius:8px;display:grid;place-items:center}
+.topbar-brand-icon svg{width:18px;height:18px;fill:white}
+.company-select{padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-weight:600;color:var(--text);background:white;cursor:pointer;outline:none;max-width:200px}
+.company-select:focus{border-color:var(--brand)}
+.period-badge{display:flex;align-items:center;gap:5px;background:var(--emerald-light);color:var(--emerald);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;white-space:nowrap}
+.period-dot{width:6px;height:6px;background:var(--emerald);border-radius:50%}
+.topbar-spacer{flex:1}
+.user-badge{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-3)}
+.user-avatar{width:30px;height:30px;background:var(--brand);border-radius:50%;display:grid;place-items:center;color:white;font-size:12px;font-weight:700}
+.btn-logout{padding:6px 14px;border-radius:7px;background:transparent;border:1.5px solid var(--border);color:var(--text-3);font-size:13px;cursor:pointer;font-weight:500;transition:all .15s}
+.btn-logout:hover{color:var(--red);border-color:#FECACA}
 
-/* ── Nav ───────────────────────────────────────── */
-.nav{background:var(--white);border-bottom:1px solid var(--border);display:flex;padding:0 24px}
-.nav-btn{padding:12px 20px;font-size:.9rem;font-weight:500;color:var(--muted);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;transition:all .15s}
-.nav-btn:hover{color:var(--text)}
-.nav-btn.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+/* ── MAIN CONTENT ── */
+.main{padding:32px 28px;max-width:1100px;margin:0 auto;width:100%}
 
-/* ── Main content ──────────────────────────────── */
-.main{padding:28px 24px;max-width:1000px;margin:0 auto;width:100%}
-.page{display:none}
-.page.active{display:block}
+/* ── SETUP VIEW ── */
+#setupView{display:none}
+.setup-center{max-width:520px;margin:80px auto;background:white;border-radius:var(--radius-lg);border:1px solid var(--border);padding:40px;box-shadow:var(--shadow)}
+.setup-icon{width:52px;height:52px;background:var(--brand-light);border-radius:14px;display:grid;place-items:center;font-size:24px;margin-bottom:20px}
+.setup-title{font-size:22px;font-weight:800;letter-spacing:-.4px;margin-bottom:6px}
+.setup-sub{font-size:14px;color:var(--text-3);margin-bottom:28px;line-height:1.5}
 
-/* ── Cards ──────────────────────────────────────── */
-.card{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);padding:24px;margin-bottom:20px;box-shadow:var(--shadow)}
-.card-title{font-size:1.05rem;font-weight:700;margin-bottom:16px;color:var(--text)}
-.card-subtitle{font-size:.88rem;color:var(--muted);margin-top:4px;font-weight:400}
+/* ── MAIN VIEW ── */
+#mainView{display:none}
 
-/* ── Setup page ─────────────────────────────────── */
-.setup-steps{display:flex;gap:8px;margin-bottom:24px;align-items:center}
-.step-dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;background:#e2e8f0;color:var(--muted)}
-.step-dot.active{background:var(--accent);color:#fff}
-.step-dot.done{background:#dcfce7;color:var(--green)}
-.step-line{flex:1;height:2px;background:var(--border)}
-.step-line.done{background:var(--green)}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
-@media(max-width:600px){.form-row,.form-row-3{grid-template-columns:1fr}}
-.inline-form{display:flex;gap:10px;align-items:flex-end}
-.inline-form .form-group{flex:1;margin-bottom:0}
+/* upload zone */
+.upload-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:40px 28px;text-align:center;background:white;transition:all .2s;cursor:pointer;position:relative}
+.upload-zone:hover{border-color:var(--brand);background:var(--brand-light)}
+.upload-zone.drag-over{border-color:var(--brand);background:var(--brand-light);transform:scale(1.01)}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.upload-icon{font-size:36px;margin-bottom:12px}
+.upload-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:5px}
+.upload-sub{font-size:13px;color:var(--text-3);margin-bottom:12px}
+.upload-tags{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.upload-tag{background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:2px 8px;font-size:11px;color:var(--text-3);font-weight:600}
 
-/* ── Company/Period cards ───────────────────────── */
-.item-list{display:flex;flex-direction:column;gap:8px}
-.item-card{display:flex;align-items:center;padding:12px 16px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;transition:all .15s;background:var(--white)}
-.item-card:hover{border-color:var(--accent);background:var(--accent-light)}
-.item-card.selected{border-color:var(--accent);background:var(--accent-light)}
-.item-card-name{font-weight:600;font-size:.95rem}
-.item-card-meta{font-size:.8rem;color:var(--muted);margin-top:2px}
-.item-card-check{margin-left:auto;font-size:1.1rem;color:var(--green);display:none}
-.item-card.selected .item-card-check{display:block}
+/* file list */
+.file-row{display:flex;align-items:center;gap:12px;background:white;border:1px solid var(--border);border-radius:9px;padding:12px 16px;margin-bottom:8px}
+.file-icon{width:36px;height:36px;background:var(--brand-light);border-radius:8px;display:grid;place-items:center;font-size:16px;flex-shrink:0}
+.file-name{font-size:14px;font-weight:600;flex:1}
+.file-meta{font-size:12px;color:var(--text-4)}
 
-/* ── Status bar ─────────────────────────────────── */
-.status-bar{background:var(--accent-light);border:1px solid #c7d2fe;border-radius:10px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;gap:10px}
-.status-bar.warning{background:#fffbeb;border-color:#fde68a}
-.status-bar.success{background:#f0fdf4;border-color:#bbf7d0}
-.status-bar-icon{font-size:1.2rem}
-.status-bar-text{font-size:.9rem;font-weight:500}
-
-/* ── Upload ─────────────────────────────────────── */
-.drop-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:40px 20px;text-align:center;cursor:pointer;transition:all .15s;background:#fafbfc}
-.drop-zone:hover,.drop-zone.over{border-color:var(--accent);background:var(--accent-light)}
-.drop-zone-icon{font-size:2.5rem;margin-bottom:12px}
-.drop-zone-text{font-weight:600;font-size:1rem;color:var(--text);margin-bottom:6px}
-.drop-zone-sub{font-size:.85rem;color:var(--muted)}
-.file-tag{display:inline-flex;align-items:center;gap:4px;background:#f1f5f9;border:1px solid var(--border);padding:3px 8px;border-radius:5px;font-size:.78rem;color:var(--muted);margin:2px}
-.file-selected{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:12px;margin-top:12px}
-.file-selected-name{font-weight:600;font-size:.9rem}
-.file-selected-size{font-size:.82rem;color:var(--muted)}
-
-/* ── Progress bar ───────────────────────────────── */
-.progress-wrap{background:#f1f5f9;border-radius:6px;height:8px;overflow:hidden;margin-bottom:6px}
-.progress-bar{height:100%;background:var(--accent);transition:width .3s;border-radius:6px}
-.upload-step{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
-.upload-step:last-child{border-bottom:none}
-.step-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0}
-.step-icon.pending{background:#f1f5f9;color:var(--muted)}
-.step-icon.running{background:#fef3c7;color:var(--yellow)}
-.step-icon.done{background:#dcfce7;color:var(--green)}
-.step-icon.error{background:#fef2f2;color:var(--red)}
-
-/* ── Files list ─────────────────────────────────── */
-table{width:100%;border-collapse:collapse;font-size:.88rem}
-th{text-align:left;padding:10px 12px;color:var(--muted);font-weight:600;border-bottom:2px solid var(--border)}
-td{padding:10px 12px;border-bottom:1px solid var(--border)}
-tr:last-child td{border-bottom:none}
-.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:.76rem;font-weight:600}
-.badge-blue{background:#dbeafe;color:#1d4ed8}
-.badge-green{background:#dcfce7;color:#15803d}
-.badge-orange{background:#ffedd5;color:#c2410c}
-.badge-gray{background:#f1f5f9;color:var(--muted)}
-
-/* ── Statements ─────────────────────────────────── */
-.stmt-tabs{display:flex;gap:2px;background:#f1f5f9;border-radius:8px;padding:3px;margin-bottom:20px;width:fit-content}
-.stmt-tab{padding:8px 18px;border-radius:6px;cursor:pointer;font-size:.88rem;font-weight:500;color:var(--muted);transition:all .15s}
-.stmt-tab.active{background:var(--white);color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.1)}
-.stmt-section{margin-bottom:12px}
-.stmt-section-title{font-weight:700;font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:8px 0;border-bottom:2px solid var(--border)}
-.stmt-row{display:flex;justify-content:space-between;padding:8px 4px;font-size:.9rem;border-bottom:1px solid #f8fafc}
-.stmt-row:last-child{border-bottom:none}
-.stmt-total{display:flex;justify-content:space-between;padding:12px 4px;font-weight:700;border-top:2px solid var(--text);margin-top:4px}
-.stmt-amount{font-variant-numeric:tabular-nums;font-weight:500}
-.stmt-amount.positive{color:var(--green)}
-.stmt-amount.negative{color:var(--red)}
-
-/* ── Chat ───────────────────────────────────────── */
-.chat-box{height:380px;overflow-y:auto;padding:16px;background:#f8fafc;border-radius:var(--radius);border:1px solid var(--border);margin-bottom:12px}
-.chat-msg{margin-bottom:14px;display:flex;flex-direction:column}
-.chat-msg.user{align-items:flex-end}
-.chat-msg.ai{align-items:flex-start}
-.chat-bubble{max-width:80%;padding:10px 14px;border-radius:12px;font-size:.88rem;line-height:1.5}
-.chat-msg.user .chat-bubble{background:var(--accent);color:#fff;border-bottom-right-radius:4px}
-.chat-msg.ai .chat-bubble{background:var(--white);border:1px solid var(--border);color:var(--text);border-bottom-left-radius:4px}
-.chat-input-row{display:flex;gap:8px}
-.chat-input-row input{flex:1;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem;outline:none}
-.chat-input-row input:focus{border-color:var(--accent)}
-.chat-send{padding:10px 20px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:.9rem}
-.chat-send:hover{background:#4338ca}
-
-/* ── Misc ───────────────────────────────────────── */
-.empty-state{text-align:center;padding:40px 20px;color:var(--muted)}
-.empty-state-icon{font-size:2.5rem;margin-bottom:10px}
-.msg{padding:10px 14px;border-radius:8px;font-size:.88rem;margin-top:10px;display:none}
-.msg.error{background:#fef2f2;color:var(--red);border:1px solid #fecaca;display:block}
-.msg.success{background:#f0fdf4;color:var(--green);border:1px solid #bbf7d0;display:block}
-.msg.warn{background:#fffbeb;color:var(--yellow);border:1px solid #fde68a;display:block}
-.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle}
+/* processing */
+.processing-bar{background:white;border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px}
+.proc-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.proc-spinner{width:20px;height:20px;border:2.5px solid var(--brand-light);border-top-color:var(--brand);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:20px}
-.kpi{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
-.kpi-label{font-size:.8rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
-.kpi-value{font-size:1.5rem;font-weight:700;margin-top:4px}
-.kpi-value.green{color:var(--green)}
-.kpi-value.red{color:var(--red)}
-.kpi-value.blue{color:var(--accent)}
+.proc-title{font-size:14px;font-weight:700;color:var(--brand)}
+.proc-log{font-size:12px;color:var(--text-3);font-family:monospace;max-height:100px;overflow-y:auto;background:var(--bg);border-radius:6px;padding:10px}
+.proc-log p{margin-bottom:2px}
+
+/* KPI stat boxes */
+.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+@media(max-width:700px){.kpi-grid{grid-template-columns:1fr}}
+.stat-box{background:white;border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+.stat-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-4);margin-bottom:8px}
+.stat-value{font-size:28px;font-weight:800;letter-spacing:-1px}
+.stat-sub{font-size:12px;color:var(--text-3);margin-top:4px}
+.stat-value.green{color:var(--emerald)}
+.stat-value.brand{color:var(--brand)}
+.stat-value.red{color:var(--red)}
+
+/* report tabs */
+.report-tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:24px}
+.report-tab{padding:10px 18px;font-size:14px;font-weight:600;color:var(--text-3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap}
+.report-tab.active{color:var(--brand);border-color:var(--brand)}
+.report-tab:hover:not(.active){color:var(--text)}
+
+/* statement table */
+.stmt-table{width:100%;border-collapse:collapse;font-size:13px}
+.stmt-table th{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-4);text-align:left;padding:8px 12px;border-bottom:2px solid var(--border)}
+.stmt-table td{padding:10px 12px;border-bottom:1px solid var(--border-subtle)}
+.stmt-table tr:hover td{background:var(--bg)}
+.stmt-table .row-section td{font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-4);background:var(--border-subtle);padding:6px 12px;border:none}
+.stmt-table .row-total td{font-weight:800;border-top:2px solid var(--border);border-bottom:2px solid var(--border)}
+.amount-col{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.amount-pos{color:var(--emerald)}.amount-neg{color:var(--red)}
+.evidence-link{font-size:11px;color:var(--brand);font-weight:600;cursor:pointer;white-space:nowrap}
+
+/* chat */
+.chat-wrap{background:white;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.chat-messages{height:380px;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:14px}
+.msg{display:flex;gap:10px;max-width:85%}
+.msg.user{align-self:flex-end;flex-direction:row-reverse}
+.msg-avatar{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:13px;flex-shrink:0}
+.msg.ai .msg-avatar{background:var(--brand-light);color:var(--brand)}
+.msg.user .msg-avatar{background:var(--brand);color:white}
+.msg-bubble{padding:11px 14px;border-radius:12px;font-size:13px;line-height:1.55}
+.msg.ai .msg-bubble{background:white;border:1px solid var(--border);color:var(--text)}
+.msg.user .msg-bubble{background:var(--brand);color:white}
+.msg-evidence{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.msg-ev-pill{font-size:11px;background:var(--brand-light);color:var(--brand);padding:3px 8px;border-radius:5px;font-weight:600}
+.chat-input-row{padding:14px 16px;border-top:1px solid var(--border);display:flex;gap:10px}
+.chat-input{flex:1;padding:10px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;outline:none}
+.chat-input:focus{border-color:var(--brand)}
+
+/* exception cards */
+.exc-card{background:white;border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;border-left:4px solid transparent}
+.exc-card.critical{border-left-color:var(--red)}
+.exc-card.warning{border-left-color:var(--amber)}
+.exc-card.info{border-left-color:var(--sky)}
+.exc-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.exc-title{font-size:14px;font-weight:700;flex:1}
+.exc-body{font-size:13px;color:var(--text-2);line-height:1.5}
+
+/* entity ontology */
+.entity-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+@media(max-width:700px){.entity-grid{grid-template-columns:1fr 1fr}}
+.entity-card{background:white;border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center}
+.entity-icon{font-size:28px;margin-bottom:8px}
+.entity-count{font-size:24px;font-weight:800;color:var(--text)}
+.entity-label{font-size:12px;color:var(--text-3);font-weight:600;margin-top:4px}
+.entity-list{background:white;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.entity-list-row{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border-subtle);font-size:13px}
+.entity-list-row:last-child{border:none}
+
+/* empty state */
+.empty-state{text-align:center;padding:60px 20px}
+.empty-icon{font-size:48px;margin-bottom:16px}
+.empty-title{font-size:20px;font-weight:700;margin-bottom:8px}
+.empty-sub{font-size:14px;color:var(--text-3);max-width:400px;margin:0 auto}
+
+/* modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(17,24,39,.5);backdrop-filter:blur(4px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal-card{background:white;border-radius:var(--radius-lg);padding:36px;width:100%;max-width:440px;box-shadow:var(--shadow-lg)}
+.modal-title{font-size:18px;font-weight:800;margin-bottom:6px}
+.modal-sub{font-size:14px;color:var(--text-3);margin-bottom:24px}
+
+/* section headers */
+.section-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-4);margin-bottom:10px}
+.content-header{margin-bottom:24px}
+.content-header h2{font-size:22px;font-weight:800;letter-spacing:-.4px}
+.content-header p{font-size:14px;color:var(--text-3);margin-top:4px}
+.divider{display:flex;align-items:center;gap:12px;margin:16px 0}
+.divider-line{flex:1;height:1px;background:var(--border)}
+.divider-text{font-size:12px;color:var(--text-4)}
 </style>
 </head>
 <body>
 
-<!-- ══════════════════════════════════════════════ AUTH SCREEN -->
+<!-- ══════════════════════════════════════════
+     AUTH SCREEN
+══════════════════════════════════════════ -->
 <div id="authScreen">
-  <div class="auth-card">
-    <div class="auth-logo">
-      <h1>📊 FinanceAI</h1>
-      <p>Smart financial statements for small businesses</p>
+  <div class="auth-wrap">
+    <!-- Left panel -->
+    <div class="auth-panel">
+      <h2>Your company's financial memory, always traceable.</h2>
+      <div class="auth-feature">
+        <div class="auth-feature-icon">📂</div>
+        <div><div class="auth-feature-text">Upload any file format</div><div class="auth-feature-sub">Excel, CSV, ODS — Thai or English headers</div></div>
+      </div>
+      <div class="auth-feature">
+        <div class="auth-feature-icon">🤖</div>
+        <div><div class="auth-feature-text">Fully automatic processing</div><div class="auth-feature-sub">AI maps columns, detects period, builds ontology</div></div>
+      </div>
+      <div class="auth-feature">
+        <div class="auth-feature-icon">🔗</div>
+        <div><div class="auth-feature-text">Every number is traceable</div><div class="auth-feature-sub">Click any P&L line to see source rows</div></div>
+      </div>
+      <div class="auth-feature">
+        <div class="auth-feature-icon">💬</div>
+        <div><div class="auth-feature-text">Ask AI anything</div><div class="auth-feature-sub">"What drove the gross margin drop?" — cited answers</div></div>
+      </div>
     </div>
-    <div class="auth-tabs">
-      <div class="auth-tab active" onclick="switchAuthTab('login')">Sign In</div>
-      <div class="auth-tab" onclick="switchAuthTab('register')">Create Account</div>
-    </div>
-    <div id="authMsg"></div>
-
-    <!-- Login Form -->
-    <div id="loginForm">
-      <div class="form-group">
-        <label>Email</label>
-        <input type="email" id="loginEmail" placeholder="you@example.com" autocomplete="email">
+    <!-- Auth card -->
+    <div class="auth-card">
+      <div class="auth-logo">
+        <div class="auth-logo-icon"><svg viewBox="0 0 24 24"><path d="M3 3h18v2H3V3zm2 4h14v2H5V7zm-2 4h18v2H3v-2zm2 4h8v2H5v-2z"/></svg></div>
+        <span class="auth-logo-text">FinanceAI</span>
       </div>
-      <div class="form-group">
-        <label>Password</label>
-        <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
+      <div class="auth-tabs">
+        <div class="auth-tab active" onclick="switchAuthTab('login')">Sign in</div>
+        <div class="auth-tab" onclick="switchAuthTab('register')">Register</div>
       </div>
-      <button class="btn btn-primary" onclick="doLogin()" id="btnLogin">Sign In</button>
-    </div>
-
-    <!-- Register Form -->
-    <div id="registerForm" style="display:none">
-      <div class="form-group">
-        <label>Your Name</label>
-        <input type="text" id="regName" placeholder="Jane Smith">
+      <div id="authMsg" class="msg-box"></div>
+      <!-- Login fields -->
+      <div id="loginFields">
+        <div class="form-group">
+          <label class="form-label">Email address</label>
+          <input class="form-input" id="loginEmail" type="email" placeholder="you@company.com" autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input class="form-input" id="loginPassword" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+        </div>
+        <button class="btn btn-brand btn-full" onclick="doLogin()">Sign in →</button>
       </div>
-      <div class="form-group">
-        <label>Email</label>
-        <input type="email" id="regEmail" placeholder="you@example.com" autocomplete="email">
+      <!-- Register fields -->
+      <div id="registerFields" style="display:none">
+        <div class="form-group">
+          <label class="form-label">Full name</label>
+          <input class="form-input" id="regName" type="text" placeholder="e.g. Somchai Jaidee">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email address</label>
+          <input class="form-input" id="regEmail" type="email" placeholder="you@company.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input class="form-input" id="regPassword" type="password" placeholder="Min. 6 characters" onkeydown="if(event.key==='Enter')doRegister()">
+          <span class="form-hint">Minimum 6 characters</span>
+        </div>
+        <button class="btn btn-brand btn-full" onclick="doRegister()">Create account →</button>
       </div>
-      <div class="form-group">
-        <label>Password <span style="color:var(--muted);font-weight:400">(min 6 chars)</span></label>
-        <input type="password" id="regPassword" placeholder="••••••••" autocomplete="new-password">
-      </div>
-      <button class="btn btn-primary" onclick="doRegister()" id="btnRegister">Create Account</button>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════ APP SCREEN -->
+<!-- ══════════════════════════════════════════
+     APP SCREEN
+══════════════════════════════════════════ -->
 <div id="appScreen">
-
-  <!-- Top Bar -->
+  <!-- Topbar -->
   <div class="topbar">
-    <div class="topbar-logo">📊 FinanceAI</div>
-    <div class="topbar-selects">
-      <select id="companySelect" onchange="onCompanyChange()" title="Select company">
-        <option value="">— Select Company —</option>
-      </select>
-      <select id="periodSelect" onchange="onPeriodChange()" title="Select period">
-        <option value="">— Select Period —</option>
-      </select>
+    <a class="topbar-brand" href="#">
+      <div class="topbar-brand-icon"><svg viewBox="0 0 24 24"><path d="M3 3h18v2H3V3zm2 4h14v2H5V7zm-2 4h18v2H3v-2zm2 4h8v2H5v-2z"/></svg></div>
+      FinanceAI
+    </a>
+    <select class="company-select" id="companySelect" onchange="onCompanyChange()" title="Switch company"></select>
+    <button class="btn btn-outline btn-sm" onclick="openNewCompanyModal()" title="Add new company">＋ New</button>
+    <div class="period-badge" id="periodBadge" style="display:none">
+      <div class="period-dot"></div>
+      <span id="periodLabel">Auto-detected</span>
     </div>
-    <div class="topbar-user">
-      <span class="user-badge" id="userBadge">User</span>
-      <button class="btn-logout" onclick="doLogout()">Logout</button>
+    <div class="topbar-spacer"></div>
+    <div class="user-badge">
+      <div class="user-avatar" id="userAvatar">?</div>
+      <span id="userName" style="font-weight:600"></span>
     </div>
+    <button class="btn-logout" onclick="doLogout()">Logout</button>
   </div>
 
-  <!-- Nav -->
-  <div class="nav">
-    <button class="nav-btn active" onclick="goPage('setup')">🏢 Setup</button>
-    <button class="nav-btn" onclick="goPage('upload')">📂 Upload</button>
-    <button class="nav-btn" onclick="goPage('reports')">📈 Reports</button>
-    <button class="nav-btn" onclick="goPage('chat')">💬 Ask AI</button>
-  </div>
-
-  <!-- Main -->
+  <!-- Main content -->
   <div class="main">
 
-    <!-- ── SETUP PAGE ─────────────────────────── -->
-    <div class="page active" id="page-setup">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
-        <div>
-          <h2 style="font-size:1.3rem;font-weight:700">Setup Your Business</h2>
-          <p style="color:var(--muted);font-size:.9rem;margin-top:4px">Create a company and reporting period to get started</p>
-        </div>
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
-        <!-- Company card -->
-        <div>
-          <div class="card">
-            <div class="card-title">🏢 Your Companies</div>
-            <div class="item-list" id="companyList">
-              <div class="empty-state" style="padding:20px 0">
-                <div class="empty-state-icon">🏢</div>
-                <div>No companies yet</div>
-              </div>
-            </div>
-            <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:16px">
-              <div style="font-size:.88rem;font-weight:600;margin-bottom:10px;color:var(--muted)">ADD NEW COMPANY</div>
-              <div class="form-group">
-                <label>Company Name</label>
-                <input type="text" id="newCompanyName" placeholder="e.g. My Shop Co.">
-              </div>
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Industry</label>
-                  <select id="newCompanyIndustry" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem">
-                    <option>Retail</option><option>Food & Beverage</option><option>Service</option>
-                    <option>Manufacturing</option><option>Trading</option><option>Other</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label>Currency</label>
-                  <select id="newCompanyCurrency" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem">
-                    <option>THB</option><option>USD</option><option>EUR</option><option>SGD</option>
-                  </select>
-                </div>
-              </div>
-              <button class="btn btn-primary" onclick="createCompany()">+ Add Company</button>
-              <div id="companyMsg" class="msg"></div>
-            </div>
+    <!-- ── SETUP VIEW (no companies) ── -->
+    <div id="setupView">
+      <div class="setup-center">
+        <div class="setup-icon">🏢</div>
+        <div class="setup-title">Set up your business</div>
+        <div class="setup-sub">Create your company profile. After this, just upload your data files — the AI handles everything else automatically.</div>
+        <div id="setupMsg" class="msg-box"></div>
+        <div class="form-grid">
+          <div class="form-group" style="grid-column:span 2">
+            <label class="form-label">Company name</label>
+            <input class="form-input" id="setupName" type="text" placeholder="e.g. Tin Trading Co., Ltd.">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Industry</label>
+            <select class="form-input" id="setupIndustry">
+              <option>Retail</option><option>Wholesale</option><option>Manufacturing</option>
+              <option>Food & Beverage</option><option>Services</option><option>Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Currency</label>
+            <select class="form-input" id="setupCurrency">
+              <option>THB</option><option>USD</option><option>EUR</option><option>SGD</option>
+            </select>
           </div>
         </div>
-
-        <!-- Period card -->
-        <div>
-          <div class="card">
-            <div class="card-title">📅 Reporting Periods</div>
-            <div id="periodRequireCompany" class="status-bar warning" style="margin-bottom:16px">
-              <span class="status-bar-icon">👈</span>
-              <span class="status-bar-text">Select a company first</span>
-            </div>
-            <div class="item-list" id="periodList"></div>
-            <div id="periodForm" style="margin-top:16px;border-top:1px solid var(--border);padding-top:16px;display:none">
-              <div style="font-size:.88rem;font-weight:600;margin-bottom:10px;color:var(--muted)">ADD NEW PERIOD</div>
-              <div class="form-group">
-                <label>Period Label</label>
-                <input type="text" id="newPeriodLabel" placeholder="e.g. Jan–Mar 2026">
-              </div>
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Start Date</label>
-                  <input type="date" id="newPeriodStart">
-                </div>
-                <div class="form-group">
-                  <label>End Date</label>
-                  <input type="date" id="newPeriodEnd">
-                </div>
-              </div>
-              <button class="btn btn-primary" onclick="createPeriod()">+ Add Period</button>
-              <div id="periodMsg" class="msg"></div>
-            </div>
-          </div>
-        </div>
+        <button class="btn btn-brand btn-full" onclick="createCompany()" style="margin-top:8px">Create company →</button>
       </div>
     </div>
 
-    <!-- ── UPLOAD PAGE ─────────────────────────── -->
-    <div class="page" id="page-upload">
-      <div style="margin-bottom:24px">
-        <h2 style="font-size:1.3rem;font-weight:700">Upload Your Data</h2>
-        <p style="color:var(--muted);font-size:.9rem;margin-top:4px">Upload any sales, purchase, or inventory file to generate your financial report</p>
-      </div>
+    <!-- ── MAIN VIEW (company selected) ── -->
+    <div id="mainView">
 
-      <div id="uploadNoPeriod" class="status-bar warning" style="display:none">
-        <span class="status-bar-icon">⚠️</span>
-        <span class="status-bar-text">Please select a company and period in the Setup tab first</span>
-      </div>
-
-      <div id="uploadReady">
-        <!-- Drop zone -->
-        <div class="card">
-          <div class="card-title">📂 Upload File</div>
-          <div class="drop-zone" id="dropZone"
-               onclick="document.getElementById('fileInput').click()"
-               ondragover="event.preventDefault();this.classList.add('over')"
-               ondragleave="this.classList.remove('over')"
-               ondrop="handleDrop(event)">
-            <input type="file" id="fileInput" style="display:none"
-                   accept=".csv,.xlsx,.xls,.ods,.tsv,.txt"
-                   onchange="handleFileSelect(this)">
-            <div class="drop-zone-icon">📁</div>
-            <div class="drop-zone-text">Drop your file here, or click to browse</div>
-            <div class="drop-zone-sub">Supported formats:</div>
-            <div style="margin-top:8px">
-              <span class="file-tag">CSV</span>
-              <span class="file-tag">Excel (.xlsx)</span>
-              <span class="file-tag">XLS</span>
-              <span class="file-tag">ODS</span>
-              <span class="file-tag">TSV</span>
-            </div>
-          </div>
-
-          <div id="fileInfo" style="display:none">
-            <div class="file-selected">
-              <span style="font-size:1.5rem">📄</span>
-              <div>
-                <div class="file-selected-name" id="fileSelectedName"></div>
-                <div class="file-selected-size" id="fileSelectedSize"></div>
-              </div>
-              <button class="btn btn-secondary" style="margin-left:auto;padding:6px 12px;font-size:.82rem" onclick="clearFile()">✕ Remove</button>
-            </div>
-          </div>
-
-          <div style="margin-top:16px;display:flex;gap:10px">
-            <button class="btn btn-primary" onclick="uploadFile()" id="btnUpload" style="flex:1">
-              ⬆️ Upload & Analyse
-            </button>
-          </div>
-          <div id="uploadMsg" class="msg"></div>
-        </div>
-
-        <!-- Pipeline progress -->
-        <div class="card" id="pipelineCard" style="display:none">
-          <div class="card-title">⚙️ Processing Pipeline</div>
-          <div id="pipelineSteps"></div>
-          <div style="margin-top:16px">
-            <button class="btn btn-green" onclick="runFullPipeline()" id="btnProcess" style="display:none">
-              🚀 Generate Financial Statements
-            </button>
-          </div>
-          <div id="pipelineMsg" class="msg"></div>
-        </div>
-
-        <!-- Uploaded files table -->
-        <div class="card">
-          <div class="card-title">📋 Files in This Period</div>
-          <div id="filesList">
-            <div class="empty-state">
-              <div class="empty-state-icon">📭</div>
-              <div>No files uploaded yet</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ── REPORTS PAGE ────────────────────────── -->
-    <div class="page" id="page-reports">
+      <!-- Upload zone (always at top) -->
       <div style="margin-bottom:20px">
-        <h2 style="font-size:1.3rem;font-weight:700">Financial Reports</h2>
-        <p style="color:var(--muted);font-size:.9rem;margin-top:4px">View your income statement and trial balance</p>
+        <div class="upload-zone" id="uploadZone" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+          <input type="file" id="fileInput" accept=".xlsx,.xls,.csv,.ods,.tsv" onchange="handleFileSelect(event)">
+          <div class="upload-icon">📂</div>
+          <div class="upload-title">Drop your data files here</div>
+          <div class="upload-sub">Supports .xlsx, .xls, .csv, .ods · Sales, Purchases, Inventory, Chart of Accounts</div>
+          <div class="upload-tags">
+            <span class="upload-tag">Sales</span>
+            <span class="upload-tag">Purchases</span>
+            <span class="upload-tag">Inventory</span>
+            <span class="upload-tag">Thai headers supported</span>
+          </div>
+        </div>
       </div>
 
-      <div id="reportsNoPeriod" class="status-bar warning" style="display:none">
-        <span class="status-bar-icon">⚠️</span>
-        <span class="status-bar-text">Please select a company and period first</span>
+      <!-- Processing status -->
+      <div id="processingBar" class="processing-bar" style="display:none">
+        <div class="proc-header">
+          <div class="proc-spinner"></div>
+          <div class="proc-title">Processing your data — AI is mapping columns, extracting records, and generating statements…</div>
+        </div>
+        <div class="proc-log" id="procLog"></div>
       </div>
 
-      <div id="reportsReady">
-        <div class="kpi-grid" id="kpiGrid">
-          <div class="kpi"><div class="kpi-label">Revenue</div><div class="kpi-value blue" id="kpiRevenue">—</div></div>
-          <div class="kpi"><div class="kpi-label">Expenses</div><div class="kpi-value red" id="kpiExpenses">—</div></div>
-          <div class="kpi"><div class="kpi-label">Net Profit</div><div class="kpi-value green" id="kpiProfit">—</div></div>
-          <div class="kpi"><div class="kpi-label">Data Files</div><div class="kpi-value" id="kpiFiles">—</div></div>
+      <!-- Uploaded files list -->
+      <div id="filesList" style="display:none;margin-bottom:24px">
+        <div class="section-label">Uploaded files</div>
+        <div id="filesContainer"></div>
+      </div>
+
+      <!-- Results section -->
+      <div id="resultsSection" style="display:none">
+
+        <!-- KPI stat boxes -->
+        <div class="kpi-grid">
+          <div class="stat-box">
+            <div class="stat-label">Revenue</div>
+            <div class="stat-value green" id="kpiRevenue">—</div>
+            <div class="stat-sub" id="kpiPeriod">—</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Gross Profit</div>
+            <div class="stat-value" id="kpiGrossProfit">—</div>
+            <div class="stat-sub" id="kpiGM">—</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Net Profit</div>
+            <div class="stat-value brand" id="kpiNetProfit">—</div>
+            <div class="stat-sub" id="kpiNPM">—</div>
+          </div>
         </div>
 
-        <div class="stmt-tabs">
-          <div class="stmt-tab active" onclick="switchStmt('income')">Income Statement</div>
-          <div class="stmt-tab" onclick="switchStmt('trial')">Trial Balance</div>
+        <!-- Report tabs -->
+        <div class="report-tabs">
+          <div class="report-tab active" onclick="switchTab('is')">Income Statement</div>
+          <div class="report-tab" onclick="switchTab('tb')">Trial Balance</div>
+          <div class="report-tab" onclick="switchTab('exc')">Exceptions</div>
+          <div class="report-tab" onclick="switchTab('ont')">Ontology</div>
+          <div class="report-tab" onclick="switchTab('chat')">Ask AI</div>
         </div>
-        <div id="stmtContent"></div>
-        <div id="trialContent" style="display:none"></div>
-        <button class="btn btn-secondary" onclick="loadReports()" style="margin-top:4px">🔄 Refresh</button>
-      </div>
-    </div>
 
-    <!-- ── CHAT PAGE ───────────────────────────── -->
-    <div class="page" id="page-chat">
-      <div style="margin-bottom:20px">
-        <h2 style="font-size:1.3rem;font-weight:700">Ask AI About Your Finances</h2>
-        <p style="color:var(--muted);font-size:.9rem;margin-top:4px">Ask anything about your business data in plain language</p>
-      </div>
+        <!-- Income Statement pane -->
+        <div id="pane-is">
+          <div id="isContent"><div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">No statement yet</div></div></div>
+        </div>
 
-      <div class="card">
-        <div class="chat-box" id="chatBox">
-          <div class="chat-msg ai">
-            <div class="chat-bubble">
-              👋 Hi! I'm your AI financial assistant. Ask me anything about your business data — revenue trends, expense breakdowns, comparisons, or any accounting questions!
+        <!-- Trial Balance pane -->
+        <div id="pane-tb" style="display:none">
+          <div id="tbContent"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No trial balance yet</div></div></div>
+        </div>
+
+        <!-- Exceptions pane -->
+        <div id="pane-exc" style="display:none">
+          <div id="excContent"><div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">No exceptions</div></div></div>
+        </div>
+
+        <!-- Ontology pane -->
+        <div id="pane-ont" style="display:none">
+          <div id="ontContent"><div class="empty-state"><div class="empty-icon">🕸</div><div class="empty-title">No entities yet</div></div></div>
+        </div>
+
+        <!-- Chat pane -->
+        <div id="pane-chat" style="display:none">
+          <div class="chat-wrap">
+            <div class="chat-messages" id="chatMessages">
+              <div class="msg ai">
+                <div class="msg-avatar">🤖</div>
+                <div class="msg-bubble">Hi! I've processed your financial data. What would you like to explore? You can ask about revenue, costs, margins, exceptions, or any specific figure.</div>
+              </div>
+            </div>
+            <div class="chat-input-row">
+              <input class="chat-input" id="chatInput" placeholder="Ask about any figure, line, or exception…" onkeydown="if(event.key==='Enter')sendChat()">
+              <button class="btn btn-brand btn-sm" onclick="sendChat()">Send →</button>
             </div>
           </div>
         </div>
-        <div class="chat-input-row">
-          <input type="text" id="chatInput" placeholder="e.g. What is my total revenue this month?" onkeydown="if(event.key==='Enter')sendChat()">
-          <button class="chat-send" onclick="sendChat()">Send ▶</button>
+      </div><!-- /resultsSection -->
+
+      <!-- Empty state when no files yet -->
+      <div id="emptyState">
+        <div class="empty-state">
+          <div class="empty-icon">📊</div>
+          <div class="empty-title">Drop your first data file above</div>
+          <div class="empty-sub">Upload a sales, purchase, or inventory file and the AI will automatically generate your financial statements — no configuration needed.</div>
         </div>
       </div>
-    </div>
 
+    </div><!-- /mainView -->
   </div><!-- /main -->
 </div><!-- /appScreen -->
 
-<script>
-// ══════════════════════════════════════════════════════════
-// STATE
-// ══════════════════════════════════════════════════════════
-let token = localStorage.getItem('fin_token') || null;
-let currentUser = JSON.parse(localStorage.getItem('fin_user') || 'null');
-let session = { companyId: null, companyName: null, periodId: null, periodLabel: null };
-let selectedFile = null;
-let lastFileId = null;
-let chatHistory = [];
+<!-- ══════════════════════════════════════════
+     NEW COMPANY MODAL
+══════════════════════════════════════════ -->
+<div class="modal-overlay" id="companyModal">
+  <div class="modal-card">
+    <div class="modal-title">Add new company</div>
+    <div class="modal-sub">Create another company profile to manage multiple businesses separately.</div>
+    <div id="modalMsg" class="msg-box"></div>
+    <div class="form-group">
+      <label class="form-label">Company name</label>
+      <input class="form-input" id="modalName" type="text" placeholder="e.g. Tin Trading Co., Ltd.">
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Industry</label>
+        <select class="form-input" id="modalIndustry">
+          <option>Retail</option><option>Wholesale</option><option>Manufacturing</option>
+          <option>Food & Beverage</option><option>Services</option><option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Currency</label>
+        <select class="form-input" id="modalCurrency">
+          <option>THB</option><option>USD</option><option>EUR</option><option>SGD</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn btn-outline" style="flex:1" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-brand" style="flex:1" onclick="createCompanyModal()">Create →</button>
+    </div>
+  </div>
+</div>
 
-// ══════════════════════════════════════════════════════════
-// BOOT
-// ══════════════════════════════════════════════════════════
+<script>
+// ─── Session state ────────────────────────────────────────────────────────────
+const session = {
+  token: localStorage.getItem('fin_token') || '',
+  userName: localStorage.getItem('fin_name') || '',
+  companyId: null,
+  companyName: '',
+  periodId: null,
+  periodLabel: '',
+  chatSessionId: null,
+  lastResult: null,
+};
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
 window.onload = function() {
-  if (token && currentUser) {
+  if (session.token) {
     showApp();
-  } else {
-    document.getElementById('authScreen').style.display = 'flex';
   }
 };
 
-// ══════════════════════════════════════════════════════════
-// API HELPER
-// ══════════════════════════════════════════════════════════
+// ─── API helper ───────────────────────────────────────────────────────────────
 async function api(method, path, body = null, isForm = false) {
   const opts = {
     method,
-    headers: {}
+    headers: { Authorization: 'Bearer ' + session.token },
   };
-  if (token) opts.headers['Authorization'] = 'Bearer ' + token;
-  if (body && !isForm) {
-    opts.headers['Content-Type'] = 'application/json';
-    opts.body = JSON.stringify(body);
-  } else if (isForm) {
-    opts.body = body; // FormData
+  if (body) {
+    if (isForm) {
+      opts.body = body;
+    } else {
+      opts.headers['Content-Type'] = 'application/json';
+      opts.body = JSON.stringify(body);
+    }
   }
-  const res = await fetch(path, opts);
-  if (res.status === 401) {
-    doLogout();
-    throw new Error('Session expired — please log in again');
-  }
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.detail || JSON.stringify(data));
-  return data;
+  const r = await fetch('/api' + path, opts);
+  if (r.status === 204) return {};
+  const text = await r.text();
+  try { return JSON.parse(text); }
+  catch { return { error: text, status: r.status }; }
 }
 
 function fmt(n) {
-  if (n === null || n === undefined) return '—';
-  return Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  if (n == null || isNaN(n)) return '—';
+  return (n < 0 ? '(' : '') + Math.abs(n).toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0}) + (n < 0 ? ')' : '');
+}
+function fmtThb(n) {
+  return '฿' + fmt(n);
+}
+function pct(v, total) {
+  if (!total) return '0%';
+  return (v / total * 100).toFixed(1) + '%';
+}
+function escHtml(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function showMsg(id, text, type) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = text;
+  el.className = 'msg-box ' + type;
+}
+function clearMsg(id) {
+  const el = document.getElementById(id);
+  if (el) { el.textContent = ''; el.className = 'msg-box'; }
 }
 
-// ══════════════════════════════════════════════════════════
-// AUTH
-// ══════════════════════════════════════════════════════════
+// ─── AUTH ─────────────────────────────────────────────────────────────────────
 function switchAuthTab(tab) {
-  document.querySelectorAll('.auth-tab').forEach((el, i) => el.classList.toggle('active', (i===0 && tab==='login') || (i===1 && tab==='register')));
-  document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
-  document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
-  document.getElementById('authMsg').innerHTML = '';
-}
-
-function showAuthMsg(msg, type = 'error') {
-  const el = document.getElementById('authMsg');
-  el.className = 'auth-msg ' + type;
-  el.textContent = msg;
+  document.querySelectorAll('.auth-tab').forEach((t, i) => {
+    t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register'));
+  });
+  document.getElementById('loginFields').style.display = tab === 'login' ? '' : 'none';
+  document.getElementById('registerFields').style.display = tab === 'register' ? '' : 'none';
+  clearMsg('authMsg');
 }
 
 async function doLogin() {
   const email = document.getElementById('loginEmail').value.trim();
-  const password = document.getElementById('loginPassword').value;
-  if (!email || !password) { showAuthMsg('Please fill in all fields'); return; }
-  const btn = document.getElementById('btnLogin');
-  btn.innerHTML = '<span class="spinner"></span> Signing in…';
-  btn.disabled = true;
-  try {
-    const data = await api('POST', '/api/auth/login', { email, password });
-    saveSession(data);
-  } catch (e) {
-    showAuthMsg(e.message);
-  } finally {
-    btn.innerHTML = 'Sign In'; btn.disabled = false;
-  }
+  const pwd = document.getElementById('loginPassword').value;
+  if (!email || !pwd) { showMsg('authMsg', 'Enter email and password.', 'error'); return; }
+  clearMsg('authMsg');
+  const fd = new FormData();
+  fd.append('username', email);
+  fd.append('password', pwd);
+  const r = await fetch('/api/auth/login', { method: 'POST', body: fd });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) { showMsg('authMsg', data.detail || 'Login failed.', 'error'); return; }
+  localStorage.setItem('fin_token', data.access_token);
+  localStorage.setItem('fin_name', data.name || email.split('@')[0]);
+  session.token = data.access_token;
+  session.userName = data.name || email.split('@')[0];
+  showApp();
 }
 
 async function doRegister() {
   const name = document.getElementById('regName').value.trim();
   const email = document.getElementById('regEmail').value.trim();
-  const password = document.getElementById('regPassword').value;
-  if (!name || !email || !password) { showAuthMsg('Please fill in all fields'); return; }
-  const btn = document.getElementById('btnRegister');
-  btn.innerHTML = '<span class="spinner"></span> Creating…';
-  btn.disabled = true;
-  try {
-    const data = await api('POST', '/api/auth/register', { name, email, password });
-    saveSession(data);
-  } catch (e) {
-    showAuthMsg(e.message);
-  } finally {
-    btn.innerHTML = 'Create Account'; btn.disabled = false;
-  }
-}
-
-function saveSession(data) {
-  token = data.token;
-  currentUser = { name: data.name, email: data.email, id: data.id };
-  localStorage.setItem('fin_token', token);
-  localStorage.setItem('fin_user', JSON.stringify(currentUser));
+  const pwd = document.getElementById('regPassword').value;
+  if (!name || !email || !pwd) { showMsg('authMsg', 'Fill in all fields.', 'error'); return; }
+  if (pwd.length < 6) { showMsg('authMsg', 'Password must be at least 6 characters.', 'error'); return; }
+  clearMsg('authMsg');
+  const r = await api('POST', '/auth/register', { name, email, password: pwd });
+  if (r.error || r.detail) { showMsg('authMsg', r.detail || r.error || 'Registration failed.', 'error'); return; }
+  localStorage.setItem('fin_token', r.access_token);
+  localStorage.setItem('fin_name', r.name || name);
+  session.token = r.access_token;
+  session.userName = r.name || name;
   showApp();
 }
 
 function doLogout() {
   localStorage.removeItem('fin_token');
-  localStorage.removeItem('fin_user');
-  token = null; currentUser = null;
-  session = { companyId: null, companyName: null, periodId: null, periodLabel: null };
-  document.getElementById('appScreen').style.display = 'none';
+  localStorage.removeItem('fin_name');
+  session.token = '';
+  session.companyId = null;
   document.getElementById('authScreen').style.display = 'flex';
+  document.getElementById('appScreen').style.display = 'none';
+  switchAuthTab('login');
 }
 
-// ══════════════════════════════════════════════════════════
-// APP INIT
-// ══════════════════════════════════════════════════════════
+// ─── APP SHELL ────────────────────────────────────────────────────────────────
 function showApp() {
   document.getElementById('authScreen').style.display = 'none';
   document.getElementById('appScreen').style.display = 'flex';
   document.getElementById('appScreen').style.flexDirection = 'column';
-  document.getElementById('userBadge').textContent = currentUser.name;
+  document.getElementById('userName').textContent = session.userName;
+  document.getElementById('userAvatar').textContent = session.userName.charAt(0).toUpperCase();
   loadCompanies();
-  goPage('setup');
 }
 
-// ══════════════════════════════════════════════════════════
-// NAVIGATION
-// ══════════════════════════════════════════════════════════
-function goPage(name) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('page-' + name).classList.add('active');
-  const idx = {'setup':0,'upload':1,'reports':2,'chat':3}[name];
-  document.querySelectorAll('.nav-btn')[idx].classList.add('active');
-  if (name === 'upload') refreshUploadPage();
-  if (name === 'reports') refreshReportsPage();
-}
-
-// ══════════════════════════════════════════════════════════
-// COMPANIES & PERIODS
-// ══════════════════════════════════════════════════════════
 async function loadCompanies() {
-  try {
-    const companies = await api('GET', '/api/companies/');
-    renderCompanyList(companies);
-    // rebuild topbar select
-    const sel = document.getElementById('companySelect');
-    const cur = sel.value;
-    sel.innerHTML = '<option value="">— Select Company —</option>';
-    companies.forEach(c => {
-      const o = document.createElement('option');
-      o.value = c.id; o.textContent = c.name;
-      sel.appendChild(o);
-    });
-    if (cur) sel.value = cur;
-  } catch(e) { console.error(e); }
-}
-
-function renderCompanyList(companies) {
-  const el = document.getElementById('companyList');
-  if (!companies.length) {
-    el.innerHTML = '<div class="empty-state" style="padding:16px 0"><div class="empty-state-icon">🏢</div><div>No companies yet — add one below</div></div>';
+  const companies = await api('GET', '/companies/');
+  if (!companies || companies.error) {
+    showSetup();
     return;
   }
-  el.innerHTML = companies.map(c => `
-    <div class="item-card ${session.companyId == c.id ? 'selected' : ''}" onclick="selectCompany(${c.id},'${escHtml(c.name)}')">
-      <div>
-        <div class="item-card-name">${escHtml(c.name)}</div>
-        <div class="item-card-meta">${escHtml(c.industry||'')} · ${escHtml(c.currency||'THB')}</div>
-      </div>
-      <span class="item-card-check">✓</span>
-    </div>`).join('');
+  if (!companies.length) {
+    showSetup();
+    return;
+  }
+  // Populate dropdown
+  const sel = document.getElementById('companySelect');
+  sel.innerHTML = companies.map(c =>
+    `<option value="${c.id}">${escHtml(c.name)}</option>`
+  ).join('');
+  // Auto-select first
+  const firstId = companies[0].id;
+  sel.value = firstId;
+  await selectCompany(firstId, companies[0].name);
 }
 
-async function createCompany() {
-  const name = document.getElementById('newCompanyName').value.trim();
-  if (!name) { showMsg('companyMsg', 'Enter a company name', 'error'); return; }
-  const industry = document.getElementById('newCompanyIndustry').value;
-  const currency = document.getElementById('newCompanyCurrency').value;
-  try {
-    await api('POST', '/api/companies/', { name, industry, currency });
-    document.getElementById('newCompanyName').value = '';
-    showMsg('companyMsg', '✓ Company created!', 'success');
-    await loadCompanies();
-  } catch(e) { showMsg('companyMsg', e.message, 'error'); }
+async function onCompanyChange() {
+  const sel = document.getElementById('companySelect');
+  const id = parseInt(sel.value);
+  const name = sel.options[sel.selectedIndex].text;
+  await selectCompany(id, name);
 }
 
 async function selectCompany(id, name) {
   session.companyId = id;
   session.companyName = name;
-  session.periodId = null;
-  session.periodLabel = null;
-  // Update topbar
-  document.getElementById('companySelect').value = id;
-  document.getElementById('periodSelect').innerHTML = '<option value="">— Select Period —</option>';
-  // Show period form
-  document.getElementById('periodRequireCompany').style.display = 'none';
-  document.getElementById('periodForm').style.display = 'block';
-  await loadCompanies(); // re-render with selection
-  await loadPeriods(id);
+  session.chatSessionId = null;
+
+  // Ensure period
+  const p = await api('POST', `/companies/${id}/ensure-period`);
+  if (p && p.id) {
+    session.periodId = p.id;
+    session.periodLabel = p.label || 'Auto-detected';
+    updatePeriodBadge(p.label);
+  }
+
+  // Load summary
+  const summary = await api('GET', `/companies/${id}/summary`);
+  showMain();
+
+  if (summary && summary.files && summary.files.length > 0) {
+    renderFilesList(summary.files);
+    if (summary.income_statement) {
+      renderResults({
+        income_statement: summary.income_statement,
+        entity_counts: summary.entity_counts || {},
+        period_label: summary.period ? summary.period.label : '',
+      });
+    }
+    if (summary.period && summary.period.label) {
+      updatePeriodBadge(summary.period.label);
+    }
+  } else {
+    // No files yet — show empty state
+    document.getElementById('filesList').style.display = 'none';
+    document.getElementById('resultsSection').style.display = 'none';
+    document.getElementById('emptyState').style.display = '';
+  }
 }
 
-async function onCompanyChange() {
-  const id = document.getElementById('companySelect').value;
-  if (!id) return;
-  const sel = document.getElementById('companySelect');
-  const name = sel.options[sel.selectedIndex].text;
-  await selectCompany(parseInt(id), name);
-}
-
-async function loadPeriods(companyId) {
-  try {
-    const periods = await api('GET', `/api/companies/periods/${companyId}`);
-    renderPeriodList(periods);
-    // rebuild topbar select
-    const sel = document.getElementById('periodSelect');
-    const cur = sel.value;
-    sel.innerHTML = '<option value="">— Select Period —</option>';
-    periods.forEach(p => {
-      const o = document.createElement('option');
-      o.value = p.id; o.textContent = p.label;
-      sel.appendChild(o);
-    });
-    if (cur) sel.value = cur;
-  } catch(e) { console.error(e); }
-}
-
-function renderPeriodList(periods) {
-  const el = document.getElementById('periodList');
-  if (!periods.length) {
-    el.innerHTML = '<div class="empty-state" style="padding:16px 0"><div>No periods yet — add one below</div></div>';
+function updatePeriodBadge(label) {
+  if (!label || label === 'Auto-detected') {
+    document.getElementById('periodBadge').style.display = 'none';
     return;
   }
-  el.innerHTML = periods.map(p => `
-    <div class="item-card ${session.periodId == p.id ? 'selected' : ''}" onclick="selectPeriod(${p.id},'${escHtml(p.label)}')">
-      <div>
-        <div class="item-card-name">${escHtml(p.label)}</div>
-        <div class="item-card-meta">${escHtml(p.start_date)} → ${escHtml(p.end_date)}</div>
-      </div>
-      <span class="item-card-check">✓</span>
-    </div>`).join('');
-}
-
-async function createPeriod() {
-  if (!session.companyId) { showMsg('periodMsg', 'Select a company first', 'error'); return; }
-  const label = document.getElementById('newPeriodLabel').value.trim();
-  const start_date = document.getElementById('newPeriodStart').value;
-  const end_date = document.getElementById('newPeriodEnd').value;
-  if (!label || !start_date || !end_date) { showMsg('periodMsg', 'Fill in all period fields', 'error'); return; }
-  try {
-    await api('POST', '/api/companies/periods', { company_id: session.companyId, label, start_date, end_date });
-    document.getElementById('newPeriodLabel').value = '';
-    document.getElementById('newPeriodStart').value = '';
-    document.getElementById('newPeriodEnd').value = '';
-    showMsg('periodMsg', '✓ Period created!', 'success');
-    await loadPeriods(session.companyId);
-  } catch(e) { showMsg('periodMsg', e.message, 'error'); }
-}
-
-function selectPeriod(id, label) {
-  session.periodId = id;
+  document.getElementById('periodLabel').textContent = label;
+  document.getElementById('periodBadge').style.display = 'flex';
   session.periodLabel = label;
-  document.getElementById('periodSelect').value = id;
-  loadPeriods(session.companyId); // re-render
 }
 
-async function onPeriodChange() {
-  const id = document.getElementById('periodSelect').value;
-  if (!id) return;
-  const sel = document.getElementById('periodSelect');
-  session.periodId = parseInt(id);
-  session.periodLabel = sel.options[sel.selectedIndex].text;
-  if (session.companyId) loadPeriods(session.companyId);
+function showSetup() {
+  document.getElementById('companySelect').innerHTML = '';
+  document.getElementById('periodBadge').style.display = 'none';
+  document.getElementById('setupView').style.display = '';
+  document.getElementById('mainView').style.display = 'none';
 }
 
-// ══════════════════════════════════════════════════════════
-// UPLOAD
-// ══════════════════════════════════════════════════════════
-function refreshUploadPage() {
-  const noPeriod = document.getElementById('uploadNoPeriod');
-  const ready = document.getElementById('uploadReady');
-  if (!session.periodId) {
-    noPeriod.style.display = 'flex';
-    ready.style.display = 'none';
-  } else {
-    noPeriod.style.display = 'none';
-    ready.style.display = 'block';
-    loadFilesList();
-  }
+function showMain() {
+  document.getElementById('setupView').style.display = 'none';
+  document.getElementById('mainView').style.display = '';
 }
 
-function handleFileSelect(input) {
-  selectedFile = input.files[0];
-  if (!selectedFile) return;
-  showFileInfo(selectedFile);
+// ─── COMPANY CREATION ─────────────────────────────────────────────────────────
+async function createCompany() {
+  const name = document.getElementById('setupName').value.trim();
+  if (!name) { showMsg('setupMsg', 'Enter a company name.', 'error'); return; }
+  clearMsg('setupMsg');
+  const r = await api('POST', '/companies/', {
+    name,
+    industry: document.getElementById('setupIndustry').value,
+    currency: document.getElementById('setupCurrency').value,
+  });
+  if (r.error || r.detail) { showMsg('setupMsg', r.detail || r.error || 'Failed.', 'error'); return; }
+  await loadCompanies();
 }
 
+function openNewCompanyModal() {
+  document.getElementById('modalName').value = '';
+  clearMsg('modalMsg');
+  document.getElementById('companyModal').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('companyModal').classList.remove('open');
+}
+async function createCompanyModal() {
+  const name = document.getElementById('modalName').value.trim();
+  if (!name) { showMsg('modalMsg', 'Enter a company name.', 'error'); return; }
+  clearMsg('modalMsg');
+  const r = await api('POST', '/companies/', {
+    name,
+    industry: document.getElementById('modalIndustry').value,
+    currency: document.getElementById('modalCurrency').value,
+  });
+  if (r.error || r.detail) { showMsg('modalMsg', r.detail || r.error || 'Failed.', 'error'); return; }
+  closeModal();
+  await loadCompanies();
+}
+document.getElementById('companyModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// ─── FILE UPLOAD ──────────────────────────────────────────────────────────────
+function handleDragOver(e) {
+  e.preventDefault();
+  document.getElementById('uploadZone').classList.add('drag-over');
+}
+function handleDragLeave(e) {
+  document.getElementById('uploadZone').classList.remove('drag-over');
+}
 function handleDrop(e) {
   e.preventDefault();
-  document.getElementById('dropZone').classList.remove('over');
-  selectedFile = e.dataTransfer.files[0];
-  if (selectedFile) showFileInfo(selectedFile);
+  document.getElementById('uploadZone').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) processUpload(file);
+}
+function handleFileSelect(e) {
+  const file = e.target.files[0];
+  if (file) processUpload(file);
+  e.target.value = ''; // reset so same file can be re-uploaded
 }
 
-function showFileInfo(file) {
-  document.getElementById('fileSelectedName').textContent = file.name;
-  document.getElementById('fileSelectedSize').textContent = (file.size / 1024).toFixed(1) + ' KB';
-  document.getElementById('fileInfo').style.display = 'block';
-}
+async function processUpload(file) {
+  if (!session.companyId) { alert('Select a company first.'); return; }
 
-function clearFile() {
-  selectedFile = null;
-  document.getElementById('fileInput').value = '';
-  document.getElementById('fileInfo').style.display = 'none';
-}
+  // Show processing bar
+  document.getElementById('processingBar').style.display = '';
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('procLog').innerHTML = '<p>📤 Uploading ' + escHtml(file.name) + '…</p>';
 
-async function uploadFile() {
-  if (!session.periodId) { showMsg('uploadMsg', '⚠ Select a period first', 'warn'); return; }
-  if (!selectedFile) { showMsg('uploadMsg', '⚠ Choose a file to upload', 'warn'); return; }
-  const btn = document.getElementById('btnUpload');
-  btn.innerHTML = '<span class="spinner"></span> Uploading…';
-  btn.disabled = true;
-  clearMsg('uploadMsg');
-  try {
-    const fd = new FormData();
-    fd.append('period_id', session.periodId);
-    fd.append('file', selectedFile);
-    const res = await api('POST', '/api/upload/', fd, true);
-    lastFileId = res.file_id;
-    showMsg('uploadMsg', `✓ Uploaded "${res.filename}" — ${res.row_count} rows · classified as ${res.file_type}`, 'success');
-    clearFile();
-    // Show pipeline
-    document.getElementById('pipelineCard').style.display = 'block';
-    showPipelineReady();
-    loadFilesList();
-  } catch(e) {
-    showMsg('uploadMsg', '✗ Upload failed: ' + e.message, 'error');
-  } finally {
-    btn.innerHTML = '⬆️ Upload & Analyse'; btn.disabled = false;
-  }
-}
+  const fd = new FormData();
+  fd.append('company_id', session.companyId);
+  fd.append('file', file);
 
-function showPipelineReady() {
-  const steps = [
-    { label: 'Map columns to standard fields', key: 'schema' },
-    { label: 'Extract business records', key: 'records' },
-    { label: 'Generate financial statements', key: 'statements' },
-  ];
-  document.getElementById('pipelineSteps').innerHTML = steps.map(s => `
-    <div class="upload-step" id="ps-${s.key}">
-      <div class="step-icon pending" id="pi-${s.key}">○</div>
-      <div style="font-size:.9rem">${s.label}</div>
-    </div>`).join('');
-  document.getElementById('btnProcess').style.display = 'inline-flex';
-}
-
-function setPipelineStep(key, status, icon) {
-  const el = document.getElementById('pi-' + key);
-  if (!el) return;
-  el.className = 'step-icon ' + status;
-  el.textContent = icon;
-}
-
-async function runFullPipeline() {
-  if (!session.periodId) return;
-  const btn = document.getElementById('btnProcess');
-  btn.innerHTML = '<span class="spinner"></span> Processing…';
-  btn.disabled = true;
-  clearMsg('pipelineMsg');
-
-  // Step 1: Map columns (LLM-assisted, auto-confirmed)
-  setPipelineStep('schema', 'running', '⟳');
-  try {
-    if (lastFileId) {
-      await api('POST', `/api/pipeline/schema/${lastFileId}`);
-    }
-    setPipelineStep('schema', 'done', '✓');
-  } catch(e) {
-    setPipelineStep('schema', 'error', '✗');
-    showMsg('pipelineMsg', '✗ Schema mapping failed: ' + e.message, 'error');
-    btn.innerHTML = '🚀 Retry'; btn.disabled = false;
-    return;
-  }
-
-  // Steps 2+3: Full pipeline (extract → validate → journals → statements)
-  setPipelineStep('records', 'running', '⟳');
-  setPipelineStep('statements', 'running', '⟳');
-  try {
-    const result = await api('POST', `/api/pipeline/${session.periodId}`);
-    setPipelineStep('records', 'done', '✓');
-    setPipelineStep('statements', 'done', '✓');
-    const entries = result.journal_entries || 0;
-    const recs = result.records_extracted || 0;
-    showMsg('pipelineMsg', `✅ Done! Extracted ${recs} records → ${entries} journal entries. Go to Reports →`, 'success');
-  } catch(e) {
-    setPipelineStep('records', 'error', '✗');
-    setPipelineStep('statements', 'error', '✗');
-    showMsg('pipelineMsg', '✗ Pipeline failed: ' + e.message, 'error');
-    btn.innerHTML = '🚀 Retry'; btn.disabled = false;
-    return;
-  }
-
-  btn.innerHTML = '✓ Done'; btn.disabled = false;
-}
-
-async function loadFilesList() {
-  if (!session.periodId) return;
-  try {
-    const files = await api('GET', `/api/upload/files/${session.periodId}`);
-    const el = document.getElementById('filesList');
-    if (!files.length) {
-      el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><div>No files yet</div></div>';
-      return;
-    }
-    el.innerHTML = `<table>
-      <thead><tr><th>File</th><th>Type</th><th>Rows</th><th>Confidence</th></tr></thead>
-      <tbody>${files.map(f => `
-        <tr>
-          <td style="font-weight:500">${escHtml(f.filename)}</td>
-          <td><span class="badge badge-blue">${escHtml(f.file_type||'—')}</span></td>
-          <td>${f.row_count || 0}</td>
-          <td>${f.classification_confidence ? Math.round(f.classification_confidence*100)+'%' : '—'}</td>
-        </tr>`).join('')}
-      </tbody></table>`;
-  } catch(e) { console.error(e); }
-}
-
-// ══════════════════════════════════════════════════════════
-// REPORTS
-// ══════════════════════════════════════════════════════════
-function refreshReportsPage() {
-  const noPeriod = document.getElementById('reportsNoPeriod');
-  const ready = document.getElementById('reportsReady');
-  if (!session.periodId) {
-    noPeriod.style.display = 'flex';
-    ready.style.display = 'none';
-  } else {
-    noPeriod.style.display = 'none';
-    ready.style.display = 'block';
-    loadReports();
-  }
-}
-
-let activeStmt = 'income';
-function switchStmt(name) {
-  activeStmt = name;
-  document.querySelectorAll('.stmt-tab').forEach((t,i) => t.classList.toggle('active', (i===0&&name==='income')||(i===1&&name==='trial')));
-  document.getElementById('stmtContent').style.display = name === 'income' ? 'block' : 'none';
-  document.getElementById('trialContent').style.display = name === 'trial' ? 'block' : 'none';
-}
-
-async function loadReports() {
-  if (!session.periodId) return;
-  // Income Statement
-  try {
-    const data = await api('GET', `/api/statements/income/${session.periodId}`);
-    renderIncomeStatement(data);
-    // KPIs
-    const revenue = (data.lines||[]).filter(l=>l.line_type==='revenue').reduce((a,b)=>a+(b.amount||0),0);
-    const expenses = (data.lines||[]).filter(l=>l.line_type==='expense').reduce((a,b)=>a+(b.amount||0),0);
-    const profit = (data.lines||[]).find(l=>l.line_type==='net_profit');
-    document.getElementById('kpiRevenue').textContent = fmt(revenue);
-    document.getElementById('kpiExpenses').textContent = fmt(expenses);
-    document.getElementById('kpiProfit').textContent = profit ? fmt(profit.amount) : fmt(revenue - expenses);
-    const profitEl = document.getElementById('kpiProfit');
-    profitEl.className = 'kpi-value ' + ((profit?.amount || (revenue-expenses)) >= 0 ? 'green' : 'red');
-  } catch(e) {
-    document.getElementById('stmtContent').innerHTML = `<div class="empty-state"><div class="empty-state-icon">📊</div><div>No statement yet — upload files and run the pipeline first</div></div>`;
-  }
-  // File count
-  try {
-    const files = await api('GET', `/api/upload/files/${session.periodId}`);
-    document.getElementById('kpiFiles').textContent = files.length;
-  } catch(e) {}
-  // Trial balance
-  try {
-    const data = await api('GET', `/api/statements/trial-balance/${session.periodId}`);
-    renderTrialBalance({ lines: data.trial_balance || [] });
-  } catch(e) {
-    document.getElementById('trialContent').innerHTML = `<div class="empty-state"><div>No trial balance yet</div></div>`;
-  }
-}
-
-function renderIncomeStatement(data) {
-  const lines = data.lines || [];
-  if (!lines.length) {
-    document.getElementById('stmtContent').innerHTML = `<div class="empty-state"><div class="empty-state-icon">📊</div><div>No data yet — upload files and run pipeline</div></div>`;
-    return;
-  }
-  const sections = { revenue: [], cogs: [], expense: [] };
-  let grossProfit = null, netProfit = null;
-  lines.forEach(l => {
-    if (l.line_type === 'revenue') sections.revenue.push(l);
-    else if (l.line_type === 'cogs') sections.cogs.push(l);
-    else if (l.line_type === 'expense') sections.expense.push(l);
-    else if (l.line_type === 'gross_profit') grossProfit = l;
-    else if (l.line_type === 'net_profit') netProfit = l;
+  const r = await fetch('/api/upload/auto', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + session.token },
+    body: fd,
   });
-  const card = (title, rows, total) => `
-    <div class="stmt-section">
-      <div class="stmt-section-title">${title}</div>
-      ${rows.map(r=>`<div class="stmt-row"><span>${escHtml(r.line_name)}</span><span class="stmt-amount">${fmt(r.amount)}</span></div>`).join('')}
-      ${total ? `<div class="stmt-total"><span>${escHtml(total.line_name)}</span><span class="stmt-amount ${(total.amount||0)>=0?'positive':'negative'}">${fmt(total.amount)}</span></div>` : ''}
-    </div>`;
-  document.getElementById('stmtContent').innerHTML =
-    (sections.revenue.length ? card('Revenue', sections.revenue, grossProfit) : '') +
-    (sections.cogs.length ? card('Cost of Goods Sold', sections.cogs) : '') +
-    (sections.expense.length ? card('Expenses', sections.expense, netProfit) : '');
-}
+  const data = await r.json().catch(() => ({}));
 
-function renderTrialBalance(data) {
-  const lines = data.lines || [];
-  if (!lines.length) {
-    document.getElementById('trialContent').innerHTML = `<div class="empty-state"><div>No trial balance data yet</div></div>`;
+  document.getElementById('processingBar').style.display = 'none';
+
+  if (!r.ok || data.error) {
+    alert('Upload failed: ' + (data.detail || data.error || 'Unknown error'));
     return;
   }
-  const totalDr = lines.reduce((s,l)=>s+(l.total_debit||0),0);
-  const totalCr = lines.reduce((s,l)=>s+(l.total_credit||0),0);
-  document.getElementById('trialContent').innerHTML = `
-    <table>
-      <thead><tr><th>Account</th><th>Code</th><th style="text-align:right">Debit</th><th style="text-align:right">Credit</th></tr></thead>
-      <tbody>${lines.map(l=>`
-        <tr>
-          <td>${escHtml(l.account_name||l.line_name||'')}</td>
-          <td style="color:var(--muted)">${escHtml(l.account_code||'')}</td>
-          <td style="text-align:right">${l.total_debit>0?fmt(l.total_debit):'—'}</td>
-          <td style="text-align:right">${l.total_credit>0?fmt(l.total_credit):'—'}</td>
-        </tr>`).join('')}
+
+  // Update period badge
+  if (data.period_label) {
+    session.periodLabel = data.period_label;
+    session.periodId = data.period_id;
+    updatePeriodBadge(data.period_label);
+  }
+
+  // Refresh file list and results
+  const summary = await api('GET', `/companies/${session.companyId}/summary`);
+  if (summary && summary.files) {
+    renderFilesList(summary.files);
+  }
+  renderResults(data);
+}
+
+function renderFilesList(files) {
+  if (!files || !files.length) {
+    document.getElementById('filesList').style.display = 'none';
+    return;
+  }
+  const icons = { sales: '📊', purchase: '🧾', inventory: '📦', coa: '📒', unknown: '📄' };
+  const badgeClass = { sales: 'badge-emerald', purchase: 'badge-brand', inventory: 'badge-amber', coa: 'badge-gray', unknown: 'badge-gray' };
+  document.getElementById('filesContainer').innerHTML = files.map(f => `
+    <div class="file-row">
+      <div class="file-icon">${icons[f.file_type] || '📄'}</div>
+      <div style="flex:1">
+        <div class="file-name">${escHtml(f.filename)}</div>
+        <div class="file-meta">${(f.row_count || 0).toLocaleString()} rows</div>
+      </div>
+      <span class="badge ${badgeClass[f.file_type] || 'badge-gray'}">${escHtml(f.file_type || 'unknown')}</span>
+    </div>
+  `).join('');
+  document.getElementById('filesList').style.display = '';
+}
+
+// ─── RESULTS RENDERING ────────────────────────────────────────────────────────
+function renderResults(data) {
+  const is = data.income_statement;
+  if (!is) return;
+
+  const summary = is.summary || {};
+  const revenue = summary.revenue || 0;
+  const gp = summary.gross_profit || 0;
+  const np = summary.net_profit || 0;
+  const opex = summary.operating_expenses || 0;
+
+  // KPIs
+  document.getElementById('kpiRevenue').textContent = fmtThb(revenue);
+  document.getElementById('kpiGrossProfit').textContent = fmtThb(gp);
+  document.getElementById('kpiNetProfit').textContent = fmtThb(np);
+  document.getElementById('kpiPeriod').textContent = data.period_label || session.periodLabel || '';
+  document.getElementById('kpiGM').textContent = revenue > 0 ? 'GM ' + pct(gp, revenue) : '—';
+  document.getElementById('kpiNPM').textContent = revenue > 0 ? 'NPM ' + pct(np, revenue) : '—';
+
+  document.getElementById('kpiNetProfit').className = 'stat-value ' + (np >= 0 ? 'brand' : 'red');
+
+  // Income statement table
+  const lines = is.lines || [];
+  let isHtml = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="font-size:15px;font-weight:800">Income Statement — ${escHtml(data.period_label || session.periodLabel || '')}</div>
+      <span style="font-size:12px;color:var(--text-4)">Currency: THB</span>
+    </div>
+    <table class="stmt-table">
+      <thead><tr><th style="width:50%">Line item</th><th>Account</th><th class="amount-col">Amount (฿)</th><th style="width:90px">Evidence</th></tr></thead>
+      <tbody>`;
+
+  let currentSection = '';
+  const sections = { revenue: 'REVENUE', cogs: 'COST OF GOODS SOLD', gross_profit: null, expense: 'OPERATING EXPENSES', net_profit: null };
+  const sectionOrder = ['revenue', 'cogs', 'gross_profit', 'expense', 'net_profit'];
+
+  // Group lines by type
+  const byType = {};
+  lines.forEach(l => {
+    if (!byType[l.line_type]) byType[l.line_type] = [];
+    byType[l.line_type].push(l);
+  });
+
+  sectionOrder.forEach(type => {
+    const typLines = byType[type] || [];
+    const sectionHeader = sections[type];
+    if (sectionHeader) {
+      isHtml += `<tr class="row-section"><td colspan="4">${sectionHeader}</td></tr>`;
+    }
+    typLines.forEach(l => {
+      const isTotal = type === 'gross_profit' || type === 'net_profit';
+      const amtClass = l.amount >= 0 ? 'amount-pos' : 'amount-neg';
+      const evLink = l.evidence_count > 0 ? `<a class="evidence-link">⟶ ${l.evidence_count} rows</a>` : '';
+      if (isTotal) {
+        isHtml += `<tr class="row-total"><td><strong>${escHtml(l.line_name)}</strong></td><td></td><td class="amount-col ${amtClass}"><strong>${fmtThb(l.amount)}</strong></td><td></td></tr>`;
+      } else {
+        isHtml += `<tr><td>${escHtml(l.line_name)}</td><td style="color:var(--text-4);font-size:12px">${escHtml(l.account_code || '')}</td><td class="amount-col ${amtClass}">${fmt(l.amount)}</td><td>${evLink}</td></tr>`;
+      }
+    });
+  });
+
+  isHtml += `</tbody></table>
+    <div style="margin-top:12px;font-size:12px;color:var(--text-4);font-style:italic">
+      ℹ️ All journal entries produced by deterministic double-entry rules. LLM used only for column interpretation and chat answers.
+    </div>`;
+  document.getElementById('isContent').innerHTML = isHtml;
+
+  // Trial balance
+  renderTrialBalance(data.trial_balance || []);
+
+  // Exceptions
+  renderExceptions(data.validation_summary || null);
+
+  // Ontology
+  renderOntology(data.entity_counts || {});
+
+  document.getElementById('resultsSection').style.display = '';
+  document.getElementById('emptyState').style.display = 'none';
+  session.lastResult = data;
+}
+
+function renderTrialBalance(items) {
+  if (!items || !items.length) {
+    document.getElementById('tbContent').innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No trial balance data</div></div>';
+    return;
+  }
+  let totalDebit = 0, totalCredit = 0;
+  let rows = items.map(r => {
+    totalDebit += r.total_debit || 0;
+    totalCredit += r.total_credit || 0;
+    return `<tr>
+      <td style="color:var(--text-4);font-size:12px">${escHtml(r.account_code || '')}</td>
+      <td>${escHtml(r.account_name || '')}</td>
+      <td class="amount-col">${r.total_debit > 0 ? fmt(r.total_debit) : '—'}</td>
+      <td class="amount-col">${r.total_credit > 0 ? fmt(r.total_credit) : '—'}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('tbContent').innerHTML = `
+    <table class="stmt-table">
+      <thead><tr><th>Code</th><th>Account</th><th class="amount-col">Debit (฿)</th><th class="amount-col">Credit (฿)</th></tr></thead>
+      <tbody>${rows}
+        <tr class="row-total">
+          <td colspan="2"><strong>TOTALS</strong></td>
+          <td class="amount-col"><strong>${fmt(totalDebit)}</strong></td>
+          <td class="amount-col"><strong>${fmt(totalCredit)}</strong></td>
+        </tr>
       </tbody>
-      <tfoot><tr style="font-weight:600;border-top:2px solid var(--border)">
-        <td colspan="2">Total</td>
-        <td style="text-align:right">${fmt(totalDr)}</td>
-        <td style="text-align:right">${fmt(totalCr)}</td>
-      </tr></tfoot>
     </table>`;
 }
 
-// ══════════════════════════════════════════════════════════
-// CHAT
-// ══════════════════════════════════════════════════════════
+function renderExceptions(summary) {
+  if (!summary) {
+    document.getElementById('excContent').innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">No exceptions</div><div class="empty-sub">All validations passed.</div></div>';
+    return;
+  }
+  const warnings = summary.warnings || [];
+  const criticals = summary.criticals || [];
+  if (!warnings.length && !criticals.length) {
+    document.getElementById('excContent').innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">No exceptions</div><div class="empty-sub">All validations passed.</div></div>';
+    return;
+  }
+  let html = '';
+  criticals.forEach(m => {
+    html += `<div class="exc-card critical"><div class="exc-head"><span style="font-size:18px">🔴</span><div class="exc-title">${escHtml(m)}</div><span class="badge badge-red">Critical</span></div></div>`;
+  });
+  warnings.forEach(m => {
+    html += `<div class="exc-card warning"><div class="exc-head"><span style="font-size:18px">🟡</span><div class="exc-title">${escHtml(m)}</div><span class="badge badge-amber">Warning</span></div></div>`;
+  });
+  document.getElementById('excContent').innerHTML = html;
+}
+
+function renderOntology(counts) {
+  const icons = { Branch: '🏪', SKU: '📦', Supplier: '🏭', Customer: '👤', Account: '💰' };
+  if (!counts || Object.keys(counts).length === 0) {
+    document.getElementById('ontContent').innerHTML = '<div class="empty-state"><div class="empty-icon">🕸</div><div class="empty-title">No entities extracted yet</div><div class="empty-sub">Upload sales, purchase, or inventory files to build the ontology.</div></div>';
+    return;
+  }
+  let gridHtml = '<div class="entity-grid">';
+  Object.entries(counts).forEach(([type, count]) => {
+    gridHtml += `
+      <div class="entity-card">
+        <div class="entity-icon">${icons[type] || '🔷'}</div>
+        <div class="entity-count">${count}</div>
+        <div class="entity-label">${escHtml(type)}</div>
+      </div>`;
+  });
+  gridHtml += '</div>';
+  gridHtml += `<div style="font-size:13px;color:var(--text-3);margin-top:8px;font-style:italic">ℹ️ Entities are automatically extracted from your data. Branch, SKU, Supplier, and Customer names are normalised and deduplicated.</div>`;
+  document.getElementById('ontContent').innerHTML = gridHtml;
+}
+
+// ─── TABS ─────────────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  const panes = ['is', 'tb', 'exc', 'ont', 'chat'];
+  const labels = ['Income Statement', 'Trial Balance', 'Exceptions', 'Ontology', 'Ask AI'];
+  const tabs = document.querySelectorAll('.report-tab');
+  tabs.forEach((t, i) => {
+    const id = panes[i];
+    const el = document.getElementById('pane-' + id);
+    const active = id === tab;
+    t.classList.toggle('active', active);
+    if (el) el.style.display = active ? '' : 'none';
+  });
+}
+
+// ─── AI CHAT ──────────────────────────────────────────────────────────────────
 async function sendChat() {
   const input = document.getElementById('chatInput');
   const msg = input.value.trim();
-  if (!msg) return;
-  if (!session.periodId) { appendChat('ai', '⚠ Please select a company and period first (Setup tab).'); return; }
-  appendChat('user', msg);
+  if (!msg || !session.periodId) return;
   input.value = '';
-  chatHistory.push({ role: 'user', content: msg });
-  appendChat('ai', '⟳ Thinking…', 'thinking');
-  try {
-    const res = await api('POST', `/api/chat/${session.periodId}`, { message: msg, history: chatHistory.slice(-10) });
-    removeThinking();
-    const reply = res.reply || res.message || JSON.stringify(res);
-    appendChat('ai', reply);
-    chatHistory.push({ role: 'assistant', content: reply });
-  } catch(e) {
-    removeThinking();
-    appendChat('ai', '✗ Error: ' + e.message);
+
+  appendMsg('user', msg);
+  const thinking = appendMsg('ai', '…thinking…');
+
+  const r = await api('POST', `/chat/${session.periodId}`, {
+    message: msg,
+    session_id: session.chatSessionId,
+  });
+
+  thinking.remove();
+  if (r.answer) {
+    session.chatSessionId = r.session_id;
+    appendMsg('ai', r.answer, r.evidence || []);
+  } else {
+    appendMsg('ai', 'Sorry, I encountered an error. Please try again.');
   }
 }
 
-function appendChat(role, text, id) {
-  const box = document.getElementById('chatBox');
+function appendMsg(role, text, evidence = []) {
+  const box = document.getElementById('chatMessages');
   const div = document.createElement('div');
-  div.className = 'chat-msg ' + role;
-  if (id) div.id = id;
-  div.innerHTML = `<div class="chat-bubble">${escHtml(text)}</div>`;
+  div.className = 'msg ' + role;
+  const avatar = role === 'ai' ? '🤖' : session.userName.charAt(0).toUpperCase();
+  let evHtml = '';
+  if (evidence && evidence.length) {
+    evHtml = '<div class="msg-evidence">' + evidence.map(e =>
+      `<span class="msg-ev-pill">${escHtml(typeof e === 'string' ? e : JSON.stringify(e))}</span>`
+    ).join('') + '</div>';
+  }
+  div.innerHTML = `
+    <div class="msg-avatar">${avatar}</div>
+    <div><div class="msg-bubble">${escHtml(text).replace(/\n/g,'<br>')}</div>${evHtml}</div>`;
   box.appendChild(div);
   box.scrollTop = box.scrollHeight;
-}
-
-function removeThinking() {
-  const el = document.getElementById('thinking');
-  if (el) el.remove();
-}
-
-// ══════════════════════════════════════════════════════════
-// UTILITIES
-// ══════════════════════════════════════════════════════════
-function showMsg(id, text, type) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.className = 'msg ' + type;
-  el.textContent = text;
-}
-
-function clearMsg(id) {
-  const el = document.getElementById(id);
-  if (el) { el.className = 'msg'; el.textContent = ''; }
-}
-
-function escHtml(s) {
-  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return div;
 }
 </script>
 </body>
