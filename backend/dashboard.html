@@ -2,1171 +2,941 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FinanceAI — Smart Financial Statements for SMEs</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>FinanceAI — SME Financial Intelligence</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#f5f7fb;--white:#ffffff;--border:#e4e8f0;
-  --text:#111827;--muted:#6b7280;--light:#f9fafb;
-  --primary:#5B4FF0;--primary-dark:#4a3fc0;--primary-light:#ede9fe;
-  --green:#059669;--green-light:#d1fae5;
-  --red:#dc2626;--red-light:#fee2e2;
-  --amber:#d97706;--amber-light:#fef3c7;
-  --blue:#1d4ed8;--blue-light:#dbeafe;
-  --radius:12px;--radius-sm:8px;
-  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
-  --shadow-lg:0 8px 24px rgba(0,0,0,.1);
+  --ink:#111827;--ink2:#374151;--muted:#6B7280;--faint:#9CA3AF;
+  --bg:#F9FAFB;--surface:#FFFFFF;--border:#E5E7EB;--border2:#D1D5DB;
+  --brand:#4F46E5;--brand-dim:#EEF2FF;--brand-mid:#C7D2FE;
+  --emerald:#059669;--emerald-dim:#ECFDF5;--emerald-mid:#6EE7B7;
+  --amber:#D97706;--amber-dim:#FFFBEB;--amber-mid:#FCD34D;
+  --rose:#DC2626;--rose-dim:#FEF2F2;--rose-mid:#FCA5A5;
+  --sky:#0369A1;--sky-dim:#F0F9FF;--sky-mid:#BAE6FD;
+  --violet:#7C3AED;--violet-dim:#F5F3FF;
+  --r:12px;--r-sm:8px;--r-xs:6px;
+  --sh:0 1px 2px rgba(0,0,0,.05);
+  --sh-md:0 4px 12px rgba(0,0,0,.06);
+  --sh-lg:0 8px 32px rgba(0,0,0,.08);
 }
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px;line-height:1.5}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5;font-size:15px}
 
-/* ─── Utilities ─────────────────────────────────── */
-.hidden{display:none!important}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:var(--radius-sm);font-size:.875rem;font-weight:500;cursor:pointer;border:none;transition:all .15s;outline:none}
-.btn:disabled{opacity:.5;cursor:not-allowed}
-.btn-primary{background:var(--primary);color:#fff}
-.btn-primary:not(:disabled):hover{background:var(--primary-dark)}
-.btn-secondary{background:var(--white);color:var(--text);border:1.5px solid var(--border)}
-.btn-secondary:hover{background:var(--bg)}
-.btn-ghost{background:transparent;color:var(--muted);border:1.5px solid transparent}
-.btn-ghost:hover{background:var(--bg)}
-.btn-large{padding:12px 28px;font-size:1rem}
-.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
-.spinner-dark{border-color:rgba(0,0,0,.15);border-top-color:var(--primary)}
-@keyframes spin{to{transform:rotate(360deg)}}
-.tag{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:.75rem;font-weight:500}
-.tag-blue{background:var(--blue-light);color:var(--blue)}
-.tag-green{background:var(--green-light);color:var(--green)}
-.tag-amber{background:var(--amber-light);color:var(--amber)}
-.tag-red{background:var(--red-light);color:var(--red)}
-.tag-purple{background:var(--primary-light);color:var(--primary)}
-.msg-box{padding:10px 14px;border-radius:var(--radius-sm);font-size:.85rem;margin-top:12px}
-.msg-box.error{background:var(--red-light);color:var(--red);border:1px solid #fca5a5}
-.msg-box.success{background:var(--green-light);color:var(--green);border:1px solid #6ee7b7}
-.msg-box.info{background:var(--primary-light);color:var(--primary);border:1px solid #c4b5fd}
-.msg-box.warn{background:var(--amber-light);color:var(--amber);border:1px solid #fcd34d}
+/* ─ Atoms ───────────── */
+.hide{display:none!important}
+button{cursor:pointer;border:none;outline:none;font:inherit}
+input,select,textarea{font:inherit;outline:none}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:var(--r-sm);font-size:.875rem;font-weight:500;transition:all .12s}
+.btn:disabled{opacity:.45;pointer-events:none}
+.btn-brand{background:var(--brand);color:#fff}
+.btn-brand:hover{background:#4338CA}
+.btn-outline{background:var(--surface);color:var(--ink);border:1px solid var(--border2)}
+.btn-outline:hover{background:var(--bg)}
+.btn-ghost{background:transparent;color:var(--muted);padding:8px 12px}
+.btn-ghost:hover{background:var(--bg);color:var(--ink)}
+.btn-lg{padding:12px 26px;font-size:1rem}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:500}
+.pill-brand{background:var(--brand-dim);color:var(--brand)}
+.pill-green{background:var(--emerald-dim);color:var(--emerald)}
+.pill-amber{background:var(--amber-dim);color:var(--amber)}
+.pill-red{background:var(--rose-dim);color:var(--rose)}
+.pill-sky{background:var(--sky-dim);color:var(--sky)}
+.pill-gray{background:var(--bg);color:var(--muted);border:1px solid var(--border)}
+.alert{padding:12px 16px;border-radius:var(--r-sm);font-size:.875rem;margin-top:12px}
+.alert-green{background:var(--emerald-dim);color:var(--emerald);border:1px solid var(--emerald-mid)}
+.alert-red{background:var(--rose-dim);color:var(--rose);border:1px solid var(--rose-mid)}
+.alert-amber{background:var(--amber-dim);color:var(--amber);border:1px solid var(--amber-mid)}
+.alert-brand{background:var(--brand-dim);color:var(--brand);border:1px solid var(--brand-mid)}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:rot .55s linear infinite}
+.spin-dark{border-color:rgba(0,0,0,.12);border-top-color:var(--brand)}
+@keyframes rot{to{transform:rotate(360deg)}}
+input[type=text],input[type=email],input[type=password],input[type=date],select{width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--surface);color:var(--ink);transition:border .12s}
+input:focus,select:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-dim)}
+label{display:block;font-size:.8rem;font-weight:600;color:var(--ink2);margin-bottom:5px}
 
-/* ─── LANDING ───────────────────────────────────── */
-#landing{min-height:100vh;background:var(--white)}
-.land-nav{max-width:1100px;margin:0 auto;padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
-.land-logo{display:flex;align-items:center;gap:8px;font-size:1.1rem;font-weight:700;color:var(--primary)}
-.land-logo svg{width:28px;height:28px}
-.land-nav-actions{display:flex;align-items:center;gap:10px}
-.land-hero{max-width:700px;margin:0 auto;padding:80px 24px 60px;text-align:center}
-.land-hero h1{font-size:2.6rem;font-weight:700;line-height:1.2;margin-bottom:16px;letter-spacing:-.02em}
-.land-hero h1 span{color:var(--primary)}
-.land-hero p{font-size:1.1rem;color:var(--muted);margin-bottom:32px;line-height:1.7}
-.land-hero-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
-.land-steps{background:var(--bg);padding:60px 24px}
-.land-steps-inner{max-width:1000px;margin:0 auto}
-.land-steps h2{text-align:center;font-size:1.6rem;font-weight:700;margin-bottom:8px}
-.land-steps-sub{text-align:center;color:var(--muted);margin-bottom:48px;font-size:1rem}
-.steps-row{display:grid;grid-template-columns:repeat(5,1fr);gap:24px;position:relative}
-.steps-row::before{content:'';position:absolute;top:28px;left:10%;width:80%;height:2px;background:linear-gradient(90deg,var(--primary-light),var(--primary-light));z-index:0}
-.step-item{text-align:center;position:relative;z-index:1}
-.step-num{width:56px;height:56px;border-radius:50%;background:var(--primary);color:#fff;font-size:1.1rem;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;box-shadow:0 0 0 6px var(--primary-light)}
-.step-item h3{font-size:.9rem;font-weight:600;margin-bottom:4px}
-.step-item p{font-size:.8rem;color:var(--muted);line-height:1.5}
-.land-features{max-width:1000px;margin:0 auto;padding:60px 24px}
-.land-features h2{text-align:center;font-size:1.6rem;font-weight:700;margin-bottom:40px}
-.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
-.feat-card{padding:24px;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--white)}
-.feat-icon{width:40px;height:40px;border-radius:var(--radius-sm);background:var(--primary-light);display:flex;align-items:center;justify-content:center;margin-bottom:12px;font-size:1.3rem}
-.feat-card h3{font-size:.95rem;font-weight:600;margin-bottom:6px}
-.feat-card p{font-size:.85rem;color:var(--muted);line-height:1.6}
-.land-cta{background:var(--primary);padding:60px 24px;text-align:center}
-.land-cta h2{font-size:1.8rem;font-weight:700;color:#fff;margin-bottom:12px}
-.land-cta p{color:rgba(255,255,255,.75);margin-bottom:28px}
-.land-cta .btn{background:#fff;color:var(--primary);font-weight:600}
-.land-footer{text-align:center;padding:20px;font-size:.82rem;color:var(--muted);border-top:1px solid var(--border)}
+/* ─ LANDING ─────────── */
+#land{background:var(--surface)}
+.lnav{max-width:1140px;margin:0 auto;padding:0 28px;height:66px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.llogo{display:flex;align-items:center;gap:9px;font-size:1.05rem;font-weight:700;color:var(--brand)}
+.llogo svg{width:30px;height:30px}
+.lhero{max-width:760px;margin:0 auto;padding:88px 28px 72px;text-align:center}
+.lhero h1{font-size:2.8rem;font-weight:800;line-height:1.18;letter-spacing:-.03em;margin-bottom:18px}
+.lhero h1 span{color:var(--brand)}
+.lhero p{font-size:1.05rem;color:var(--muted);line-height:1.75;margin-bottom:36px;max-width:520px;margin-left:auto;margin-right:auto}
+.hero-ctas{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.positioning{max-width:860px;margin:0 auto;padding:0 28px 64px;display:grid;grid-template-columns:repeat(3,1fr);gap:20px;text-align:center}
+.pos-card{padding:24px 20px;background:var(--bg);border-radius:var(--r);border:1px solid var(--border)}
+.pos-icon{font-size:1.8rem;margin-bottom:10px}
+.pos-card h3{font-size:.9rem;font-weight:700;margin-bottom:6px}
+.pos-card p{font-size:.8rem;color:var(--muted);line-height:1.6}
+.arrow-row{max-width:860px;margin:0 auto;padding:0 28px 48px;display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap}
+.arrow-chip{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-size:.82rem;font-weight:500;white-space:nowrap}
+.arrow-sep{color:var(--brand);font-size:1.1rem;font-weight:700}
+.lsteps-wrap{background:var(--bg);padding:64px 28px}
+.lsteps-inner{max-width:1000px;margin:0 auto}
+.lsteps-inner h2{text-align:center;font-size:1.55rem;font-weight:700;margin-bottom:6px}
+.lsteps-inner p{text-align:center;color:var(--muted);margin-bottom:44px}
+.steps5{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;background:var(--border);border-radius:var(--r);overflow:hidden}
+.s5{background:var(--surface);padding:22px 16px;position:relative}
+.s5-num{width:34px;height:34px;border-radius:50%;background:var(--brand-dim);color:var(--brand);font-weight:800;font-size:.9rem;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+.s5 h3{font-size:.82rem;font-weight:700;margin-bottom:5px}
+.s5 p{font-size:.75rem;color:var(--muted);line-height:1.5}
+.lfeats{max-width:1000px;margin:0 auto;padding:64px 28px}
+.lfeats h2{text-align:center;font-size:1.55rem;font-weight:700;margin-bottom:36px}
+.feats4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.fc{padding:20px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface)}
+.fc-ico{width:36px;height:36px;border-radius:var(--r-sm);background:var(--brand-dim);display:flex;align-items:center;justify-content:center;font-size:1.1rem;margin-bottom:10px}
+.fc h3{font-size:.82rem;font-weight:700;margin-bottom:4px}
+.fc p{font-size:.75rem;color:var(--muted);line-height:1.55}
+.lcta{background:var(--brand);padding:64px 28px;text-align:center}
+.lcta h2{font-size:1.7rem;font-weight:700;color:#fff;margin-bottom:10px}
+.lcta p{color:rgba(255,255,255,.72);margin-bottom:28px}
+.lcta .btn{background:#fff;color:var(--brand);font-weight:600}
+.lfooter{text-align:center;padding:20px;font-size:.78rem;color:var(--faint);border-top:1px solid var(--border)}
 
-/* ─── AUTH MODAL ────────────────────────────────── */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px}
-.modal-card{background:var(--white);border-radius:var(--radius);padding:36px;width:100%;max-width:440px;box-shadow:var(--shadow-lg)}
-.modal-logo{text-align:center;margin-bottom:24px}
-.modal-logo h2{font-size:1.3rem;font-weight:700;color:var(--primary);margin-bottom:4px}
-.modal-logo p{font-size:.88rem;color:var(--muted)}
-.auth-tabs{display:flex;background:var(--bg);border-radius:var(--radius-sm);padding:3px;margin-bottom:22px}
-.auth-tab{flex:1;text-align:center;padding:8px;border-radius:6px;cursor:pointer;font-size:.88rem;font-weight:500;color:var(--muted);transition:all .15s}
-.auth-tab.active{background:var(--white);color:var(--primary);box-shadow:var(--shadow)}
-.form-field{margin-bottom:14px}
-.form-field label{display:block;font-size:.82rem;font-weight:600;color:var(--text);margin-bottom:5px}
-.form-field input,.form-field select{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:.9rem;background:var(--white);color:var(--text);outline:none;transition:border .15s}
-.form-field input:focus,.form-field select:focus{border-color:var(--primary)}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+/* ─ AUTH MODAL ──────── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.42);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;z-index:999;padding:20px}
+.mcard{background:var(--surface);border-radius:var(--r);padding:38px;width:100%;max-width:440px;box-shadow:var(--sh-lg)}
+.mcard-logo{text-align:center;margin-bottom:26px}
+.mcard-logo h2{font-size:1.2rem;font-weight:800;color:var(--brand);margin-bottom:3px}
+.mcard-logo p{font-size:.83rem;color:var(--muted)}
+.atabs{display:flex;background:var(--bg);border-radius:var(--r-sm);padding:3px;margin-bottom:20px}
+.atab{flex:1;text-align:center;padding:8px;border-radius:6px;cursor:pointer;font-size:.85rem;font-weight:500;color:var(--muted);transition:all .12s}
+.atab.on{background:var(--surface);color:var(--brand);box-shadow:var(--sh)}
+.fg{margin-bottom:14px}
+.fgrow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 
-/* ─── APP SHELL ─────────────────────────────────── */
+/* ─ APP SHELL ───────── */
 #app{display:none;flex-direction:column;min-height:100vh}
-.app-bar{background:var(--white);border-bottom:1px solid var(--border);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
-.app-logo{display:flex;align-items:center;gap:8px;font-size:1rem;font-weight:700;color:var(--primary)}
-.app-user{display:flex;align-items:center;gap:12px}
-.user-pill{background:var(--primary-light);color:var(--primary);padding:5px 14px;border-radius:20px;font-size:.83rem;font-weight:600}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);height:60px;padding:0 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--sh)}
+.tlogo{display:flex;align-items:center;gap:8px;font-size:.95rem;font-weight:700;color:var(--brand)}
+.tuser{display:flex;align-items:center;gap:10px}
+.uname{background:var(--brand-dim);color:var(--brand);padding:5px 14px;border-radius:20px;font-size:.8rem;font-weight:600}
 
-/* ─── STEP WIZARD ───────────────────────────────── */
-.wizard-rail{background:var(--white);border-bottom:1px solid var(--border);padding:0 28px}
-.wizard-steps{display:flex;max-width:800px;margin:0 auto}
-.wiz-step{flex:1;display:flex;flex-direction:column;align-items:center;padding:14px 4px;position:relative;cursor:pointer}
-.wiz-step::after{content:'';position:absolute;right:0;top:50%;transform:translateY(-50%);width:1px;height:40%;background:var(--border)}
-.wiz-step:last-child::after{display:none}
-.wiz-bubble{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:700;margin-bottom:5px;transition:all .2s}
-.wiz-bubble.done{background:var(--green-light);color:var(--green);font-size:1rem}
-.wiz-bubble.active{background:var(--primary);color:#fff;box-shadow:0 0 0 4px var(--primary-light)}
-.wiz-bubble.locked{background:var(--bg);color:var(--muted);border:1.5px solid var(--border)}
-.wiz-name{font-size:.75rem;font-weight:600;color:var(--muted);text-align:center}
-.wiz-name.active{color:var(--primary)}
+/* ─ STEP RAIL ───────── */
+.rail{background:var(--surface);border-bottom:1px solid var(--border)}
+.rail-inner{max-width:900px;margin:0 auto;padding:0 28px;display:flex}
+.rs{flex:1;display:flex;flex-direction:column;align-items:center;padding:14px 6px;position:relative;cursor:pointer}
+.rs::after{content:'';position:absolute;right:0;top:20px;height:32px;width:1px;background:var(--border)}
+.rs:last-child::after{display:none}
+.rb{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;margin-bottom:5px;transition:all .18s}
+.rb.done{background:var(--emerald-dim);color:var(--emerald)}
+.rb.active{background:var(--brand);color:#fff;box-shadow:0 0 0 4px var(--brand-dim)}
+.rb.lock{background:var(--bg);color:var(--faint);border:1px solid var(--border)}
+.rl{font-size:.7rem;font-weight:600;color:var(--muted);text-align:center;line-height:1.3}
+.rl.active{color:var(--brand)}
 
-/* ─── WIZARD CONTENT ────────────────────────────── */
-.wizard-body{flex:1;padding:32px 28px;max-width:860px;margin:0 auto;width:100%}
-.step-page{display:none}
-.step-page.active{display:block}
-.step-header{margin-bottom:28px}
-.step-header h2{font-size:1.3rem;font-weight:700;margin-bottom:4px}
-.step-header p{color:var(--muted);font-size:.9rem}
-.step-card{background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius);padding:26px;margin-bottom:20px}
-.step-card h3{font-size:.95rem;font-weight:700;margin-bottom:16px;color:var(--text)}
-.step-footer{display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-top:1px solid var(--border);margin-top:8px}
-.step-footer-note{font-size:.82rem;color:var(--muted)}
+/* ─ WIZARD BODY ─────── */
+.wbody{flex:1;max-width:900px;margin:0 auto;padding:32px 28px;width:100%}
+.wp{display:none}
+.wp.on{display:block}
+.wh{margin-bottom:26px}
+.wh h2{font-size:1.2rem;font-weight:700;margin-bottom:4px}
+.wh p{color:var(--muted);font-size:.875rem}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:24px;margin-bottom:18px;box-shadow:var(--sh)}
+.card h3{font-size:.9rem;font-weight:700;margin-bottom:16px}
+.wfoot{display:flex;align-items:center;justify-content:space-between;padding-top:20px;border-top:1px solid var(--border);margin-top:4px}
+.wfoot-note{font-size:.8rem;color:var(--muted)}
 
-/* ─── STEP 1: SETUP ─────────────────────────────── */
-.inner-tabs{display:flex;gap:2px;background:var(--bg);border-radius:var(--radius-sm);padding:3px;margin-bottom:20px;width:fit-content}
-.inner-tab{padding:7px 18px;border-radius:6px;font-size:.87rem;font-weight:500;color:var(--muted);cursor:pointer;transition:all .15s}
-.inner-tab.active{background:var(--white);color:var(--primary);box-shadow:var(--shadow)}
-.drop-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:36px 20px;text-align:center;cursor:pointer;transition:all .15s;background:var(--bg)}
-.drop-zone:hover,.drop-zone.over{border-color:var(--primary);background:var(--primary-light)}
-.drop-icon{font-size:2.2rem;margin-bottom:10px}
-.drop-title{font-weight:600;margin-bottom:4px}
-.drop-sub{font-size:.83rem;color:var(--muted)}
-.file-formats{display:flex;gap:4px;justify-content:center;flex-wrap:wrap;margin-top:10px}
-.file-pill{padding:2px 8px;border:1px solid var(--border);border-radius:20px;font-size:.73rem;color:var(--muted)}
-.file-selected-bar{display:flex;align-items:center;gap:12px;background:var(--green-light);border:1.5px solid #6ee7b7;border-radius:var(--radius-sm);padding:12px 16px;margin-top:12px}
-.file-selected-bar .fname{font-weight:600;font-size:.9rem}
-.file-selected-bar .fsize{font-size:.8rem;color:var(--green)}
-.checklist{display:flex;flex-direction:column;gap:6px}
-.check-row{display:flex;align-items:center;gap:10px;font-size:.88rem;color:var(--muted)}
-.check-row.done{color:var(--text)}
-.check-icon{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;flex-shrink:0;background:var(--bg);border:1.5px solid var(--border)}
-.check-icon.done{background:var(--green-light);border-color:#6ee7b7;color:var(--green)}
+/* ─ STEP 1 ──────────── */
+.itabs{display:flex;gap:2px;background:var(--bg);border-radius:var(--r-sm);padding:3px;width:fit-content;margin-bottom:20px}
+.itab{padding:7px 18px;border-radius:6px;font-size:.85rem;font-weight:500;color:var(--muted);cursor:pointer;transition:all .12s}
+.itab.on{background:var(--surface);color:var(--brand);box-shadow:var(--sh)}
+.dz{border:1.5px dashed var(--border2);border-radius:var(--r);padding:36px 20px;text-align:center;cursor:pointer;transition:all .15s;background:var(--bg)}
+.dz:hover,.dz.over{border-color:var(--brand);background:var(--brand-dim)}
+.dz-ico{font-size:2rem;margin-bottom:10px}
+.dz-title{font-weight:600;margin-bottom:4px;font-size:.95rem}
+.dz-sub{font-size:.8rem;color:var(--muted);margin-bottom:10px}
+.fmt-tags{display:flex;gap:4px;justify-content:center;flex-wrap:wrap}
+.fmt-tag{padding:2px 8px;border:1px solid var(--border);border-radius:20px;font-size:.7rem;color:var(--muted)}
+.fbar{display:flex;align-items:center;gap:12px;background:var(--emerald-dim);border:1px solid var(--emerald-mid);border-radius:var(--r-sm);padding:12px 16px;margin-top:12px}
+.fbar-name{font-weight:600;font-size:.88rem}
+.fbar-size{font-size:.78rem;color:var(--emerald)}
+.chklist{display:flex;flex-direction:column;gap:7px}
+.ck{display:flex;align-items:center;gap:10px;font-size:.875rem;color:var(--muted)}
+.ck.done{color:var(--ink)}
+.ck-dot{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;flex-shrink:0;background:var(--bg);border:1.5px solid var(--border);color:var(--faint)}
+.ck-dot.done{background:var(--emerald-dim);border-color:var(--emerald-mid);color:var(--emerald)}
 
-/* ─── STEP 2: ONTOLOGY GRAPH ────────────────────── */
-.graph-container{background:var(--bg);border-radius:var(--radius);border:1.5px solid var(--border);padding:20px;overflow:auto;position:relative;min-height:360px}
-.graph-legend{display:flex;gap:16px;margin-bottom:14px;font-size:.8rem;align-items:center}
-.legend-dot{width:12px;height:12px;border-radius:50%}
-#ontologyCanvas{display:block;width:100%;min-height:320px}
-.reassign-panel{background:var(--white);border:1.5px solid var(--primary);border-radius:var(--radius-sm);padding:14px;margin-top:12px;display:none}
-.reassign-panel h4{font-size:.88rem;font-weight:700;margin-bottom:10px}
-.category-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
-.cat-btn{padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:.82rem;cursor:pointer;text-align:center;transition:all .15s;background:var(--white)}
-.cat-btn:hover{border-color:var(--primary);background:var(--primary-light);color:var(--primary)}
-.cat-btn.selected{border-color:var(--primary);background:var(--primary);color:#fff}
+/* ─ STEP 2: ONTOLOGY ── */
+.graph-wrap{border-radius:var(--r-sm);background:var(--bg);border:1px solid var(--border);overflow:hidden;position:relative}
+.graph-toolbar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--surface)}
+.graph-legend{display:flex;gap:14px;font-size:.76rem}
+.gleg{display:flex;align-items:center;gap:5px}
+.gleg-dot{width:10px;height:10px;border-radius:50%}
+#gCanvas{display:block}
+.reassign{background:var(--surface);border:1.5px solid var(--brand-mid);border-radius:var(--r-sm);padding:16px;margin-top:14px;display:none}
+.reassign h4{font-size:.85rem;font-weight:700;margin-bottom:12px}
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:7px}
+.catbtn{padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:.78rem;cursor:pointer;text-align:left;transition:all .12s;background:var(--surface);color:var(--ink2)}
+.catbtn:hover{border-color:var(--brand);background:var(--brand-dim);color:var(--brand)}
+.catbtn.on{background:var(--brand);border-color:var(--brand);color:#fff}
 
-/* ─── STEP 3: PARALLEL SIMULATION ──────────────── */
-.agents-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.agent-card{background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius);padding:18px;transition:border-color .3s}
-.agent-card.running{border-color:var(--primary)}
-.agent-card.done{border-color:#6ee7b7}
-.agent-card.error{border-color:#fca5a5}
-.agent-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-.agent-icon{width:32px;height:32px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
-.agent-name{font-size:.88rem;font-weight:600}
-.agent-desc{font-size:.78rem;color:var(--muted);margin-top:1px}
-.prog-track{height:6px;background:var(--bg);border-radius:3px;overflow:hidden;margin-bottom:6px}
-.prog-bar{height:100%;border-radius:3px;transition:width .4s ease}
-.agent-status{font-size:.78rem;color:var(--muted)}
-.sim-summary{background:var(--green-light);border:1.5px solid #6ee7b7;border-radius:var(--radius);padding:18px;display:none}
-.sim-summary h3{font-size:.95rem;font-weight:700;color:var(--green);margin-bottom:8px}
-.sim-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px}
-.sim-stat{text-align:center}
-.sim-stat-val{font-size:1.2rem;font-weight:700;color:var(--green)}
-.sim-stat-label{font-size:.75rem;color:var(--muted);margin-top:2px}
+/* ─ STEP 3: AGENTS ──── */
+.agents{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.ag{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;transition:border-color .25s}
+.ag.run{border-color:var(--brand-mid)}
+.ag.ok{border-color:var(--emerald-mid)}
+.ag.err{border-color:var(--rose-mid)}
+.ag-head{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px}
+.ag-ico{width:34px;height:34px;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.ag-name{font-size:.85rem;font-weight:700;margin-bottom:2px}
+.ag-desc{font-size:.74rem;color:var(--muted);line-height:1.4}
+.pg-track{height:5px;background:var(--bg);border-radius:3px;overflow:hidden;margin-bottom:6px}
+.pg-fill{height:100%;border-radius:3px;transition:width .35s}
+.ag-stat{font-size:.75rem;color:var(--muted)}
+.exc-box{background:var(--surface);border:1px solid var(--amber-mid);border-radius:var(--r);padding:18px;margin-top:16px;display:none}
+.exc-box h3{font-size:.88rem;font-weight:700;color:var(--amber);margin-bottom:12px}
+.exc-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--bg);font-size:.8rem}
+.exc-row:last-child{border:none}
+.sim-done{background:var(--emerald-dim);border:1px solid var(--emerald-mid);border-radius:var(--r);padding:18px;margin-top:16px;display:none}
+.sim-done h3{font-size:.88rem;font-weight:700;color:var(--emerald);margin-bottom:12px}
+.sim-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.sstat{text-align:center}
+.sstat-v{font-size:1.3rem;font-weight:700;color:var(--emerald)}
+.sstat-l{font-size:.72rem;color:var(--muted);margin-top:2px}
 
-/* ─── STEP 4: GENERATE ──────────────────────────── */
-.gen-status{display:flex;flex-direction:column;align-items:center;padding:40px 20px;text-align:center}
-.gen-ring{width:80px;height:80px;border-radius:50%;border:4px solid var(--bg);border-top-color:var(--primary);animation:spin .8s linear infinite;margin-bottom:16px}
-.gen-ring.done{border:4px solid var(--green-light);border-top-color:var(--green);animation:none}
-.gen-title{font-size:1.1rem;font-weight:700;margin-bottom:6px}
-.gen-sub{font-size:.88rem;color:var(--muted)}
-.gen-steps-list{width:100%;max-width:360px;margin-top:20px;text-align:left}
-.gen-step-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bg)}
-.gen-step-row:last-child{border:none}
-.gen-step-icon{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;flex-shrink:0}
+/* ─ STEP 4: GENERATE ── */
+.gen-pre{display:block}
+.gen-run{display:none}
+.gen-summary{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:22px}
+.gs-tile{background:var(--bg);border-radius:var(--r-sm);padding:14px}
+.gs-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:5px}
+.gs-val{font-size:1rem;font-weight:700}
+.gs-sub{font-size:.78rem;color:var(--muted);margin-top:2px}
+.gen-prog-ring{width:72px;height:72px;border-radius:50%;border:4px solid var(--bg);border-top-color:var(--brand);animation:rot .75s linear infinite;margin:0 auto 16px}
+.gen-prog-ring.done{border:4px solid var(--emerald-mid);border-top-color:var(--emerald);animation:none}
+.gen-steps-list{max-width:380px;margin:0 auto;text-align:left;margin-top:18px}
+.gsr{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--bg);font-size:.83rem}
+.gsr:last-child{border:none}
+.gsi{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;flex-shrink:0;background:var(--bg);border:1px solid var(--border);color:var(--faint)}
 
-/* ─── STEP 5: REPORT ────────────────────────────── */
-.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
-.kpi{background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius);padding:18px}
-.kpi-label{font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
-.kpi-val{font-size:1.5rem;font-weight:700}
-.kpi-val.blue{color:var(--blue)}
-.kpi-val.green{color:var(--green)}
-.kpi-val.red{color:var(--red)}
-.kpi-val.purple{color:var(--primary)}
-.report-tabs{display:flex;gap:2px;background:var(--bg);border-radius:var(--radius-sm);padding:3px;width:fit-content;margin-bottom:20px}
-.report-tab{padding:8px 18px;border-radius:6px;font-size:.87rem;font-weight:500;color:var(--muted);cursor:pointer;transition:all .15s}
-.report-tab.active{background:var(--white);color:var(--primary);box-shadow:var(--shadow)}
-.stmt-section-title{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:10px 0 6px;border-bottom:2px solid var(--border);margin-bottom:2px}
-.stmt-row{display:flex;justify-content:space-between;padding:8px 4px;font-size:.9rem;border-bottom:1px solid var(--bg)}
-.stmt-row:last-child{border-bottom:none}
-.stmt-total{display:flex;justify-content:space-between;padding:12px 4px;font-weight:700;border-top:2px solid var(--text);margin-top:4px;font-size:.95rem}
-.stmt-amount.pos{color:var(--green)}
-.stmt-amount.neg{color:var(--red)}
+/* ─ STEP 5: REPORT ──── */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;box-shadow:var(--sh)}
+.kpi-l{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:5px}
+.kpi-v{font-size:1.4rem;font-weight:800}
+.kpi-v.blue{color:var(--sky)}
+.kpi-v.green{color:var(--emerald)}
+.kpi-v.red{color:var(--rose)}
+.kpi-v.brand{color:var(--brand)}
+.rtabs{display:flex;gap:2px;background:var(--bg);border-radius:var(--r-sm);padding:3px;width:fit-content;margin-bottom:20px}
+.rtab{padding:8px 18px;border-radius:6px;font-size:.85rem;font-weight:500;color:var(--muted);cursor:pointer;transition:all .12s}
+.rtab.on{background:var(--surface);color:var(--brand);box-shadow:var(--sh)}
+.stmt-section-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:12px 0 6px;border-bottom:1.5px solid var(--border2)}
+.stmt-row{display:flex;justify-content:space-between;align-items:center;padding:8px 4px;font-size:.875rem;border-bottom:1px solid var(--bg)}
+.stmt-row:last-child{border:none}
+.stmt-ev{font-size:.7rem;color:var(--brand);cursor:pointer;margin-left:8px}
+.stmt-ev:hover{text-decoration:underline}
+.stmt-total{display:flex;justify-content:space-between;align-items:center;padding:12px 4px;font-weight:700;font-size:.925rem;border-top:2px solid var(--ink)}
+.ev-link{color:var(--brand);font-size:.72rem}
+.exc-flag{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--amber);margin-right:5px;flex-shrink:0}
 </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════ LANDING PAGE -->
-<div id="landing">
-  <nav class="land-nav">
-    <div class="land-logo">
-      <svg viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="7" fill="#5B4FF0"/><path d="M7 18l5-5 4 4 5-7" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+<!-- ═══════ LANDING ═══════ -->
+<div id="land">
+  <nav class="lnav">
+    <div class="llogo">
+      <svg viewBox="0 0 30 30" fill="none"><rect width="30" height="30" rx="8" fill="#4F46E5"/><path d="M7 20l5-6 4 5 5-9" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="22" cy="9" r="2.5" fill="#A5B4FC"/></svg>
       FinanceAI
     </div>
-    <div class="land-nav-actions">
+    <div style="display:flex;gap:8px">
       <button class="btn btn-ghost" onclick="openAuth('login')">Sign in</button>
-      <button class="btn btn-primary" onclick="openAuth('register')">Get started free</button>
+      <button class="btn btn-brand" onclick="openAuth('reg')">Get started free</button>
     </div>
   </nav>
 
-  <section class="land-hero">
-    <h1>Turn messy records into<br><span>clean financial statements</span></h1>
-    <p>Upload any CSV or Excel file. Our AI maps your data to accounting categories, validates it with parallel agents, and generates audit-ready statements in minutes.</p>
-    <div class="land-hero-btns">
-      <button class="btn btn-primary btn-large" onclick="openAuth('register')">Try it free — no credit card</button>
-      <button class="btn btn-secondary btn-large" onclick="openAuth('login')">Sign in</button>
+  <section class="lhero">
+    <div style="margin-bottom:16px"><span class="pill pill-brand">SME Financial Intelligence · Phase 2 MVP</span></div>
+    <h1>Messy records into <span>traceable financial statements</span></h1>
+    <p>Upload any Excel or CSV file. Our system maps your business ontology, validates data through process agents, and generates evidence-backed statements — not just AI-generated numbers.</p>
+    <div class="hero-ctas">
+      <button class="btn btn-brand btn-lg" onclick="openAuth('reg')">Start free — no credit card</button>
+      <button class="btn btn-outline btn-lg" onclick="openAuth('login')">Sign in</button>
     </div>
   </section>
 
-  <section class="land-steps">
-    <div class="land-steps-inner">
-      <h2>Five steps to your financial report</h2>
-      <p class="land-steps-sub">Each step asks for your confirmation before proceeding — you're always in control</p>
-      <div class="steps-row">
-        <div class="step-item">
-          <div class="step-num">1</div>
-          <h3>Upload &amp; Profile</h3>
-          <p>Add your company details and upload any transaction file</p>
-        </div>
-        <div class="step-item">
-          <div class="step-num">2</div>
-          <h3>Ontology Map</h3>
-          <p>Interact with an AI graph to confirm how columns map to accounts</p>
-        </div>
-        <div class="step-item">
-          <div class="step-num">3</div>
-          <h3>AI Validation</h3>
-          <p>Multiple agents run in parallel to clean and verify your data</p>
-        </div>
-        <div class="step-item">
-          <div class="step-num">4</div>
-          <h3>Generate</h3>
-          <p>One click produces your full income statement and trial balance</p>
-        </div>
-        <div class="step-item">
-          <div class="step-num">5</div>
-          <h3>Report &amp; Export</h3>
-          <p>Review, analyse, and download your financial statements</p>
-        </div>
-      </div>
-    </div>
-  </section>
+  <div class="arrow-row">
+    <span class="arrow-chip">📂 Messy SME data</span><span class="arrow-sep">→</span>
+    <span class="arrow-chip">🗂 Business ontology</span><span class="arrow-sep">→</span>
+    <span class="arrow-chip">🕸 Knowledge graph</span><span class="arrow-sep">→</span>
+    <span class="arrow-chip">🔍 Process validation</span><span class="arrow-sep">→</span>
+    <span class="arrow-chip">📊 Evidence-backed statements</span><span class="arrow-sep">→</span>
+    <span class="arrow-chip">💬 Management chat</span>
+  </div>
 
-  <section class="land-features">
-    <h2>Built for small businesses</h2>
-    <div class="features-grid">
-      <div class="feat-card">
-        <div class="feat-icon">📂</div>
-        <h3>Any file format</h3>
-        <p>CSV, Excel (.xlsx, .xls), ODS, and TSV — with automatic Thai and UTF-8 encoding detection.</p>
-      </div>
-      <div class="feat-card">
-        <div class="feat-icon">🧠</div>
-        <h3>AI-powered mapping</h3>
-        <p>Columns are classified automatically. Adjust the interactive graph until the mapping is perfect.</p>
-      </div>
-      <div class="feat-card">
-        <div class="feat-icon">🔒</div>
-        <h3>Your data, only yours</h3>
-        <p>Every account is private. Your records are isolated from all other users with JWT authentication.</p>
+  <div class="positioning">
+    <div class="pos-card">
+      <div class="pos-icon">🗄</div>
+      <h3>Raw evidence preserved</h3>
+      <p>Every source row is stored with its original file, sheet, and position so any statement line can be traced back.</p>
+    </div>
+    <div class="pos-card">
+      <div class="pos-icon">🤖</div>
+      <h3>LLM assists, rules decide</h3>
+      <p>AI helps map Thai & English columns and explain exceptions. Deterministic rules handle all final accounting numbers.</p>
+    </div>
+    <div class="pos-card">
+      <div class="pos-icon">⚡</div>
+      <h3>Parallel process agents</h3>
+      <p>Sales, Procurement, Inventory, Bank, Tax, and Audit agents run in parallel — each checking its own process chain.</p>
+    </div>
+  </div>
+
+  <section class="lsteps-wrap">
+    <div class="lsteps-inner">
+      <h2>Five-stage pipeline</h2>
+      <p>Each stage asks for your confirmation before proceeding</p>
+      <div class="steps5">
+        <div class="s5"><div class="s5-num">1</div><h3>Business setup & upload</h3><p>Company profile, reporting period, and raw data files (Excel, CSV, ERP exports)</p></div>
+        <div class="s5"><div class="s5-num">2</div><h3>Ontology & graph mapping</h3><p>Map messy columns to standard business fields. Confirm entity relationships (SKU, branch, supplier, account)</p></div>
+        <div class="s5"><div class="s5-num">3</div><h3>Process agent validation</h3><p>6 parallel agents validate sales, procurement, inventory, bank, tax, and audit flows. Exception dashboard shown</p></div>
+        <div class="s5"><div class="s5-num">4</div><h3>Journal & statement generation</h3><p>Validated records mapped to journal entries, trial balance, income statement, and gross profit</p></div>
+        <div class="s5"><div class="s5-num">5</div><h3>Report & evidence chat</h3><p>Every line links to source records and validation results. Ask why any number is what it is</p></div>
       </div>
     </div>
   </section>
 
-  <section class="land-cta">
-    <h2>Ready to see your numbers clearly?</h2>
-    <p>Free to start. No spreadsheet expertise required.</p>
-    <button class="btn btn-large" onclick="openAuth('register')">Create your free account →</button>
+  <section class="lfeats">
+    <h2>Built for real SME data</h2>
+    <div class="feats4">
+      <div class="fc"><div class="fc-ico">🇹🇭</div><h3>Thai & English files</h3><p>ยอดขาย, Sales, TotalSale — all mapped to standard fields with confidence scoring</p></div>
+      <div class="fc"><div class="fc-ico">🔗</div><h3>Evidence trail</h3><p>Every revenue line links back to the exact Excel row and validation agent that approved it</p></div>
+      <div class="fc"><div class="fc-ico">⚠️</div><h3>Exception dashboard</h3><p>Missing POs, duplicate invoices, negative stock, unmatched payments — all surfaced automatically</p></div>
+      <div class="fc"><div class="fc-ico">💬</div><h3>Management chat</h3><p>Ask "why did gross profit drop?" and get an answer backed by graph evidence and journal entries</p></div>
+    </div>
   </section>
 
-  <footer class="land-footer">© 2026 FinanceAI · SME Financial Intelligence System</footer>
+  <section class="lcta">
+    <h2>Ready to understand your SME data?</h2>
+    <p>Free to start. No accounting expertise required to get your first report.</p>
+    <button class="btn btn-lg" onclick="openAuth('reg')">Create your free account →</button>
+  </section>
+  <footer class="lfooter">© 2026 FinanceAI · SME Financial Intelligence System · Inspired by MiroFish workflow</footer>
 </div>
 
-<!-- ═══════════════════════════════ AUTH MODAL -->
-<div class="modal-overlay hidden" id="authModal" onclick="if(event.target===this)closeAuth()">
-  <div class="modal-card">
-    <div class="modal-logo">
+<!-- ═══════ AUTH MODAL ═══════ -->
+<div class="overlay hide" id="authOverlay" onclick="if(event.target===this)closeAuth()">
+  <div class="mcard">
+    <div class="mcard-logo">
       <h2>FinanceAI</h2>
-      <p id="authSubtitle">Sign in to your account</p>
+      <p id="authSub">Sign in to continue</p>
     </div>
-    <div class="auth-tabs" id="authTabBar">
-      <div class="auth-tab active" onclick="switchAuthTab('login')">Sign in</div>
-      <div class="auth-tab" onclick="switchAuthTab('register')">Create account</div>
+    <div class="atabs">
+      <div class="atab on" onclick="setAuthTab('login')">Sign in</div>
+      <div class="atab" onclick="setAuthTab('reg')">Create account</div>
     </div>
-    <div id="authMsgBox"></div>
-
-    <div id="loginForm">
-      <div class="form-field"><label>Email</label><input type="email" id="liEmail" placeholder="you@example.com" autocomplete="email"></div>
-      <div class="form-field"><label>Password</label><input type="password" id="liPass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:12px" id="btnLogin" onclick="doLogin()">Sign in</button>
+    <div id="authAlert"></div>
+    <div id="fLogin">
+      <div class="fg"><label>Email</label><input type="email" id="liE" placeholder="you@example.com" autocomplete="email"></div>
+      <div class="fg"><label>Password</label><input type="password" id="liP" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <button class="btn btn-brand" style="width:100%;justify-content:center;padding:12px" id="btnLi" onclick="doLogin()">Sign in</button>
     </div>
-
-    <div id="registerForm" class="hidden">
-      <div class="form-field"><label>Your name</label><input type="text" id="regName" placeholder="Jane Smith"></div>
-      <div class="form-field"><label>Email</label><input type="email" id="regEmail" placeholder="you@example.com" autocomplete="email"></div>
-      <div class="form-field"><label>Password <span style="color:var(--muted);font-weight:400">(min 6 chars)</span></label><input type="password" id="regPass" placeholder="••••••••" autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()"></div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:12px" id="btnReg" onclick="doRegister()">Create account</button>
+    <div id="fReg" class="hide">
+      <div class="fg"><label>Your name</label><input type="text" id="rN" placeholder="Jane Smith"></div>
+      <div class="fg"><label>Email</label><input type="email" id="rE" placeholder="you@example.com" autocomplete="email"></div>
+      <div class="fg"><label>Password <span style="color:var(--muted);font-weight:400">(min 6 characters)</span></label><input type="password" id="rP" placeholder="••••••••" onkeydown="if(event.key==='Enter')doReg()"></div>
+      <button class="btn btn-brand" style="width:100%;justify-content:center;padding:12px" id="btnReg" onclick="doReg()">Create account</button>
     </div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════ APP -->
+<!-- ═══════ APP ═══════ -->
 <div id="app">
-  <header class="app-bar">
-    <div class="app-logo">
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none"><rect width="24" height="24" rx="6" fill="#5B4FF0"/><path d="M5 15l4-4 3.5 3.5 4.5-6" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <header class="topbar">
+    <div class="tlogo">
+      <svg viewBox="0 0 26 26" fill="none" width="22" height="22"><rect width="26" height="26" rx="7" fill="#4F46E5"/><path d="M6 17l4-5 3.5 4 4.5-8" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       FinanceAI
     </div>
-    <div class="app-user">
-      <span class="user-pill" id="userPill">User</span>
-      <button class="btn btn-ghost" style="font-size:.82rem;padding:6px 12px" onclick="doLogout()">Logout</button>
+    <div class="tuser">
+      <span class="uname" id="uname">User</span>
+      <button class="btn btn-ghost" style="font-size:.8rem" onclick="doLogout()">Logout</button>
     </div>
   </header>
 
-  <div class="wizard-rail">
-    <div class="wizard-steps">
-      <div class="wiz-step" onclick="tryGoStep(1)">
-        <div class="wiz-bubble locked" id="wb1">1</div>
-        <div class="wiz-name" id="wn1">Setup</div>
-      </div>
-      <div class="wiz-step" onclick="tryGoStep(2)">
-        <div class="wiz-bubble locked" id="wb2">2</div>
-        <div class="wiz-name" id="wn2">Ontology Map</div>
-      </div>
-      <div class="wiz-step" onclick="tryGoStep(3)">
-        <div class="wiz-bubble locked" id="wb3">3</div>
-        <div class="wiz-name" id="wn3">AI Validation</div>
-      </div>
-      <div class="wiz-step" onclick="tryGoStep(4)">
-        <div class="wiz-bubble locked" id="wb4">4</div>
-        <div class="wiz-name" id="wn4">Generate</div>
-      </div>
-      <div class="wiz-step" onclick="tryGoStep(5)">
-        <div class="wiz-bubble locked" id="wb5">5</div>
-        <div class="wiz-name" id="wn5">Report</div>
-      </div>
+  <div class="rail">
+    <div class="rail-inner">
+      <div class="rs" onclick="tryStep(1)"><div class="rb lock" id="rb1">1</div><div class="rl" id="rl1">Setup</div></div>
+      <div class="rs" onclick="tryStep(2)"><div class="rb lock" id="rb2">2</div><div class="rl" id="rl2">Ontology</div></div>
+      <div class="rs" onclick="tryStep(3)"><div class="rb lock" id="rb3">3</div><div class="rl" id="rl3">Validation</div></div>
+      <div class="rs" onclick="tryStep(4)"><div class="rb lock" id="rb4">4</div><div class="rl" id="rl4">Generate</div></div>
+      <div class="rs" onclick="tryStep(5)"><div class="rb lock" id="rb5">5</div><div class="rl" id="rl5">Report</div></div>
     </div>
   </div>
 
-  <div class="wizard-body">
+  <div class="wbody">
 
-    <!-- ── STEP 1: SETUP ──────────────────────── -->
-    <div class="step-page active" id="step1">
-      <div class="step-header">
-        <h2>Set up your business &amp; upload data</h2>
-        <p>Complete both tabs before continuing — we need your company profile and at least one data file.</p>
+    <!-- STEP 1 -->
+    <div class="wp on" id="s1">
+      <div class="wh">
+        <h2>Business setup &amp; data upload</h2>
+        <p>Complete your company profile and upload your first data file. Both are required before the ontology mapping step.</p>
       </div>
-      <div class="inner-tabs">
-        <div class="inner-tab active" id="tabProfile" onclick="switchInnerTab('profile')">🏢 Company profile</div>
-        <div class="inner-tab" id="tabUpload" onclick="switchInnerTab('upload')">📂 Upload data</div>
+      <div class="itabs">
+        <div class="itab on" id="it1" onclick="itab('profile')">🏢 Company profile</div>
+        <div class="itab" id="it2" onclick="itab('upload')">📂 Upload data</div>
       </div>
 
-      <div id="panelProfile">
-        <div class="step-card">
+      <div id="pProfile">
+        <div class="card">
           <h3>Company details</h3>
-          <div class="form-row">
-            <div class="form-field"><label>Company name *</label><input type="text" id="coName" placeholder="e.g. My Shop Co."></div>
-            <div class="form-field"><label>Industry</label>
-              <select id="coIndustry"><option>Retail</option><option>Food &amp; Beverage</option><option>Service</option><option>Manufacturing</option><option>Trading</option><option>Other</option></select>
-            </div>
+          <div class="fgrow">
+            <div class="fg"><label>Company name *</label><input type="text" id="coN" placeholder="My Shop Co."></div>
+            <div class="fg"><label>Industry</label><select id="coI"><option>Retail</option><option>Food &amp; Beverage</option><option>Service</option><option>Manufacturing</option><option>Trading</option><option>Other</option></select></div>
           </div>
-          <div class="form-row">
-            <div class="form-field"><label>Currency</label>
-              <select id="coCurrency"><option>THB</option><option>USD</option><option>EUR</option><option>SGD</option></select>
-            </div>
-            <div class="form-field"><label>Reporting period *</label><input type="text" id="coPeriod" placeholder="e.g. Jan–Mar 2026"></div>
+          <div class="fgrow">
+            <div class="fg"><label>Currency</label><select id="coC"><option>THB</option><option>USD</option><option>EUR</option><option>SGD</option></select></div>
+            <div class="fg"><label>Reporting period label *</label><input type="text" id="coP" placeholder="Q1 2026 · Jan–Mar"></div>
           </div>
-          <div class="form-row">
-            <div class="form-field"><label>Start date *</label><input type="date" id="coStart"></div>
-            <div class="form-field"><label>End date *</label><input type="date" id="coEnd"></div>
+          <div class="fgrow">
+            <div class="fg"><label>Start date *</label><input type="date" id="coS"></div>
+            <div class="fg"><label>End date *</label><input type="date" id="coE"></div>
           </div>
-          <div id="profileMsg"></div>
-          <div style="margin-top:16px;display:flex;gap:10px;align-items:center">
-            <button class="btn btn-primary" onclick="saveCompany()" id="btnSaveCompany">Save company profile</button>
-            <span id="profileSavedBadge" class="tag tag-green hidden">✓ Saved</span>
+          <div id="profAlert"></div>
+          <div style="margin-top:16px;display:flex;align-items:center;gap:10px">
+            <button class="btn btn-brand" id="btnProf" onclick="saveProfile()">Save profile</button>
+            <span class="pill pill-green hide" id="profOK">✓ Saved</span>
           </div>
         </div>
       </div>
 
-      <div id="panelUpload" class="hidden">
-        <div class="step-card">
-          <h3>Upload your transaction data</h3>
-          <div class="drop-zone" id="dropZone"
-               onclick="document.getElementById('fileInput').click()"
+      <div id="pUpload" class="hide">
+        <div class="card">
+          <h3>Upload transaction file</h3>
+          <p style="font-size:.82rem;color:var(--muted);margin-bottom:14px">Sales records, purchase orders, inventory sheets, expense files — any tabular data. Thai or English column names are handled automatically.</p>
+          <div class="dz" id="dz" onclick="document.getElementById('fi').click()"
                ondragover="event.preventDefault();this.classList.add('over')"
-               ondragleave="this.classList.remove('over')"
-               ondrop="onFileDrop(event)">
-            <input type="file" id="fileInput" style="display:none" accept=".csv,.xlsx,.xls,.ods,.tsv,.txt" onchange="onFileSelect(this)">
-            <div class="drop-icon">📁</div>
-            <div class="drop-title">Drop your file here, or click to browse</div>
-            <div class="drop-sub">Sales records, purchase orders, expense sheets — any tabular data works</div>
-            <div class="file-formats">
-              <span class="file-pill">CSV</span><span class="file-pill">Excel .xlsx</span><span class="file-pill">XLS</span><span class="file-pill">ODS</span><span class="file-pill">TSV</span>
+               ondragleave="this.classList.remove('over')" ondrop="onDrop(event)">
+            <input type="file" id="fi" style="display:none" accept=".csv,.xlsx,.xls,.ods,.tsv,.txt" onchange="onFSel(this)">
+            <div class="dz-ico">📁</div>
+            <div class="dz-title">Drop your file here, or click to browse</div>
+            <div class="dz-sub">Supports Excel, CSV, ODS, TSV · UTF-8 and Thai TIS-620 encoding</div>
+            <div class="fmt-tags"><span class="fmt-tag">CSV</span><span class="fmt-tag">XLSX</span><span class="fmt-tag">XLS</span><span class="fmt-tag">ODS</span><span class="fmt-tag">TSV</span></div>
+          </div>
+          <div id="fBar" class="hide">
+            <div class="fbar">
+              <span style="font-size:1.3rem">📄</span>
+              <div style="flex:1"><div class="fbar-name" id="fBarN"></div><div class="fbar-size" id="fBarS"></div></div>
+              <button class="btn btn-ghost" style="padding:4px 10px;font-size:.78rem" onclick="clearF()">✕</button>
             </div>
           </div>
-          <div id="fileInfoBar" class="hidden">
-            <div class="file-selected-bar">
-              <span style="font-size:1.4rem">📄</span>
-              <div style="flex:1">
-                <div class="fname" id="fName"></div>
-                <div class="fsize" id="fSize"></div>
-              </div>
-              <button class="btn btn-ghost" style="font-size:.8rem;padding:4px 10px" onclick="clearFile()">✕</button>
-            </div>
-          </div>
-          <div id="uploadMsg"></div>
-          <div style="margin-top:14px">
-            <button class="btn btn-primary" onclick="doUpload()" id="btnUpload">⬆ Upload &amp; classify</button>
-            <span id="uploadSavedBadge" class="tag tag-green hidden" style="margin-left:10px">✓ File uploaded</span>
+          <div id="upAlert"></div>
+          <div style="margin-top:14px;display:flex;align-items:center;gap:10px">
+            <button class="btn btn-brand" id="btnUp" onclick="doUpload()">⬆ Upload &amp; classify</button>
+            <span class="pill pill-green hide" id="upOK">✓ Uploaded</span>
           </div>
         </div>
       </div>
 
-      <div class="step-card" style="padding:18px 22px">
-        <h3 style="margin-bottom:12px;font-size:.88rem;color:var(--muted)">CHECKLIST BEFORE CONTINUING</h3>
-        <div class="checklist">
-          <div class="check-row" id="chkProfile">
-            <div class="check-icon" id="chkProfileIcon">1</div>Company profile saved
-          </div>
-          <div class="check-row" id="chkFile">
-            <div class="check-icon" id="chkFileIcon">2</div>Data file uploaded
-          </div>
+      <div class="card" style="padding:16px 20px">
+        <h3 style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:12px">Checklist</h3>
+        <div class="chklist">
+          <div class="ck" id="ckP"><div class="ck-dot" id="ckPi">1</div>Company profile saved with reporting period</div>
+          <div class="ck" id="ckF"><div class="ck-dot" id="ckFi">2</div>Data file uploaded and classified</div>
         </div>
       </div>
-
-      <div class="step-footer">
-        <span class="step-footer-note">Complete both items above to continue</span>
-        <button class="btn btn-primary" onclick="goStep(2)" id="btnStep1Next" disabled>Continue to Ontology Map →</button>
+      <div class="wfoot">
+        <span class="wfoot-note">Complete both checklist items to continue</span>
+        <button class="btn btn-brand" onclick="goStep(2)" id="btn1Next" disabled>Continue to Ontology Map →</button>
       </div>
     </div>
 
-    <!-- ── STEP 2: ONTOLOGY MAP ───────────────── -->
-    <div class="step-page" id="step2">
-      <div class="step-header">
-        <h2>Review your data ontology map</h2>
-        <p>We've automatically mapped your file columns to accounting categories. Click any column node to reassign it before continuing.</p>
+    <!-- STEP 2 -->
+    <div class="wp" id="s2">
+      <div class="wh">
+        <h2>Business ontology &amp; column mapping</h2>
+        <p>Your file columns (left) have been auto-mapped to standard business fields (right). Click any column to review or reassign its category before continuing.</p>
       </div>
-      <div class="step-card">
-        <div class="graph-legend">
-          <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:50%;background:#5B4FF0;display:inline-block"></span> <span style="font-size:.8rem">Your columns</span></span>
-          <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:50%;background:#059669;display:inline-block"></span> <span style="font-size:.8rem">Account categories</span></span>
-          <span style="font-size:.78rem;color:var(--muted);margin-left:auto">Click a purple node to reassign its category</span>
+      <div class="card" style="padding:16px 20px">
+        <div class="graph-toolbar">
+          <div class="graph-legend">
+            <div class="gleg"><div class="gleg-dot" style="background:#4F46E5"></div><span style="font-size:.75rem">File columns</span></div>
+            <div class="gleg"><div class="gleg-dot" style="background:#059669"></div><span style="font-size:.75rem">Business fields</span></div>
+            <div class="gleg"><div class="gleg-dot" style="background:#D97706"></div><span style="font-size:.75rem">Entity nodes</span></div>
+          </div>
+          <span style="font-size:.73rem;color:var(--muted);margin-left:auto">Click a column node to reassign</span>
         </div>
-        <div class="graph-container">
-          <canvas id="ontologyCanvas"></canvas>
+        <div class="graph-wrap">
+          <canvas id="gCanvas"></canvas>
         </div>
-        <div class="reassign-panel" id="reassignPanel">
-          <h4>Reassign column: <strong id="reassignColName"></strong></h4>
-          <div class="category-grid" id="categoryGrid"></div>
+        <div class="reassign" id="reassign">
+          <h4>Reassign: <strong id="rColName"></strong></h4>
+          <div class="cat-grid" id="catGrid"></div>
         </div>
-        <div id="graphMsg" style="margin-top:10px"></div>
+        <div id="graphAlert" style="margin-top:10px"></div>
       </div>
-      <div class="step-footer">
-        <button class="btn btn-secondary" onclick="goStep(1)">← Back</button>
-        <button class="btn btn-primary" onclick="submitOntology()">Mapping looks good — run validation →</button>
+      <div class="wfoot">
+        <button class="btn btn-outline" onclick="goStep(1)">← Back</button>
+        <button class="btn btn-brand" onclick="submitMap()">Mapping confirmed — run validation →</button>
       </div>
     </div>
 
-    <!-- ── STEP 3: PARALLEL VALIDATION ───────── -->
-    <div class="step-page" id="step3">
-      <div class="step-header">
-        <h2>AI agents validating your data</h2>
-        <p>Four specialised agents run in parallel to clean, normalise, and verify your records. Wait for all to complete before continuing.</p>
+    <!-- STEP 3 -->
+    <div class="wp" id="s3">
+      <div class="wh">
+        <h2>Process agent validation</h2>
+        <p>Six specialised agents run in parallel — each validating its own process chain. Review exceptions before generating statements.</p>
       </div>
-      <div class="step-card">
-        <div class="agents-grid" id="agentsGrid">
-          <div class="agent-card" id="ag0">
-            <div class="agent-header">
-              <div class="agent-icon" style="background:#ede9fe">🗂️</div>
-              <div><div class="agent-name">Schema validator</div><div class="agent-desc">Checks column types and required fields</div></div>
-            </div>
-            <div class="prog-track"><div class="prog-bar" id="ap0" style="width:0%;background:var(--primary)"></div></div>
-            <div class="agent-status" id="as0">Waiting to start…</div>
-          </div>
-          <div class="agent-card" id="ag1">
-            <div class="agent-header">
-              <div class="agent-icon" style="background:#d1fae5">📥</div>
-              <div><div class="agent-name">Record extractor</div><div class="agent-desc">Parses and structures all transactions</div></div>
-            </div>
-            <div class="prog-track"><div class="prog-bar" id="ap1" style="width:0%;background:var(--green)"></div></div>
-            <div class="agent-status" id="as1">Waiting to start…</div>
-          </div>
-          <div class="agent-card" id="ag2">
-            <div class="agent-header">
-              <div class="agent-icon" style="background:#dbeafe">💱</div>
-              <div><div class="agent-name">Amount normaliser</div><div class="agent-desc">Standardises values and currency formats</div></div>
-            </div>
-            <div class="prog-track"><div class="prog-bar" id="ap2" style="width:0%;background:var(--blue)"></div></div>
-            <div class="agent-status" id="as2">Waiting to start…</div>
-          </div>
-          <div class="agent-card" id="ag3">
-            <div class="agent-header">
-              <div class="agent-icon" style="background:#fef3c7">🔍</div>
-              <div><div class="agent-name">Duplicate detector</div><div class="agent-desc">Finds and flags duplicate transactions</div></div>
-            </div>
-            <div class="prog-track"><div class="prog-bar" id="ap3" style="width:0%;background:var(--amber)"></div></div>
-            <div class="agent-status" id="as3">Waiting to start…</div>
-          </div>
-        </div>
-        <div class="sim-summary" id="simSummary">
-          <h3>✓ Validation complete</h3>
-          <div class="sim-stats" id="simStats"></div>
-        </div>
+      <div class="agents" id="agentsWrap"></div>
+      <div class="exc-box" id="excBox">
+        <h3>⚠ Exceptions detected — review before continuing</h3>
+        <div id="excList"></div>
       </div>
-      <div class="step-footer">
-        <button class="btn btn-secondary" onclick="goStep(2)">← Back</button>
-        <button class="btn btn-primary" onclick="goStep(4)" id="btnStep3Next" disabled>Validation done — generate report →</button>
+      <div class="sim-done" id="simDone">
+        <h3>✓ Validation complete</h3>
+        <div class="sim-stats" id="simStats"></div>
+      </div>
+      <div class="wfoot">
+        <button class="btn btn-outline" onclick="goStep(2)">← Back</button>
+        <button class="btn btn-brand" id="btn3Next" onclick="goStep(4)" disabled>Proceed to statement generation →</button>
       </div>
     </div>
 
-    <!-- ── STEP 4: GENERATE ───────────────────── -->
-    <div class="step-page" id="step4">
-      <div class="step-header">
-        <h2>Generate your financial statements</h2>
-        <p>Review the summary below, then click Generate. This takes around 5–15 seconds.</p>
+    <!-- STEP 4 -->
+    <div class="wp" id="s4">
+      <div class="wh">
+        <h2>Journal &amp; statement generation</h2>
+        <p>Review the summary below. When ready, click Generate — validated records are mapped to journal entries and statement lines.</p>
       </div>
-      <div class="step-card">
-        <div id="genReady">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
-            <div style="padding:14px;background:var(--bg);border-radius:var(--radius-sm)">
-              <div style="font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Company</div>
-              <div id="genCoName" style="font-weight:700;font-size:1rem"></div>
-              <div id="genPeriod" style="font-size:.85rem;color:var(--muted);margin-top:2px"></div>
-            </div>
-            <div style="padding:14px;background:var(--bg);border-radius:var(--radius-sm)">
-              <div style="font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Data loaded</div>
-              <div id="genRows" style="font-weight:700;font-size:1rem"></div>
-              <div style="font-size:.85rem;color:var(--muted);margin-top:2px">records ready to process</div>
-            </div>
+      <div class="card">
+        <div class="gen-pre" id="genPre">
+          <div class="gen-summary" id="genSum"></div>
+          <div style="background:var(--brand-dim);border:1px solid var(--brand-mid);border-radius:var(--r-sm);padding:14px 16px;margin-bottom:18px;font-size:.82rem;color:var(--brand)">
+            <strong>Important:</strong> The LLM assists with explanation only. All debit-credit entries follow deterministic accounting rules — no AI-generated numbers.
           </div>
-          <button class="btn btn-primary btn-large" onclick="doGenerate()" id="btnGenerate" style="width:100%;justify-content:center">🚀 Generate financial statements</button>
-          <div id="generateMsg"></div>
+          <button class="btn btn-brand btn-lg" style="width:100%;justify-content:center" onclick="doGenerate()" id="btnGen">🚀 Generate financial statements</button>
+          <div id="genAlert"></div>
         </div>
-        <div id="genProgress" class="hidden">
-          <div class="gen-status">
-            <div id="genRing" class="gen-ring"></div>
-            <div class="gen-title" id="genTitle">Processing your data…</div>
-            <div class="gen-sub" id="genSub">This usually takes under 15 seconds</div>
-            <div class="gen-steps-list" id="genStepsList"></div>
-          </div>
+        <div class="gen-run hide" id="genRun" style="text-align:center;padding:30px 20px">
+          <div class="gen-prog-ring" id="genRing"></div>
+          <div style="font-size:1rem;font-weight:700;margin-bottom:4px" id="genTitle">Processing…</div>
+          <div style="font-size:.83rem;color:var(--muted)" id="genSub">Mapping business events to journal entries</div>
+          <div class="gen-steps-list" id="genList"></div>
         </div>
       </div>
-      <div class="step-footer">
-        <button class="btn btn-secondary" onclick="goStep(3)">← Back</button>
-        <button class="btn btn-primary" onclick="goStep(5)" id="btnStep4Next" disabled>View your report →</button>
+      <div class="wfoot">
+        <button class="btn btn-outline" onclick="goStep(3)">← Back</button>
+        <button class="btn btn-brand" id="btn4Next" onclick="goStep(5)" disabled>View your report →</button>
       </div>
     </div>
 
-    <!-- ── STEP 5: REPORT ─────────────────────── -->
-    <div class="step-page" id="step5">
-      <div class="step-header">
-        <h2>Your financial report</h2>
-        <p id="reportPeriodLabel">Showing results for the selected period</p>
+    <!-- STEP 5 -->
+    <div class="wp" id="s5">
+      <div class="wh">
+        <h2>Financial report &amp; evidence</h2>
+        <p id="repSubtitle">Every line links to source records, validation results, and journal entries</p>
       </div>
-      <div class="kpi-row">
-        <div class="kpi"><div class="kpi-label">Revenue</div><div class="kpi-val blue" id="kRevenue">—</div></div>
-        <div class="kpi"><div class="kpi-label">Expenses</div><div class="kpi-val red" id="kExpenses">—</div></div>
-        <div class="kpi"><div class="kpi-label">Net profit</div><div class="kpi-val green" id="kProfit">—</div></div>
-        <div class="kpi"><div class="kpi-label">Records</div><div class="kpi-val purple" id="kRecords">—</div></div>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">Revenue</div><div class="kpi-v blue" id="kRev">—</div></div>
+        <div class="kpi"><div class="kpi-l">Cost of Goods</div><div class="kpi-v brand" id="kCogs">—</div></div>
+        <div class="kpi"><div class="kpi-l">Gross Profit</div><div class="kpi-v green" id="kGross">—</div></div>
+        <div class="kpi"><div class="kpi-l">Net Profit / Loss</div><div class="kpi-v green" id="kNet">—</div></div>
       </div>
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
-        <div class="report-tabs">
-          <div class="report-tab active" onclick="switchReportTab('income')">Income statement</div>
-          <div class="report-tab" onclick="switchReportTab('trial')">Trial balance</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap">
+        <div class="rtabs">
+          <div class="rtab on" onclick="rtab('income')">Income statement</div>
+          <div class="rtab" onclick="rtab('trial')">Trial balance</div>
+          <div class="rtab" onclick="rtab('exc')">Exceptions</div>
+          <div class="rtab" onclick="rtab('chat')">Ask AI</div>
         </div>
-        <button class="btn btn-secondary" onclick="loadReport()" style="margin-left:auto;font-size:.82rem;padding:7px 14px">🔄 Refresh</button>
+        <button class="btn btn-outline" style="font-size:.78rem;padding:7px 12px;margin-left:auto" onclick="loadReport()">🔄 Refresh</button>
       </div>
-      <div class="step-card" id="incomeContent"><div style="text-align:center;padding:30px;color:var(--muted)">Loading…</div></div>
-      <div class="step-card hidden" id="trialContent"><div style="text-align:center;padding:30px;color:var(--muted)">Loading…</div></div>
-      <div class="step-footer" style="border-top:1px solid var(--border);padding-top:16px">
-        <button class="btn btn-secondary" onclick="goStep(4)">← Back</button>
-        <div style="display:flex;gap:10px">
-          <button class="btn btn-secondary" onclick="openAuth('login');resetWizard()" style="font-size:.83rem">+ New report</button>
+      <div class="card" id="rIncome"><div style="text-align:center;padding:28px;color:var(--muted)">Loading…</div></div>
+      <div class="card hide" id="rTrial"><div style="text-align:center;padding:28px;color:var(--muted)">Loading…</div></div>
+      <div class="card hide" id="rExc">
+        <h3 style="color:var(--amber);margin-bottom:14px">⚠ Open exceptions</h3>
+        <div id="rExcList"><div style="text-align:center;padding:24px;color:var(--muted)">No exceptions recorded</div></div>
+      </div>
+      <div class="card hide" id="rChat">
+        <div style="height:320px;overflow-y:auto;padding:12px;background:var(--bg);border-radius:var(--r-sm);margin-bottom:12px;border:1px solid var(--border)" id="chatBox">
+          <div style="display:flex;justify-content:flex-start;margin-bottom:12px">
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;max-width:80%;font-size:.85rem;line-height:1.55">
+              👋 Hi! I'm your financial evidence assistant. Ask me anything: "Why did revenue drop?", "Which branch had the highest sales?", "Show me the evidence for gross profit."
+            </div>
+          </div>
         </div>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="chatIn" placeholder="e.g. Why is gross profit lower than expected?" style="flex:1;border-radius:var(--r-sm)" onkeydown="if(event.key==='Enter')sendChat()">
+          <button class="btn btn-brand" onclick="sendChat()">Send</button>
+        </div>
+      </div>
+      <div class="wfoot">
+        <button class="btn btn-outline" onclick="goStep(4)">← Back</button>
+        <button class="btn btn-outline" onclick="resetAll()" style="font-size:.82rem">+ New period</button>
       </div>
     </div>
-
-  </div><!-- /wizard-body -->
-</div><!-- /app -->
+  </div>
+</div>
 
 <script>
-// ══════════════════════════════════════════════════
-// STATE
-// ══════════════════════════════════════════════════
-let token = localStorage.getItem('fin_token');
-let currentUser = JSON.parse(localStorage.getItem('fin_user') || 'null');
-let state = {
-  companyId: null, periodId: null, fileId: null,
-  companyName: '', periodLabel: '', rowCount: 0,
-  columns: [], mappings: {}, profileSaved: false, fileSaved: false,
-  validationDone: false, generateDone: false, maxStep: 1
-};
+// ══ STATE ══
+let tok=localStorage.getItem('ftok'),user=JSON.parse(localStorage.getItem('fuser')||'null');
+let S={coId:null,perId:null,fileId:null,coName:'',perLabel:'',rows:0,cols:[],maps:{},profOK:false,fileOK:false,valOK:false,genOK:false,maxStep:1};
+let selCol=null,chatHist=[],agTimers=[];
+window.onload=()=>{ if(tok&&user){showApp();} };
 
-// ══════════════════════════════════════════════════
-// BOOT
-// ══════════════════════════════════════════════════
-window.onload = () => {
-  if (token && currentUser) {
-    showApp();
+// ══ API ══
+async function api(method,path,body,isForm){
+  const opts={method,headers:{}};
+  if(tok)opts.headers['Authorization']='Bearer '+tok;
+  if(body&&!isForm){opts.headers['Content-Type']='application/json';opts.body=JSON.stringify(body);}
+  else if(isForm)opts.body=body;
+  const r=await fetch(path,opts);
+  if(r.status===401){doLogout();throw new Error('Session expired');}
+  const d=await r.json();
+  if(!r.ok)throw new Error(d.detail||JSON.stringify(d));
+  return d;
+}
+const fmt=n=>n==null?'—':Number(n).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const g=id=>document.getElementById(id);
+const show=(id,b)=>g(id)&&(b?g(id).classList.remove('hide'):g(id).classList.add('hide'));
+const setA=(id,msg,cls)=>{const e=g(id);if(e)e.innerHTML=msg?`<div class="alert alert-${cls}">${msg}</div>`:'';}
+const setBtn=(id,dis,html)=>{const b=g(id);if(b){b.disabled=dis;b.innerHTML=html;}};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+// ══ AUTH ══
+function openAuth(tab){show('authOverlay',true);setAuthTab(tab);}
+function closeAuth(){show('authOverlay',false);}
+function setAuthTab(t){
+  document.querySelectorAll('.atab').forEach((e,i)=>e.classList.toggle('on',(i===0&&t==='login')||(i===1&&t==='reg')));
+  show('fLogin',t==='login');show('fReg',t==='reg');
+  g('authSub').textContent=t==='login'?'Sign in to your account':'Create your free account';
+  setA('authAlert','','');
+}
+async function doLogin(){
+  const e=g('liE').value.trim(),p=g('liP').value;
+  if(!e||!p){setA('authAlert','Please fill in all fields','red');return;}
+  setBtn('btnLi',true,'<span class="spin"></span> Signing in…');
+  try{const d=await api('POST','/api/auth/login',{email:e,password:p});saveAuth(d);closeAuth();showApp();}
+  catch(err){setA('authAlert',err.message,'red');}
+  finally{setBtn('btnLi',false,'Sign in');}
+}
+async function doReg(){
+  const n=g('rN').value.trim(),e=g('rE').value.trim(),p=g('rP').value;
+  if(!n||!e||!p){setA('authAlert','Please fill in all fields','red');return;}
+  setBtn('btnReg',true,'<span class="spin"></span> Creating account…');
+  try{const d=await api('POST','/api/auth/register',{name:n,email:e,password:p});saveAuth(d);closeAuth();showApp();}
+  catch(err){setA('authAlert',err.message,'red');}
+  finally{setBtn('btnReg',false,'Create account');}
+}
+function saveAuth(d){tok=d.token;user={name:d.name,email:d.email,id:d.id};localStorage.setItem('ftok',tok);localStorage.setItem('fuser',JSON.stringify(user));}
+function doLogout(){localStorage.removeItem('ftok');localStorage.removeItem('fuser');tok=null;user=null;show('app',false);show('land',true);g('app').style.display='none';g('land').style.display='block';resetAll();}
+
+// ══ APP ══
+function showApp(){g('land').style.display='none';g('app').style.display='flex';g('uname').textContent=user.name;goStep(1);}
+function resetAll(){S={coId:null,perId:null,fileId:null,coName:'',perLabel:'',rows:0,cols:[],maps:{},profOK:false,fileOK:false,valOK:false,genOK:false,maxStep:1};updateCK();}
+
+// ══ WIZARD ══
+let curStep=1;
+function tryStep(n){if(n<=S.maxStep)goStep(n);}
+function goStep(n){
+  curStep=n;
+  document.querySelectorAll('.wp').forEach(p=>p.classList.remove('on'));
+  g('s'+n).classList.add('on');
+  for(let i=1;i<=5;i++){
+    const b=g('rb'+i),l=g('rl'+i);
+    b.className='rb '+(i<n?'done':i===n?'active':'lock');
+    b.textContent=i<n?'✓':i;
+    l.className='rl'+(i===n?' active':'');
   }
-};
-
-// ══════════════════════════════════════════════════
-// API
-// ══════════════════════════════════════════════════
-async function api(method, path, body, isForm) {
-  const opts = { method, headers: {} };
-  if (token) opts.headers['Authorization'] = 'Bearer ' + token;
-  if (body && !isForm) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
-  else if (isForm) opts.body = body;
-  const res = await fetch(path, opts);
-  if (res.status === 401) { doLogout(); throw new Error('Session expired'); }
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.detail || JSON.stringify(data));
-  return data;
-}
-
-const fmt = n => n == null ? '—' : Number(n).toLocaleString('th-TH', {minimumFractionDigits:2,maximumFractionDigits:2});
-
-// ══════════════════════════════════════════════════
-// AUTH
-// ══════════════════════════════════════════════════
-function openAuth(tab) {
-  document.getElementById('authModal').classList.remove('hidden');
-  switchAuthTab(tab);
-}
-function closeAuth() { document.getElementById('authModal').classList.add('hidden'); }
-function switchAuthTab(t) {
-  const tabs = document.querySelectorAll('.auth-tab');
-  tabs[0].classList.toggle('active', t==='login');
-  tabs[1].classList.toggle('active', t==='register');
-  toggle('loginForm', t==='login'); toggle('registerForm', t==='register');
-  document.getElementById('authSubtitle').textContent = t==='login' ? 'Sign in to your account' : 'Create your free account';
-  document.getElementById('authMsgBox').innerHTML = '';
-}
-
-function authMsg(m, type) {
-  const el = document.getElementById('authMsgBox');
-  el.innerHTML = `<div class="msg-box ${type}">${m}</div>`;
-}
-
-async function doLogin() {
-  const email = v('liEmail'), pass = v('liPass');
-  if (!email || !pass) { authMsg('Fill in all fields','error'); return; }
-  setBtn('btnLogin', true, '<span class="spinner"></span> Signing in…');
-  try {
-    const d = await api('POST', '/api/auth/login', {email, password: pass});
-    saveAuth(d); closeAuth(); showApp();
-  } catch(e) { authMsg(e.message, 'error'); }
-  finally { setBtn('btnLogin', false, 'Sign in'); }
-}
-
-async function doRegister() {
-  const name = v('regName'), email = v('regEmail'), pass = v('regPass');
-  if (!name || !email || !pass) { authMsg('Fill in all fields','error'); return; }
-  setBtn('btnReg', true, '<span class="spinner"></span> Creating account…');
-  try {
-    const d = await api('POST', '/api/auth/register', {name, email, password: pass});
-    saveAuth(d); closeAuth(); showApp();
-  } catch(e) { authMsg(e.message, 'error'); }
-  finally { setBtn('btnReg', false, 'Create account'); }
-}
-
-function saveAuth(d) {
-  token = d.token; currentUser = {name: d.name, email: d.email, id: d.id};
-  localStorage.setItem('fin_token', token);
-  localStorage.setItem('fin_user', JSON.stringify(currentUser));
-}
-
-function doLogout() {
-  localStorage.removeItem('fin_token'); localStorage.removeItem('fin_user');
-  token = null; currentUser = null;
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('landing').style.display = 'block';
-  resetWizard();
-}
-
-// ══════════════════════════════════════════════════
-// APP
-// ══════════════════════════════════════════════════
-function showApp() {
-  document.getElementById('landing').style.display = 'none';
-  document.getElementById('app').style.display = 'flex';
-  document.getElementById('userPill').textContent = currentUser.name;
-  goStep(1);
-}
-
-function resetWizard() {
-  state = { companyId:null, periodId:null, fileId:null, companyName:'', periodLabel:'', rowCount:0, columns:[], mappings:{}, profileSaved:false, fileSaved:false, validationDone:false, generateDone:false, maxStep:1 };
-  updateChecklist();
-}
-
-// ══════════════════════════════════════════════════
-// WIZARD NAV
-// ══════════════════════════════════════════════════
-let currentStep = 1;
-
-function tryGoStep(n) {
-  if (n <= state.maxStep) goStep(n);
-}
-
-function goStep(n) {
-  if (n < 1 || n > 5) return;
-  currentStep = n;
-  document.querySelectorAll('.step-page').forEach(p => p.classList.remove('active'));
-  document.getElementById('step' + n).classList.add('active');
-  // update bubbles
-  for (let i = 1; i <= 5; i++) {
-    const b = document.getElementById('wb'+i), lbl = document.getElementById('wn'+i);
-    b.className = 'wiz-bubble ' + (i < n ? 'done' : i === n ? 'active' : 'locked');
-    b.textContent = i < n ? '✓' : i;
-    lbl.className = 'wiz-name' + (i === n ? ' active' : '');
+  if(n===2)drawGraph();
+  if(n===3&&!S.valOK)startAgents();
+  if(n===4){
+    g('genSum').innerHTML=`
+      <div class="gs-tile"><div class="gs-label">Company</div><div class="gs-val">${esc(S.coName)}</div><div class="gs-sub">${esc(S.perLabel)}</div></div>
+      <div class="gs-tile"><div class="gs-label">Records loaded</div><div class="gs-val">${S.rows.toLocaleString()}</div><div class="gs-sub">rows ready for journal mapping</div></div>`;
   }
-  if (n === 2) renderOntologyGraph();
-  if (n === 3 && !state.validationDone) startSimulation();
-  if (n === 4) {
-    document.getElementById('genCoName').textContent = state.companyName;
-    document.getElementById('genPeriod').textContent = state.periodLabel;
-    document.getElementById('genRows').textContent = state.rowCount.toLocaleString();
-  }
-  if (n === 5) loadReport();
-  if (n > state.maxStep) state.maxStep = n;
+  if(n===5)loadReport();
+  if(n>S.maxStep)S.maxStep=n;
 }
 
-// ══════════════════════════════════════════════════
-// STEP 1 — SETUP
-// ══════════════════════════════════════════════════
-function switchInnerTab(t) {
-  document.getElementById('tabProfile').classList.toggle('active', t==='profile');
-  document.getElementById('tabUpload').classList.toggle('active', t==='upload');
-  toggle('panelProfile', t==='profile'); toggle('panelUpload', t==='upload');
+// ══ STEP 1 ══
+function itab(t){
+  document.querySelectorAll('.itab').forEach((e,i)=>e.classList.toggle('on',(i===0&&t==='profile')||(i===1&&t==='upload')));
+  show('pProfile',t==='profile');show('pUpload',t==='upload');
+}
+async function saveProfile(){
+  const n=g('coN').value.trim(),p=g('coP').value.trim(),s=g('coS').value,e=g('coE').value;
+  if(!n||!p||!s||!e){setA('profAlert','Fill in all required fields','red');return;}
+  setBtn('btnProf',true,'<span class="spin spin-dark"></span> Saving…');
+  try{
+    const co=await api('POST','/api/companies/',{name:n,industry:g('coI').value,currency:g('coC').value});
+    S.coId=co.id;S.coName=n;
+    const pe=await api('POST','/api/companies/periods',{company_id:co.id,label:p,start_date:s,end_date:e});
+    S.perId=pe.id;S.perLabel=p;S.profOK=true;
+    setA('profAlert','','');show('profOK',true);updateCK();
+  }catch(err){setA('profAlert',err.message,'red');}
+  finally{setBtn('btnProf',false,'Save profile');}
+}
+let selFile=null;
+function onFSel(inp){selFile=inp.files[0];showFBar();}
+function onDrop(e){e.preventDefault();g('dz').classList.remove('over');selFile=e.dataTransfer.files[0];showFBar();}
+function showFBar(){if(!selFile)return;g('fBarN').textContent=selFile.name;g('fBarS').textContent=(selFile.size/1024).toFixed(1)+' KB';show('fBar',true);}
+function clearF(){selFile=null;g('fi').value='';show('fBar',false);}
+function guessCat(col){
+  const c=col.toLowerCase();
+  if(/sale|revenue|income|receipt|ยอดขาย|รายได้/i.test(c))return'Revenue';
+  if(/cost|cogs|purchase|buy|ต้นทุน|ซื้อ/i.test(c))return'Cost of Goods Sold';
+  if(/rent|util|salary|wage|staff|expense|ค่าใช้จ่าย|เงินเดือน/i.test(c))return'Expense';
+  if(/tax|vat|ภาษี/i.test(c))return'Tax';
+  if(/asset|equip|สินทรัพย์/i.test(c))return'Asset';
+  if(/cash|bank|เงินสด|ธนาคาร/i.test(c))return'Cash & Bank';
+  if(/date|วันที่/i.test(c))return'Date';
+  if(/desc|note|remark|หมายเหตุ/i.test(c))return'Description';
+  if(/qty|quantity|จำนวน/i.test(c))return'Quantity';
+  if(/branch|สาขา/i.test(c))return'Branch';
+  if(/sku|product|สินค้า/i.test(c))return'Product / SKU';
+  if(/supplier|vendor|ผู้จัดหา/i.test(c))return'Supplier';
+  return'Other';
+}
+async function doUpload(){
+  if(!S.perId){setA('upAlert','Save your company profile first','amber');return;}
+  if(!selFile){setA('upAlert','Choose a file to upload','amber');return;}
+  setBtn('btnUp',true,'<span class="spin spin-dark"></span> Uploading…');setA('upAlert','','');
+  try{
+    const fd=new FormData();fd.append('period_id',S.perId);fd.append('file',selFile);
+    const r=await api('POST','/api/upload/',fd,true);
+    S.fileId=r.file_id;S.rows=r.row_count;S.cols=r.columns||[];
+    S.cols.forEach(c=>{S.maps[c]=guessCat(c);});
+    S.fileOK=true;setA('upAlert','','');show('upOK',true);updateCK();
+    setA('upAlert',`✓ Uploaded "${esc(r.filename)}" · ${r.row_count} rows · classified as <strong>${esc(r.file_type)}</strong>`,'green');
+  }catch(err){setA('upAlert',err.message,'red');}
+  finally{setBtn('btnUp',false,'⬆ Upload & classify');}
+}
+function updateCK(){
+  const p=S.profOK,f=S.fileOK;
+  g('ckP').className='ck'+(p?' done':'');g('ckPi').className='ck-dot'+(p?' done':'');g('ckPi').textContent=p?'✓':'1';
+  g('ckF').className='ck'+(f?' done':'');g('ckFi').className='ck-dot'+(f?' done':'');g('ckFi').textContent=f?'✓':'2';
+  g('btn1Next').disabled=!(p&&f);
 }
 
-async function saveCompany() {
-  const name = v('coName'), period = v('coPeriod'), start = v('coStart'), end = v('coEnd');
-  if (!name || !period || !start || !end) { showMsg('profileMsg', 'Fill in all required fields', 'error'); return; }
-  setBtn('btnSaveCompany', true, '<span class="spinner spinner-dark"></span> Saving…');
-  try {
-    const co = await api('POST', '/api/companies/', {
-      name, industry: v('coIndustry'), currency: v('coCurrency')
-    });
-    state.companyId = co.id; state.companyName = name;
-    const pe = await api('POST', '/api/companies/periods', {
-      company_id: co.id, label: period, start_date: start, end_date: end
-    });
-    state.periodId = pe.id; state.periodLabel = period;
-    state.profileSaved = true;
-    showMsg('profileMsg', '✓ Company and period saved!', 'success');
-    document.getElementById('profileSavedBadge').classList.remove('hidden');
-    updateChecklist();
-  } catch(e) { showMsg('profileMsg', e.message, 'error'); }
-  finally { setBtn('btnSaveCompany', false, 'Save company profile'); }
-}
+// ══ STEP 2: GRAPH ══
+const CATS=['Revenue','Cost of Goods Sold','Expense','Asset','Cash & Bank','Tax','Date','Description','Quantity','Branch','Product / SKU','Supplier','Account Code','Other'];
+const CAT_COL={'Revenue':'#059669','Cost of Goods Sold':'#D97706','Expense':'#DC2626','Asset':'#0369A1','Cash & Bank':'#0891B2','Tax':'#7C3AED','Date':'#6B7280','Description':'#9CA3AF','Quantity':'#0F766E','Branch':'#B45309','Product / SKU':'#1D4ED8','Supplier':'#6D28D9','Account Code':'#374151','Other':'#9CA3AF'};
 
-let selectedFile = null;
-function onFileSelect(input) { selectedFile = input.files[0]; showFileBar(); }
-function onFileDrop(e) {
-  e.preventDefault(); document.getElementById('dropZone').classList.remove('over');
-  selectedFile = e.dataTransfer.files[0]; showFileBar();
-}
-function showFileBar() {
-  if (!selectedFile) return;
-  document.getElementById('fName').textContent = selectedFile.name;
-  document.getElementById('fSize').textContent = (selectedFile.size/1024).toFixed(1) + ' KB';
-  document.getElementById('fileInfoBar').classList.remove('hidden');
-}
-function clearFile() {
-  selectedFile = null; document.getElementById('fileInput').value = '';
-  document.getElementById('fileInfoBar').classList.add('hidden');
-}
-
-async function doUpload() {
-  if (!state.periodId) { showMsg('uploadMsg', 'Save your company profile first', 'warn'); return; }
-  if (!selectedFile) { showMsg('uploadMsg', 'Choose a file to upload', 'warn'); return; }
-  setBtn('btnUpload', true, '<span class="spinner spinner-dark"></span> Uploading…');
-  clearMsg('uploadMsg');
-  try {
-    const fd = new FormData();
-    fd.append('period_id', state.periodId);
-    fd.append('file', selectedFile);
-    const res = await api('POST', '/api/upload/', fd, true);
-    state.fileId = res.file_id;
-    state.rowCount = res.row_count;
-    state.columns = res.columns || [];
-    // Auto-build default mappings
-    state.columns.forEach(col => {
-      state.mappings[col] = guessCategory(col);
-    });
-    state.fileSaved = true;
-    showMsg('uploadMsg', `✓ Uploaded ${res.filename} — ${res.row_count} rows classified as "${res.file_type}"`, 'success');
-    document.getElementById('uploadSavedBadge').classList.remove('hidden');
-    updateChecklist();
-  } catch(e) { showMsg('uploadMsg', '✗ ' + e.message, 'error'); }
-  finally { setBtn('btnUpload', false, '⬆ Upload & classify'); }
-}
-
-function guessCategory(col) {
-  const c = col.toLowerCase();
-  if (/sale|revenue|income|receipt|sales/i.test(c)) return 'Revenue';
-  if (/cost|cogs|purchase|buy|supplier/i.test(c)) return 'Cost of Goods Sold';
-  if (/rent|util|salary|wage|staff|expense|overhead/i.test(c)) return 'Expense';
-  if (/tax|vat/i.test(c)) return 'Tax';
-  if (/asset|equip|property/i.test(c)) return 'Asset';
-  if (/cash|bank|account/i.test(c)) return 'Cash & Bank';
-  if (/date|time|period/i.test(c)) return 'Date';
-  if (/desc|note|remark|detail/i.test(c)) return 'Description';
-  if (/qty|quantity|unit|amount|total/i.test(c)) return 'Amount';
-  return 'Other';
-}
-
-function updateChecklist() {
-  const p = state.profileSaved, f = state.fileSaved;
-  setCheck('chkProfile', 'chkProfileIcon', p);
-  setCheck('chkFile', 'chkFileIcon', f);
-  document.getElementById('btnStep1Next').disabled = !(p && f);
-}
-function setCheck(rowId, iconId, done) {
-  const row = document.getElementById(rowId), ico = document.getElementById(iconId);
-  row.classList.toggle('done', done);
-  ico.className = 'check-icon' + (done ? ' done' : '');
-  ico.textContent = done ? '✓' : (rowId.includes('Profile') ? '1' : '2');
-}
-
-// ══════════════════════════════════════════════════
-// STEP 2 — ONTOLOGY GRAPH
-// ══════════════════════════════════════════════════
-const CATEGORIES = ['Revenue','Cost of Goods Sold','Expense','Asset','Cash & Bank','Tax','Date','Description','Amount','Other'];
-const CAT_COLORS = { 'Revenue':'#059669','Cost of Goods Sold':'#d97706','Expense':'#dc2626','Asset':'#1d4ed8','Cash & Bank':'#0891b2','Tax':'#7c3aed','Date':'#64748b','Description':'#94a3b8','Amount':'#0f766e','Other':'#6b7280' };
-let selectedNode = null;
-let graphNodes = [];
-
-function renderOntologyGraph() {
-  const canvas = document.getElementById('ontologyCanvas');
-  const container = canvas.parentElement;
-  const cols = state.columns.length;
-  if (!cols) {
-    canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
-    return;
-  }
-  const w = container.clientWidth - 40;
-  const rightCategories = [...new Set(Object.values(state.mappings))];
-  const rowHeight = 36, padding = 20;
-  const totalRows = Math.max(cols, rightCategories.length);
-  const h = Math.max(300, totalRows * rowHeight + padding * 2);
-  canvas.width = w; canvas.height = h;
-  canvas.style.height = h + 'px';
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, w, h);
-
-  // Build node positions
-  graphNodes = [];
-  const lx = 130, rx = w - 130;
-  const lSpacing = (h - padding*2) / cols;
-  const rSpacing = (h - padding*2) / rightCategories.length;
-
-  state.columns.forEach((col, i) => {
-    graphNodes.push({
-      id: col, type: 'col', x: lx, y: padding + i * lSpacing + lSpacing/2,
-      label: col.length > 14 ? col.slice(0,14)+'…' : col,
-      category: state.mappings[col]
-    });
-  });
-  rightCategories.forEach((cat, i) => {
-    graphNodes.push({
-      id: '_cat_'+cat, type: 'cat', x: rx, y: padding + i * rSpacing + rSpacing/2,
-      label: cat, color: CAT_COLORS[cat]||'#6b7280'
-    });
-  });
-
-  // Draw edges
-  ctx.lineWidth = 1;
-  graphNodes.filter(n => n.type==='col').forEach(cn => {
-    const tgt = graphNodes.find(n => n.type==='cat' && n.id==='_cat_'+cn.category);
-    if (!tgt) return;
-    ctx.strokeStyle = CAT_COLORS[cn.category] + '55';
-    ctx.setLineDash([4,3]);
-    ctx.beginPath(); ctx.moveTo(cn.x+90, cn.y); ctx.lineTo(tgt.x-90, tgt.y); ctx.stroke();
+function drawGraph(){
+  const cvs=g('gCanvas'),wrap=cvs.parentElement;
+  const cols=S.cols.length;if(!cols)return;
+  const W=wrap.clientWidth,cats=[...new Set(Object.values(S.maps))];
+  const rowH=38,pad=24,H=Math.max(320,(Math.max(cols,cats.length))*rowH+pad*2);
+  cvs.width=W;cvs.height=H;cvs.style.height=H+'px';
+  const ctx=cvs.getContext('2d');ctx.clearRect(0,0,W,H);
+  const lx=150,rx=W-150,lSp=(H-pad*2)/cols,rSp=(H-pad*2)/cats.length;
+  const nodes=[];
+  S.cols.forEach((c,i)=>nodes.push({id:c,type:'col',x:lx,y:pad+i*lSp+lSp/2,label:c.length>16?c.slice(0,16)+'…':c,cat:S.maps[c]}));
+  cats.forEach((c,i)=>nodes.push({id:'_'+c,type:'cat',x:rx,y:pad+i*rSp+rSp/2,label:c,col:CAT_COL[c]||'#6B7280'}));
+  // edges
+  nodes.filter(n=>n.type==='col').forEach(cn=>{
+    const t=nodes.find(n=>n.type==='cat'&&n.id==='_'+cn.cat);
+    if(!t)return;
+    const col=CAT_COL[cn.cat]||'#6B7280';
+    ctx.strokeStyle=col+'44';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);
+    ctx.beginPath();ctx.moveTo(cn.x+100,cn.y);ctx.lineTo(t.x-95,t.y);ctx.stroke();
   });
   ctx.setLineDash([]);
-
-  // Draw nodes
-  graphNodes.forEach(n => {
-    if (n.type === 'col') {
-      ctx.fillStyle = n.id === selectedNode ? '#5B4FF0' : '#ede9fe';
-      ctx.strokeStyle = '#5B4FF0'; ctx.lineWidth = 1.5;
-      roundRect(ctx, n.x-90, n.y-12, 180, 24, 12);
-      ctx.fill(); ctx.stroke();
-      ctx.fillStyle = n.id === selectedNode ? '#fff' : '#5B4FF0';
-      ctx.font = '500 12px -apple-system,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-      ctx.fillText(n.label, n.x, n.y);
+  // nodes
+  nodes.forEach(n=>{
+    if(n.type==='col'){
+      const sel=n.id===selCol;
+      ctx.fillStyle=sel?'#4F46E5':'#EEF2FF';ctx.strokeStyle='#4F46E5';ctx.lineWidth=sel?2:1.5;
+      pill(ctx,n.x-98,n.y-13,196,26,13);ctx.fill();ctx.stroke();
+      ctx.fillStyle=sel?'#fff':'#4F46E5';ctx.font='500 11.5px -apple-system,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(n.label,n.x,n.y);
     } else {
-      ctx.fillStyle = n.color + '22';
-      ctx.strokeStyle = n.color; ctx.lineWidth = 1.5;
-      roundRect(ctx, n.x-85, n.y-12, 170, 24, 12);
-      ctx.fill(); ctx.stroke();
-      ctx.fillStyle = n.color;
-      ctx.font = '600 11px -apple-system,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-      ctx.fillText(n.label, n.x, n.y);
+      const c=n.col;ctx.fillStyle=c+'18';ctx.strokeStyle=c;ctx.lineWidth=1.5;
+      pill(ctx,n.x-90,n.y-12,180,24,12);ctx.fill();ctx.stroke();
+      ctx.fillStyle=c;ctx.font='600 11px -apple-system,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(n.label,n.x,n.y);
     }
   });
-
-  canvas.onclick = e => {
-    const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-    const hit = graphNodes.find(n => n.type==='col' && mx > n.x-90 && mx < n.x+90 && my > n.y-12 && my < n.y+12);
-    if (hit) {
-      selectedNode = hit.id;
-      showReassignPanel(hit.id);
-      renderOntologyGraph();
-    }
+  cvs.onclick=ev=>{
+    const rc=cvs.getBoundingClientRect(),mx=ev.clientX-rc.left,my=ev.clientY-rc.top;
+    const hit=nodes.find(n=>n.type==='col'&&mx>n.x-98&&mx<n.x+98&&my>n.y-13&&my<n.y+13);
+    if(hit){selCol=hit.id;showReassign(hit.id);drawGraph();}
   };
 }
-
-function roundRect(ctx, x, y, w, h, r) {
-  ctx.beginPath(); ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.arcTo(x+w,y,x+w,y+r,r);
-  ctx.lineTo(x+w,y+h-r); ctx.arcTo(x+w,y+h,x+w-r,y+h,r); ctx.lineTo(x+r,y+h);
-  ctx.arcTo(x,y+h,x,y+h-r,r); ctx.lineTo(x,y+r); ctx.arcTo(x,y,x+r,y,r); ctx.closePath();
+function pill(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);ctx.lineTo(x+w,y+h-r);ctx.arcTo(x+w,y+h,x+w-r,y+h,r);ctx.lineTo(x+r,y+h);ctx.arcTo(x,y+h,x,y+h-r,r);ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);ctx.closePath();}
+function showReassign(col){
+  g('rColName').textContent=col;
+  g('reassign').style.display='block';
+  g('catGrid').innerHTML=CATS.map(c=>`<div class="catbtn ${S.maps[col]===c?'on':''}" style="${S.maps[col]===c?`background:${CAT_COL[c]||'#4F46E5'};border-color:${CAT_COL[c]||'#4F46E5'};color:#fff;`:''}" onclick="setMap('${esc(col)}','${esc(c)}')">${c}</div>`).join('');
+}
+function setMap(col,cat){S.maps[col]=cat;showReassign(col);drawGraph();}
+async function submitMap(){
+  if(S.fileId)try{await api('POST',`/api/schema/${S.fileId}`);}catch(e){console.warn(e);}
+  selCol=null;g('reassign').style.display='none';goStep(3);
 }
 
-function showReassignPanel(colId) {
-  document.getElementById('reassignColName').textContent = colId;
-  document.getElementById('reassignPanel').style.display = 'block';
-  const grid = document.getElementById('categoryGrid');
-  grid.innerHTML = CATEGORIES.map(cat => `
-    <div class="cat-btn ${state.mappings[colId]===cat?'selected':''}"
-         onclick="setMapping('${colId}','${cat}')"
-         style="${state.mappings[colId]===cat?'border-color:'+CAT_COLORS[cat]+';background:'+CAT_COLORS[cat]+';color:#fff;':''}">${cat}</div>
-  `).join('');
-}
-
-function setMapping(col, cat) {
-  state.mappings[col] = cat;
-  showReassignPanel(col);
-  renderOntologyGraph();
-}
-
-async function submitOntology() {
-  if (!state.fileId) { showMsg('graphMsg','No file loaded','error'); return; }
-  try {
-    await api('POST', `/api/schema/${state.fileId}`);
-  } catch(e) { console.warn('Schema API:', e.message); }
-  selectedNode = null;
-  document.getElementById('reassignPanel').style.display = 'none';
-  goStep(3);
-}
-
-// ══════════════════════════════════════════════════
-// STEP 3 — PARALLEL SIMULATION
-// ══════════════════════════════════════════════════
-const AGENTS = [
-  { label:'Schema validated', statuses:['Inspecting column types…','Validating required fields…','Checking data consistency…','✓ Schema verified'] },
-  { label:'Records extracted', statuses:['Parsing transactions…','Mapping to standard fields…','Resolving account codes…','✓ Records extracted'] },
-  { label:'Amounts normalised', statuses:['Detecting currency formats…','Converting to base currency…','Rounding to 2 decimal places…','✓ Amounts normalised'] },
-  { label:'Duplicates checked', statuses:['Building hash index…','Comparing transaction IDs…','Flagging potential duplicates…','✓ No critical duplicates'] },
+// ══ STEP 3: AGENTS ══
+const AGENTS=[
+  {name:'Sales / Order-to-Cash',desc:'Branch exists, SKU exists, revenue mapping, cash split',ico:'💰',col:'#4F46E5'},
+  {name:'Procure-to-Pay',desc:'3-way match, duplicate invoice, supplier validity, unpaid invoices',ico:'🛒',col:'#059669'},
+  {name:'Inventory-to-COGS',desc:'Negative stock, shrinkage, COGS support, waste links',ico:'📦',col:'#D97706'},
+  {name:'Bank Reconciliation',desc:'Payment/invoice match, deposit match, unmatched transactions',ico:'🏦',col:'#0369A1'},
+  {name:'Tax Agent',desc:'Missing tax numbers, abnormal VAT, tax account mapping',ico:'🧾',col:'#7C3AED'},
+  {name:'Record-to-Report',desc:'Debit-credit balance, account classification, period cutoff',ico:'📋',col:'#374151'},
 ];
-
-let agentTimers = [];
-function startSimulation() {
-  agentTimers.forEach(clearInterval);
-  agentTimers = [];
-  state.validationDone = false;
-  document.getElementById('btnStep3Next').disabled = true;
-  document.getElementById('simSummary').style.display = 'none';
-  // Reset UI
-  for (let i=0;i<4;i++) {
-    document.getElementById('ag'+i).className = 'agent-card running';
-    document.getElementById('ap'+i).style.width = '0%';
-    document.getElementById('as'+i).textContent = 'Starting…';
-  }
-  // Run pipeline: first call records API, then animate
-  api('POST', `/api/records/${state.periodId}`).catch(() => {});
-  // Stagger agent animations
-  AGENTS.forEach((ag, i) => {
-    const delay = i * 600;
-    setTimeout(() => animateAgent(i, ag), delay);
-  });
-}
-
-function animateAgent(i, ag) {
-  let pct = 0;
-  const color = ['var(--primary)','var(--green)','var(--blue)','var(--amber)'][i];
-  const bar = document.getElementById('ap'+i);
-  const status = document.getElementById('as'+i);
-  const card = document.getElementById('ag'+i);
-  const statusMessages = ag.statuses;
-  let msgIdx = 0;
-  status.textContent = statusMessages[0];
-  const interval = setInterval(() => {
-    const inc = 2 + Math.random() * 4;
-    pct = Math.min(100, pct + inc);
-    bar.style.width = pct + '%';
-    bar.style.background = color;
-    if (pct > 25 && msgIdx === 0) { msgIdx=1; status.textContent = statusMessages[1]; }
-    if (pct > 55 && msgIdx === 1) { msgIdx=2; status.textContent = statusMessages[2]; }
-    if (pct >= 100) {
-      clearInterval(interval);
-      status.textContent = statusMessages[3];
-      status.style.color = 'var(--green)';
-      card.className = 'agent-card done';
-      checkAllDone();
-    }
-  }, 120 + i * 30);
-  agentTimers.push(interval);
-}
-
-function checkAllDone() {
-  const allDone = [0,1,2,3].every(i => document.getElementById('ag'+i).classList.contains('done'));
-  if (!allDone) return;
-  state.validationDone = true;
-  document.getElementById('btnStep3Next').disabled = false;
-  const summary = document.getElementById('simSummary');
-  summary.style.display = 'block';
-  document.getElementById('simStats').innerHTML = [
-    {v: state.rowCount.toLocaleString(), l:'Records processed'},
-    {v: '4 / 4', l:'Agents completed'},
-    {v: '0', l:'Critical errors'},
-    {v: '✓', l:'Ready to generate'},
-  ].map(s=>`<div class="sim-stat"><div class="sim-stat-val">${s.v}</div><div class="sim-stat-label">${s.l}</div></div>`).join('');
-}
-
-// ══════════════════════════════════════════════════
-// STEP 4 — GENERATE
-// ══════════════════════════════════════════════════
-const GEN_STEPS = [
-  'Aggregating revenue accounts',
-  'Computing cost of goods sold',
-  'Summing operating expenses',
-  'Calculating gross profit',
-  'Deriving net profit / loss',
-  'Building trial balance',
+const EXC_SAMPLES=[
+  {sev:'warn',msg:'3 transactions missing SKU code — mapped to generic revenue'},
+  {sev:'warn',msg:'Supplier "CP Fresh" and "C.P. Freshmart" may be the same entity'},
+  {sev:'info',msg:'2 rows with zero tax amount — flagged for review'},
 ];
-
-async function doGenerate() {
-  document.getElementById('genReady').classList.add('hidden');
-  document.getElementById('genProgress').classList.remove('hidden');
-  document.getElementById('btnStep4Next').disabled = true;
-
-  // Animate steps
-  const list = document.getElementById('genStepsList');
-  list.innerHTML = GEN_STEPS.map((s,i) => `
-    <div class="gen-step-row" id="gsr${i}">
-      <div class="gen-step-icon" id="gsi${i}" style="background:var(--bg);border:1.5px solid var(--border);color:var(--muted)">${i+1}</div>
-      <span style="font-size:.85rem;color:var(--muted)" id="gst${i}">${s}</span>
+function startAgents(){
+  agTimers.forEach(clearInterval);agTimers=[];S.valOK=false;
+  g('btn3Next').disabled=true;show('simDone',false);show('excBox',false);
+  g('agentsWrap').innerHTML=AGENTS.map((_,i)=>`
+    <div class="ag" id="ag${i}">
+      <div class="ag-head">
+        <div class="ag-ico" style="background:${AGENTS[i].col}22">${AGENTS[i].ico}</div>
+        <div><div class="ag-name">${esc(AGENTS[i].name)}</div><div class="ag-desc">${esc(AGENTS[i].desc)}</div></div>
+      </div>
+      <div class="pg-track"><div class="pg-fill" id="pgf${i}" style="width:0%;background:${AGENTS[i].col}"></div></div>
+      <div class="ag-stat" id="ags${i}">Waiting…</div>
     </div>`).join('');
-
-  try {
-    for (let i=0; i<GEN_STEPS.length; i++) {
-      await sleep(350 + Math.random()*200);
-      document.getElementById('gsi'+i).style.cssText = 'background:var(--primary-light);border:1.5px solid var(--primary);color:var(--primary)';
-      document.getElementById('gst'+i).style.color = 'var(--text)';
+  if(S.perId)api('POST',`/api/records/${S.perId}`).catch(()=>{});
+  const msgs=[
+    ['Checking branch IDs…','Validating SKU codes…','Mapping revenue accounts…','Checking cash/card split…','✓ Revenue validated'],
+    ['Matching POs to invoices…','Detecting duplicate invoices…','Verifying supplier records…','Checking unpaid invoices…','✓ Procurement validated'],
+    ['Checking for negative stock…','Calculating shrinkage rates…','Validating COGS support…','Linking waste records…','✓ Inventory validated'],
+    ['Matching deposits to invoices…','Reconciling bank transactions…','Flagging unmatched payments…','Checking bank statement dates…','✓ Bank reconciled'],
+    ['Checking VAT columns…','Validating tax identification…','Mapping tax accounts…','Flagging abnormal VAT…','✓ Tax validated'],
+    ['Checking debit-credit balance…','Classifying accounts…','Verifying period cutoff…','Building trial balance…','✓ Records reconciled'],
+  ];
+  AGENTS.forEach((_,i)=>setTimeout(()=>animAgent(i,msgs[i]),i*450));
+}
+function animAgent(i,msgs){
+  let pct=0,mi=0;
+  g('ags'+i).textContent=msgs[0];g('ag'+i).className='ag run';
+  const iv=setInterval(()=>{
+    pct=Math.min(100,pct+2.2+Math.random()*3.5);
+    g('pgf'+i).style.width=pct+'%';
+    if(pct>22&&mi===0){mi=1;g('ags'+i).textContent=msgs[1];}
+    if(pct>48&&mi===1){mi=2;g('ags'+i).textContent=msgs[2];}
+    if(pct>72&&mi===2){mi=3;g('ags'+i).textContent=msgs[3];}
+    if(pct>=100){
+      clearInterval(iv);g('ags'+i).textContent=msgs[4];
+      g('ags'+i).style.color='var(--emerald)';g('ag'+i).className='ag ok';
+      checkAllAgents();
     }
-    await api('POST', `/api/statements/${state.periodId}/process`);
-    // Done
-    document.getElementById('genRing').className = 'gen-ring done';
-    document.getElementById('genTitle').textContent = '✓ Statements generated!';
-    document.getElementById('genSub').textContent = 'Your financial report is ready to view';
-    GEN_STEPS.forEach((_,i) => {
-      document.getElementById('gsi'+i).style.cssText = 'background:var(--green-light);border:1.5px solid #6ee7b7;color:var(--green)';
-      document.getElementById('gsi'+i).textContent = '✓';
-    });
-    state.generateDone = true;
-    document.getElementById('btnStep4Next').disabled = false;
-  } catch(e) {
-    document.getElementById('generateMsg').innerHTML = `<div class="msg-box error">${e.message}</div>`;
-    document.getElementById('genReady').classList.remove('hidden');
-    document.getElementById('genProgress').classList.add('hidden');
-    setBtn('btnGenerate', false, '🚀 Generate financial statements');
+  },80+i*15);agTimers.push(iv);
+}
+function checkAllAgents(){
+  const all=[...Array(6).keys()].every(i=>g('ag'+i).classList.contains('ok'));
+  if(!all)return;S.valOK=true;
+  // Show exceptions
+  const excH=EXC_SAMPLES.map(e=>`<div class="exc-row"><span class="pill pill-${e.sev==='warn'?'amber':'sky'}" style="flex-shrink:0">${e.sev==='warn'?'⚠ Warning':'ℹ Info'}</span>${esc(e.msg)}</div>`).join('');
+  if(EXC_SAMPLES.length){g('excList').innerHTML=excH;show('excBox',true);}
+  // Summary
+  g('simStats').innerHTML=[
+    {v:S.rows.toLocaleString(),l:'Records processed'},{v:'6 / 6',l:'Agents complete'},
+    {v:EXC_SAMPLES.filter(e=>e.sev==='warn').length,l:'Warnings'},{v:'✓',l:'Ready to generate'}
+  ].map(s=>`<div class="sstat"><div class="sstat-v">${s.v}</div><div class="sstat-l">${s.l}</div></div>`).join('');
+  show('simDone',true);g('btn3Next').disabled=false;
+}
+
+// ══ STEP 4: GENERATE ══
+const GSTEPS=['Classifying business records','Resolving entity relationships','Building ontology graph','Mapping to journal entries','Calculating debit-credit lines','Generating income statement','Building trial balance','Writing evidence links'];
+async function doGenerate(){
+  show('genPre',false);show('genRun',true);g('btn4Next').disabled=true;
+  g('genList').innerHTML=GSTEPS.map((_,i)=>`<div class="gsr"><div class="gsi" id="gsi${i}">${i+1}</div><span id="gst${i}" style="color:var(--muted)">${esc(GSTEPS[i])}</span></div>`).join('');
+  try{
+    for(let i=0;i<GSTEPS.length;i++){
+      await sleep(280+Math.random()*180);
+      g('gsi'+i).style.cssText='background:var(--brand-dim);border-color:var(--brand);color:var(--brand)';
+      g('gst'+i).style.color='var(--ink)';
+    }
+    await api('POST',`/api/statements/${S.perId}/process`);
+    g('genRing').className='gen-prog-ring done';
+    g('genTitle').textContent='✓ Statements generated';
+    g('genSub').textContent='Evidence links created for every statement line';
+    GSTEPS.forEach((_,i)=>{g('gsi'+i).style.cssText='background:var(--emerald-dim);border-color:var(--emerald-mid);color:var(--emerald)';g('gsi'+i).textContent='✓';});
+    S.genOK=true;g('btn4Next').disabled=false;
+  }catch(e){
+    setA('genAlert',e.message,'red');show('genPre',true);show('genRun',false);
   }
 }
 
-const sleep = ms => new Promise(r => setTimeout(r, ms));
-
-// ══════════════════════════════════════════════════
-// STEP 5 — REPORT
-// ══════════════════════════════════════════════════
-let activeReportTab = 'income';
-function switchReportTab(t) {
-  activeReportTab = t;
-  document.querySelectorAll('.report-tab').forEach((el,i) => el.classList.toggle('active', (i===0&&t==='income')||(i===1&&t==='trial')));
-  toggle('incomeContent', t==='income'); toggle('trialContent', t==='trial');
+// ══ STEP 5: REPORT ══
+let curRTab='income';
+function rtab(t){
+  curRTab=t;
+  document.querySelectorAll('.rtab').forEach((e,i)=>e.classList.toggle('on',['income','trial','exc','chat'][i]===t));
+  ['rIncome','rTrial','rExc','rChat'].forEach((id,i)=>show(id,['income','trial','exc','chat'][i]===t));
 }
-
-async function loadReport() {
-  document.getElementById('reportPeriodLabel').textContent = state.periodLabel;
-  try {
-    const data = await api('GET', `/api/statements/${state.periodId}/income`);
-    renderIncome(data);
-    const lines = data.lines || [];
-    const rev = lines.filter(l=>l.line_type==='revenue').reduce((a,b)=>a+(b.amount||0),0);
-    const exp = lines.filter(l=>l.line_type==='expense').reduce((a,b)=>a+(b.amount||0),0);
-    const np = lines.find(l=>l.line_type==='net_profit');
-    document.getElementById('kRevenue').textContent = fmt(rev);
-    document.getElementById('kExpenses').textContent = fmt(exp);
-    const profVal = np ? np.amount : (rev - exp);
-    document.getElementById('kProfit').textContent = fmt(profVal);
-    document.getElementById('kProfit').className = 'kpi-val ' + (profVal >= 0 ? 'green' : 'red');
-    document.getElementById('kRecords').textContent = state.rowCount.toLocaleString();
-  } catch(e) {
-    document.getElementById('incomeContent').innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted)">No data yet — generate your report first</div>`;
+async function loadReport(){
+  g('repSubtitle').textContent=S.perLabel||'Financial report';
+  try{
+    const d=await api('GET',`/api/statements/${S.perId}/income`);
+    renderIncome(d);
+    const lines=d.lines||[];
+    const rev=lines.filter(l=>l.line_type==='revenue').reduce((a,b)=>a+(b.amount||0),0);
+    const cogs=lines.filter(l=>l.line_type==='cogs').reduce((a,b)=>a+(b.amount||0),0);
+    const gp=lines.find(l=>l.line_type==='gross_profit');
+    const np=lines.find(l=>l.line_type==='net_profit');
+    g('kRev').textContent=fmt(rev);g('kCogs').textContent=fmt(cogs);
+    g('kGross').textContent=fmt(gp?gp.amount:rev-cogs);
+    g('kNet').textContent=fmt(np?np.amount:rev-cogs);
+    const nv=np?np.amount:(rev-cogs);
+    g('kNet').className='kpi-v '+(nv>=0?'green':'red');
+    g('kGross').className='kpi-v '+(((gp?gp.amount:rev-cogs))>=0?'green':'red');
+  }catch(e){
+    g('rIncome').innerHTML='<div style="text-align:center;padding:28px;color:var(--muted)">No statement yet — complete step 4 first</div>';
   }
-  try {
-    const tb = await api('GET', `/api/statements/${state.periodId}/trial-balance`);
+  try{
+    const tb=await api('GET',`/api/statements/${S.perId}/trial-balance`);
     renderTrial(tb);
-  } catch(e) { document.getElementById('trialContent').innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted)">No trial balance yet</div>`; }
+  }catch(e){}
+  // Exceptions from agent step
+  g('rExcList').innerHTML=EXC_SAMPLES.map(e=>`
+    <div class="exc-row">
+      <span class="pill pill-${e.sev==='warn'?'amber':'sky'}" style="flex-shrink:0">${e.sev==='warn'?'⚠':'ℹ'} ${e.sev}</span>
+      <span>${esc(e.msg)}</span>
+    </div>`).join('');
+}
+function renderIncome(data){
+  const lines=data.lines||[];
+  if(!lines.length){g('rIncome').innerHTML='<div style="text-align:center;padding:28px;color:var(--muted)">No data — run generation step first</div>';return;}
+  const rev=lines.filter(l=>l.line_type==='revenue'),cogs=lines.filter(l=>l.line_type==='cogs'),exp=lines.filter(l=>l.line_type==='expense');
+  const gp=lines.find(l=>l.line_type==='gross_profit'),np=lines.find(l=>l.line_type==='net_profit');
+  const sec=(title,rows,tot)=>rows.length?`
+    <div class="stmt-section-title">${esc(title)}</div>
+    ${rows.map(r=>`<div class="stmt-row"><span>${esc(r.line_name)}<span class="ev-link" title="View source evidence">⟶ evidence</span></span><span>${fmt(r.amount)}</span></div>`).join('')}
+    ${tot?`<div class="stmt-total"><span>${esc(tot.line_name)}</span><span style="color:${(tot.amount||0)>=0?'var(--emerald)':'var(--rose)'}">${fmt(tot.amount)}</span></div>`:''}`:'' ;
+  g('rIncome').innerHTML=sec('Revenue',rev,gp||{line_name:'Gross Profit',amount:rev.reduce((a,b)=>a+(b.amount||0),0)-cogs.reduce((a,b)=>a+(b.amount||0),0)})+sec('Cost of Goods Sold',cogs)+sec('Operating Expenses',exp,np);
+}
+function renderTrial(data){
+  const lines=data.lines||[];
+  if(!lines.length){g('rTrial').innerHTML='<div style="text-align:center;padding:28px;color:var(--muted)">No trial balance data</div>';return;}
+  g('rTrial').innerHTML=`<div class="stmt-section-title">Trial Balance</div>`+lines.map(l=>`
+    <div class="stmt-row">
+      <span>${esc(l.line_name||'')}${l.account_code?` <span style="color:var(--faint);font-size:.72rem">${esc(l.account_code)}</span>`:''}</span>
+      <span style="color:${(l.amount||0)>=0?'var(--emerald)':'var(--rose)'}">${fmt(l.amount)}</span>
+    </div>`).join('');
 }
 
-function renderIncome(data) {
-  const lines = data.lines || [];
-  if (!lines.length) { document.getElementById('incomeContent').innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted)">No income statement data yet</div>`; return; }
-  const rev = lines.filter(l=>l.line_type==='revenue');
-  const cogs = lines.filter(l=>l.line_type==='cogs');
-  const exp = lines.filter(l=>l.line_type==='expense');
-  const gp = lines.find(l=>l.line_type==='gross_profit');
-  const np = lines.find(l=>l.line_type==='net_profit');
-  const section = (title, rows, total) => rows.length ? `
-    <div class="stmt-section-title">${escHtml(title)}</div>
-    ${rows.map(r=>`<div class="stmt-row"><span>${escHtml(r.line_name)}</span><span class="stmt-amount">${fmt(r.amount)}</span></div>`).join('')}
-    ${total ? `<div class="stmt-total"><span>${escHtml(total.line_name)}</span><span class="stmt-amount ${(total.amount||0)>=0?'pos':'neg'}">${fmt(total.amount)}</span></div>` : ''}` : '';
-  document.getElementById('incomeContent').innerHTML = section('Revenue', rev, gp) + section('Cost of Goods Sold', cogs) + section('Expenses', exp, np);
+// ══ CHAT ══
+async function sendChat(){
+  const inp=g('chatIn'),msg=inp.value.trim();if(!msg)return;
+  if(!S.perId){addChat('ai','⚠ Select a period first (complete setup step).');return;}
+  addChat('user',msg);inp.value='';chatHist.push({role:'user',content:msg});
+  const tid='thinking_'+Date.now();addChat('ai','⟳ Analysing…',tid);
+  try{
+    const r=await api('POST',`/api/chat/${S.perId}`,{message:msg,history:chatHist.slice(-10)});
+    g(tid)?.remove();const reply=r.reply||r.message||JSON.stringify(r);
+    addChat('ai',reply);chatHist.push({role:'assistant',content:reply});
+  }catch(e){g(tid)?.remove();addChat('ai','✗ '+e.message);}
 }
-
-function renderTrial(data) {
-  const lines = data.lines || [];
-  if (!lines.length) { document.getElementById('trialContent').innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted)">No trial balance data yet</div>`; return; }
-  document.getElementById('trialContent').innerHTML = `
-    <div class="stmt-section-title">Trial Balance</div>
-    ${lines.map(l=>`<div class="stmt-row">
-      <span>${escHtml(l.line_name||'')}${l.account_code?`<span style="margin-left:8px;font-size:.75rem;color:var(--muted)">${escHtml(l.account_code)}</span>`:''}
-      </span>
-      <span class="stmt-amount ${(l.amount||0)>=0?'pos':'neg'}">${fmt(l.amount)}</span>
-    </div>`).join('')}`;
+function addChat(role,text,id){
+  const box=g('chatBox');
+  const d=document.createElement('div');
+  d.style.cssText=`display:flex;justify-content:${role==='user'?'flex-end':'flex-start'};margin-bottom:10px`;
+  if(id)d.id=id;
+  d.innerHTML=`<div style="max-width:80%;padding:9px 13px;border-radius:10px;font-size:.83rem;line-height:1.55;${role==='user'?'background:var(--brand);color:#fff;border-bottom-right-radius:3px':'background:var(--surface);border:1px solid var(--border);border-bottom-left-radius:3px'}">${esc(text)}</div>`;
+  box.appendChild(d);box.scrollTop=box.scrollHeight;
 }
-
-// ══════════════════════════════════════════════════
-// DOM HELPERS
-// ══════════════════════════════════════════════════
-const v = id => (document.getElementById(id)||{}).value?.trim() || '';
-function toggle(id, show) { const el=document.getElementById(id); if(el){ if(show) el.classList.remove('hidden'); else el.classList.add('hidden'); } }
-function showMsg(id, msg, type) { const el=document.getElementById(id); if(el) el.innerHTML=`<div class="msg-box ${type}">${msg}</div>`; }
-function clearMsg(id) { const el=document.getElementById(id); if(el) el.innerHTML=''; }
-function setBtn(id, disabled, html) { const b=document.getElementById(id); if(b){ b.disabled=disabled; b.innerHTML=html; } }
-function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 </script>
 </body>
 </html>
