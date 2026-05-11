@@ -3,1059 +3,871 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FinanceAI — SME Financial Intelligence</title>
+<title>Ledger Spark — SME Financial Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
+/* ── LEDGER SPARK design tokens ── */
 :root {
-  --brand:#4F46E5;--brand-light:#EEF2FF;--brand-dark:#3730A3;
-  --emerald:#059669;--emerald-light:#ECFDF5;
-  --amber:#D97706;--amber-light:#FFFBEB;
-  --red:#DC2626;--red-light:#FEF2F2;
-  --sky:#0284C7;--sky-light:#F0F9FF;
-  --violet:#7C3AED;
-  --bg:#F9FAFB;--surface:#FFFFFF;
-  --border:#E5E7EB;--border-subtle:#F3F4F6;
-  --text:#111827;--text-2:#374151;--text-3:#6B7280;--text-4:#9CA3AF;
-  --radius:12px;--radius-sm:8px;--radius-lg:16px;
-  --shadow-sm:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
-  --shadow:0 4px 12px rgba(0,0,0,.08),0 1px 3px rgba(0,0,0,.04);
-  --shadow-lg:0 20px 48px rgba(0,0,0,.12),0 4px 12px rgba(0,0,0,.06);
+  --brand:#5B4BFB; --brand-deep:#3B2EE0; --brand-soft:#EEEBFF;
+  --spark:#FF7A59; --spark-soft:#FFE9E1;
+  --mint:#10B981; --mint-soft:#DCFCE7;
+  --amber:#F59E0B; --amber-soft:#FEF3C7;
+  --rose:#EF4444; --rose-soft:#FEE2E2;
+  --canvas:#FAFAF7; --surface:#FFFFFF; --surface-2:#F5F4F0;
+  --line:#E9E6DE; --line-soft:#F0EDE5;
+  --ink:#1B1730; --ink-2:#3C3856; --ink-3:#6C6884; --ink-4:#9E9BB1;
+  --r-xs:6px; --r-sm:10px; --r:14px; --r-lg:22px; --r-xl:32px;
+  --shadow-1:0 1px 2px rgba(27,23,48,.04),0 1px 1px rgba(27,23,48,.02);
+  --shadow-2:0 4px 14px rgba(27,23,48,.06),0 2px 4px rgba(27,23,48,.04);
+  --shadow-3:0 24px 56px -12px rgba(27,23,48,.18),0 8px 20px -8px rgba(27,23,48,.10);
+  --shadow-glow:0 12px 28px -6px rgba(91,75,251,.32);
+  --sans:'Plus Jakarta Sans',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
 }
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--sans);background:var(--canvas);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.45}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:none;background:none}
+a{color:inherit;text-decoration:none}
+.mono{font-family:var(--mono);font-feature-settings:'tnum'}
+.tnum{font-variant-numeric:tabular-nums}
 
-/* ── BUTTONS ── */
-.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
-.btn-brand{background:var(--brand);color:white}.btn-brand:hover{background:var(--brand-dark)}
-.btn-outline{background:white;color:var(--text-2);border:1.5px solid var(--border)}.btn-outline:hover{border-color:var(--brand);color:var(--brand)}
-.btn-sm{padding:6px 12px;font-size:13px;border-radius:7px}
-.btn-lg{padding:12px 28px;font-size:16px;border-radius:10px}
-.btn-danger{background:var(--red-light);color:var(--red);border:1.5px solid #FECACA}.btn-danger:hover{background:#FEE2E2}
-.btn-full{width:100%;justify-content:center;padding:12px}
-.btn:disabled{opacity:.5;cursor:not-allowed}
+/* ── Layout helpers ── */
+.row{display:flex;align-items:center;gap:12px}
+.col{display:flex;flex-direction:column;gap:12px}
+.spacer{flex:1}
 
-/* ── BADGES ── */
-.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:12px;font-weight:600}
-.badge-brand{background:var(--brand-light);color:var(--brand)}
-.badge-emerald{background:var(--emerald-light);color:var(--emerald)}
-.badge-amber{background:var(--amber-light);color:var(--amber)}
-.badge-red{background:var(--red-light);color:var(--red)}
-.badge-gray{background:#F3F4F6;color:var(--text-3)}
-
-/* ── FORMS ── */
-.form-label{font-size:13px;font-weight:600;color:var(--text-2);margin-bottom:6px;display:block}
-.form-input{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;color:var(--text);background:white;transition:border .15s}
-.form-input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(79,70,229,.1)}
-.form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
-.form-hint{font-size:12px;color:var(--text-4);margin-top:2px}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-@media(max-width:600px){.form-grid{grid-template-columns:1fr}}
-
-/* ── MSG TOASTS ── */
-.msg-box{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px;display:none}
-.msg-box.error{background:var(--red-light);color:var(--red);border:1px solid #FECACA;display:block}
-.msg-box.success{background:var(--emerald-light);color:var(--emerald);border:1px solid #A7F3D0;display:block}
-.msg-box.info{background:var(--brand-light);color:var(--brand);border:1px solid #C7D2FE;display:block}
-
-/* ══════════════════════════════
-   AUTH SCREEN
-══════════════════════════════ */
-#authScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;background:linear-gradient(135deg,#EEF2FF 0%,#F9FAFB 100%)}
-.auth-wrap{display:flex;gap:0;background:white;border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);border:1px solid var(--border);overflow:hidden;width:100%;max-width:860px}
-.auth-panel{flex:1;padding:48px;background:linear-gradient(160deg,#4F46E5 0%,#7C3AED 100%);color:white}
-.auth-panel h2{font-size:26px;font-weight:800;line-height:1.2;letter-spacing:-.4px;margin-bottom:28px}
-.auth-feature{display:flex;gap:12px;align-items:flex-start;margin-bottom:18px}
-.auth-feature-icon{width:36px;height:36px;background:rgba(255,255,255,.15);border-radius:9px;display:grid;place-items:center;font-size:16px;flex-shrink:0}
-.auth-feature-text{font-size:14px;font-weight:600;margin-bottom:2px}
-.auth-feature-sub{font-size:13px;opacity:.7}
-.auth-card{width:380px;flex-shrink:0;padding:40px}
-.auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:28px}
-.auth-logo-icon{width:38px;height:38px;background:var(--brand);border-radius:10px;display:grid;place-items:center}
-.auth-logo-icon svg{width:20px;height:20px;fill:white}
-.auth-logo-text{font-size:19px;font-weight:800;color:var(--text);letter-spacing:-.3px}
-.auth-tabs{display:flex;background:var(--bg);border-radius:9px;padding:3px;margin-bottom:24px}
-.auth-tab{flex:1;text-align:center;padding:8px;border-radius:7px;font-size:14px;font-weight:600;color:var(--text-3);cursor:pointer;transition:all .15s}
-.auth-tab.active{background:white;color:var(--text);box-shadow:var(--shadow-sm)}
-
-/* ══════════════════════════════
-   APP SHELL
-══════════════════════════════ */
-#appScreen{display:none;flex-direction:column;min-height:100vh}
-.topbar{background:white;border-bottom:1px solid var(--border);padding:0 28px;height:60px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow-sm)}
-.topbar-brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:16px;color:var(--brand);text-decoration:none;white-space:nowrap}
-.topbar-brand-icon{width:32px;height:32px;background:var(--brand);border-radius:8px;display:grid;place-items:center}
-.topbar-brand-icon svg{width:18px;height:18px;fill:white}
-.company-select{padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-weight:600;color:var(--text);background:white;cursor:pointer;outline:none;max-width:200px}
-.company-select:focus{border-color:var(--brand)}
-.period-badge{display:flex;align-items:center;gap:5px;background:var(--emerald-light);color:var(--emerald);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;white-space:nowrap}
-.period-dot{width:6px;height:6px;background:var(--emerald);border-radius:50%}
-.topbar-spacer{flex:1}
-.user-badge{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-3)}
-.user-avatar{width:30px;height:30px;background:var(--brand);border-radius:50%;display:grid;place-items:center;color:white;font-size:12px;font-weight:700}
-.btn-logout{padding:6px 14px;border-radius:7px;background:transparent;border:1.5px solid var(--border);color:var(--text-3);font-size:13px;cursor:pointer;font-weight:500;transition:all .15s}
-.btn-logout:hover{color:var(--red);border-color:#FECACA}
-
-/* ── MAIN CONTENT ── */
-.main{padding:32px 28px;max-width:1100px;margin:0 auto;width:100%}
-
-/* ── SETUP VIEW ── */
-#setupView{display:none}
-.setup-center{max-width:520px;margin:80px auto;background:white;border-radius:var(--radius-lg);border:1px solid var(--border);padding:40px;box-shadow:var(--shadow)}
-.setup-icon{width:52px;height:52px;background:var(--brand-light);border-radius:14px;display:grid;place-items:center;font-size:24px;margin-bottom:20px}
-.setup-title{font-size:22px;font-weight:800;letter-spacing:-.4px;margin-bottom:6px}
-.setup-sub{font-size:14px;color:var(--text-3);margin-bottom:28px;line-height:1.5}
-
-/* ── MAIN VIEW ── */
-#mainView{display:none}
-
-/* upload zone */
-.upload-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:40px 28px;text-align:center;background:white;transition:all .2s;cursor:pointer;position:relative}
-.upload-zone:hover{border-color:var(--brand);background:var(--brand-light)}
-.upload-zone.drag-over{border-color:var(--brand);background:var(--brand-light);transform:scale(1.01)}
-.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
-.upload-icon{font-size:36px;margin-bottom:12px}
-.upload-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:5px}
-.upload-sub{font-size:13px;color:var(--text-3);margin-bottom:12px}
-.upload-tags{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
-.upload-tag{background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:2px 8px;font-size:11px;color:var(--text-3);font-weight:600}
-
-/* file list */
-.file-row{display:flex;align-items:center;gap:12px;background:white;border:1px solid var(--border);border-radius:9px;padding:12px 16px;margin-bottom:8px}
-.file-icon{width:36px;height:36px;background:var(--brand-light);border-radius:8px;display:grid;place-items:center;font-size:16px;flex-shrink:0}
-.file-name{font-size:14px;font-weight:600;flex:1}
-.file-meta{font-size:12px;color:var(--text-4)}
-
-/* processing */
-.processing-bar{background:white;border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px}
-.proc-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
-.proc-spinner{width:20px;height:20px;border:2.5px solid var(--brand-light);border-top-color:var(--brand);border-radius:50%;animation:spin .8s linear infinite}
+/* ── Animations ── */
+@keyframes screenIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @keyframes spin{to{transform:rotate(360deg)}}
-.proc-title{font-size:14px;font-weight:700;color:var(--brand)}
-.proc-log{font-size:12px;color:var(--text-3);font-family:monospace;max-height:100px;overflow-y:auto;background:var(--bg);border-radius:6px;padding:10px}
-.proc-log p{margin-bottom:2px}
+@keyframes pulse{0%{transform:scale(.6);opacity:.4}100%{transform:scale(2);opacity:0}}
+@keyframes meterShimmer{from{background-position:0% 0}to{background-position:200% 0}}
+.screen{animation:screenIn .42s cubic-bezier(.2,.7,.2,1)}
 
-/* KPI stat boxes */
-.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
-@media(max-width:700px){.kpi-grid{grid-template-columns:1fr}}
-.stat-box{background:white;border:1px solid var(--border);border-radius:var(--radius);padding:20px}
-.stat-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-4);margin-bottom:8px}
-.stat-value{font-size:28px;font-weight:800;letter-spacing:-1px}
-.stat-sub{font-size:12px;color:var(--text-3);margin-top:4px}
-.stat-value.green{color:var(--emerald)}
-.stat-value.brand{color:var(--brand)}
-.stat-value.red{color:var(--red)}
+/* ── Brand glyph ── */
+.brand-glyph{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--brand) 0%,#7C6EFF 60%,var(--spark) 130%);display:grid;place-items:center;color:white;box-shadow:var(--shadow-glow);flex-shrink:0;position:relative}
+.brand-glyph::after{content:'';position:absolute;inset:1px;border-radius:9px;background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,0));pointer-events:none}
+.brand-glyph svg{position:relative;z-index:1}
+.brand-mark{display:inline-flex;align-items:center;gap:10px;font-weight:700;font-size:17px;letter-spacing:-.01em}
 
-/* report tabs */
-.report-tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:24px}
-.report-tab{padding:10px 18px;font-size:14px;font-weight:600;color:var(--text-3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap}
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 18px;border-radius:11px;font-weight:600;font-size:14px;transition:transform .12s,box-shadow .18s,background .15s,border-color .15s,color .15s;white-space:nowrap;border:none;cursor:pointer}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary{background:var(--ink);color:white;box-shadow:0 1px 0 rgba(255,255,255,.12) inset,var(--shadow-2)}
+.btn-primary:hover:not(:disabled){background:#0E0A22}
+.btn-spark{background:linear-gradient(135deg,var(--brand) 0%,#7363FF 100%);color:white;box-shadow:var(--shadow-glow)}
+.btn-spark:hover:not(:disabled){filter:brightness(1.06)}
+.btn-ghost{color:var(--ink-2)}
+.btn-ghost:hover{background:var(--surface-2);color:var(--ink)}
+.btn-outline{background:var(--surface);color:var(--ink);border:1.5px solid var(--line)}
+.btn-outline:hover:not(:disabled){border-color:var(--ink)}
+.btn-lg{padding:14px 22px;font-size:15px;border-radius:13px}
+.btn-sm{padding:7px 12px;font-size:13px;border-radius:9px}
+.btn-full{width:100%;justify-content:center}
+
+/* ── Chips ── */
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;font-size:12px;font-weight:600;letter-spacing:.01em}
+.chip-brand{background:var(--brand-soft);color:var(--brand-deep)}
+.chip-spark{background:var(--spark-soft);color:#B5421F}
+.chip-mint{background:var(--mint-soft);color:#047857}
+.chip-amber{background:var(--amber-soft);color:#92400E}
+.chip-rose{background:var(--rose-soft);color:#B91C1C}
+.chip-line{background:var(--surface);color:var(--ink-2);border:1px solid var(--line)}
+.dot{width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block}
+.dot-pulse{position:relative}
+.dot-pulse::before{content:'';position:absolute;inset:-3px;border-radius:50%;background:currentColor;opacity:.25;animation:pulse 1.6s ease-out infinite}
+
+/* ── Cards ── */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow-1)}
+.card-pad{padding:22px}
+
+/* ── Forms ── */
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:13px;font-weight:600;color:var(--ink-2)}
+.field input,.field select,.field textarea{padding:11px 14px;border-radius:11px;border:1.5px solid var(--line);background:var(--surface);font-size:14.5px;outline:none;transition:border-color .15s,box-shadow .15s;width:100%}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--brand);box-shadow:0 0 0 4px rgba(91,75,251,.12)}
+.field-hint{font-size:12px;color:var(--ink-3)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+/* ── Alert messages ── */
+.alert{padding:11px 14px;border-radius:10px;font-size:13.5px;display:none}
+.alert.show{display:block}
+.alert-error{background:var(--rose-soft);color:#9B1C1C;border:1px solid #FECACA}
+.alert-success{background:var(--mint-soft);color:#065F46;border:1px solid #A7F3D0}
+.alert-info{background:var(--brand-soft);color:var(--brand-deep);border:1px solid #C4B5FD}
+
+/* ════════════════════════════════════════════
+   AUTH SCREEN — Ledger Spark split panel
+════════════════════════════════════════════ */
+#authScreen{display:grid;grid-template-columns:1.05fr 1fr;min-height:100vh}
+.auth-aside{position:relative;background:linear-gradient(160deg,#15102E 0%,#1F1746 50%,#4030B5 130%);color:white;padding:36px 48px;overflow:hidden;display:flex;flex-direction:column}
+.auth-aside-noise{position:absolute;inset:0;pointer-events:none;opacity:.04;mix-blend-mode:multiply;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='.6'/></svg>")}
+.auth-aside-glow{position:absolute;top:-20%;right:-30%;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(255,122,89,.35),transparent 60%)}
+.auth-aside-top{position:relative;display:flex;align-items:center;justify-content:space-between}
+.auth-aside-main{position:relative;margin-top:auto;max-width:460px}
+.auth-aside-quote{margin-top:30px;padding:16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:14px;backdrop-filter:blur(6px)}
+.auth-aside-footer{position:relative;margin-top:32px;display:flex;gap:14px;font-size:11px;color:rgba(255,255,255,.5)}
+.auth-form-side{display:grid;place-items:center;padding:36px;background:var(--surface)}
+.auth-form-inner{width:100%;max-width:420px}
+.auth-form-inner h1{font-size:30px;font-weight:800;letter-spacing:-.02em}
+.auth-form-inner p{color:var(--ink-3);font-size:14.5px;margin-top:6px}
+.auth-mode-tabs{display:flex;gap:4px;padding:4px;background:var(--surface-2);border-radius:12px;margin-top:24px}
+.auth-mode-tab{flex:1;padding:10px 12px;border-radius:9px;font-size:13.5px;font-weight:600;text-align:center;cursor:pointer;transition:all .15s;color:var(--ink-3);background:transparent;border:none}
+.auth-mode-tab.active{background:var(--surface);color:var(--ink);box-shadow:var(--shadow-1)}
+
+/* ════════════════════════════════════════════
+   APP SHELL — sidebar layout
+════════════════════════════════════════════ */
+#appScreen{display:none;min-height:100vh}
+#appScreen.visible{display:grid;grid-template-columns:264px 1fr}
+.sidebar{background:var(--surface);border-right:1px solid var(--line);padding:18px 14px;display:flex;flex-direction:column;gap:18px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sb-section{display:flex;flex-direction:column;gap:6px}
+.sb-label{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--ink-4);padding:0 8px;text-transform:uppercase}
+.sb-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;font-size:13.5px;font-weight:500;color:var(--ink-2);cursor:pointer;transition:background .12s}
+.sb-item:hover{background:var(--surface-2);color:var(--ink)}
+.sb-item.active{background:var(--ink);color:white}
+.sb-item svg{width:17px;height:17px;flex-shrink:0;opacity:.7}
+.sb-item.active svg{opacity:1}
+.sb-context{background:var(--surface-2);border-radius:var(--r-sm);padding:12px;display:flex;flex-direction:column;gap:10px}
+.sb-ctx-row{display:flex;flex-direction:column;gap:5px}
+.sb-ctx-row span{font-size:11px;color:var(--ink-3);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.sb-ctx-row select{border:1px solid var(--line);background:var(--surface);padding:7px 9px;border-radius:8px;font-size:13px;outline:none;width:100%;cursor:pointer}
+.sb-ctx-row select:focus{border-color:var(--brand)}
+.sb-upsell{background:linear-gradient(180deg,var(--brand-soft),#FFFFFF);border:1px solid #D6CFFF;border-radius:var(--r-sm);padding:12px;display:flex;flex-direction:column;gap:8px}
+.sb-user{display:flex;align-items:center;gap:10px;padding:0 8px}
+.sb-avatar{width:30px;height:30px;border-radius:50%;background:var(--ink);color:white;display:grid;place-items:center;font-weight:700;font-size:12px;flex-shrink:0}
+.main-area{padding:28px 36px 56px;min-width:0;overflow-y:auto}
+
+/* ── Pipeline stages ── */
+.pipeline{display:grid;grid-template-columns:repeat(4,1fr);gap:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:6px;overflow:hidden}
+.stage{padding:18px 16px;border-radius:var(--r);display:flex;flex-direction:column;gap:10px;position:relative;transition:background .25s}
+.stage+.stage::before{content:'';position:absolute;left:-16px;top:50%;width:28px;height:2px;background:linear-gradient(90deg,transparent,var(--line) 30%,var(--line) 70%,transparent);transform:translateY(-50%)}
+.stage.done{background:linear-gradient(180deg,#F0FDF6,#FFFFFF)}
+.stage.run{background:linear-gradient(180deg,var(--brand-soft),#FFFFFF)}
+.stage.idle,.stage.waiting{background:var(--surface)}
+.stage.error{background:linear-gradient(180deg,var(--rose-soft),#FFFFFF)}
+.stage-num{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-family:var(--mono);font-size:12px;font-weight:700;background:var(--surface-2);color:var(--ink-3)}
+.stage.done .stage-num{background:var(--mint);color:white}
+.stage.run .stage-num{background:var(--brand);color:white}
+.stage h4{font-size:14px;font-weight:700}
+.stage p{font-size:12px;color:var(--ink-3);line-height:1.4}
+.stage-meter{height:4px;background:var(--surface-2);border-radius:99px;overflow:hidden}
+.stage-meter-bar{height:100%;background:var(--brand);border-radius:99px;transition:width .4s ease;width:0%}
+.stage.done .stage-meter-bar{background:var(--mint);width:100%}
+.stage.run .stage-meter-bar{background:linear-gradient(90deg,var(--brand),var(--spark));background-size:200% 100%;animation:meterShimmer 1.8s linear infinite}
+
+/* ── Drop zone ── */
+.dropzone{border:2px dashed var(--line);border-radius:var(--r);padding:40px 28px;background:var(--surface);text-align:center;cursor:pointer;transition:all .15s;position:relative}
+.dropzone:hover,.dropzone.over{border-color:var(--brand);background:linear-gradient(180deg,var(--brand-soft),var(--surface))}
+.dropzone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.dz-icon-wrap{width:72px;height:72px;border-radius:18px;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center;margin:0 auto 14px}
+
+/* ── KPI grid ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+.kpi-label{font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em}
+.kpi-value{font-family:var(--mono);font-size:22px;font-weight:700;letter-spacing:-.01em}
+.kpi-sub{font-size:12px;font-weight:600;color:var(--ink-3)}
+.kpi-sub.up{color:var(--mint)} .kpi-sub.down{color:var(--rose)}
+
+/* ── Console ── */
+.console{background:#0E0A22;color:#DDD6FE;border-radius:var(--r);padding:14px 16px;font-family:var(--mono);font-size:12px;line-height:1.7;max-height:160px;overflow-y:auto;border:1px solid #2A2150}
+.console .ts{color:#8B7FC9}
+.console .ok{color:#6EE7B7}
+.console .info{color:#C4B5FD}
+.console .warn{color:#FCD34D}
+.console .err{color:#FCA5A5}
+
+/* ── Statements ── */
+.stmt-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:24px}
+.stmt-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px}
+.stmt-head h3{font-size:16px;font-weight:700;letter-spacing:-.01em}
+.stmt-meta{font-size:12px;color:var(--ink-3);font-family:var(--mono)}
+.stmt-section-head{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--ink-3);text-transform:uppercase;padding:10px 0 8px;border-bottom:1px solid var(--line-soft)}
+.stmt-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;font-size:14px;border-bottom:1px dashed var(--line-soft)}
+.stmt-row .lbl{color:var(--ink-2)}
+.stmt-row.indent .lbl{padding-left:14px;color:var(--ink-3);font-size:13px}
+.stmt-row .amt{font-family:var(--mono);font-weight:600;font-variant-numeric:tabular-nums}
+.stmt-total{display:flex;align-items:center;justify-content:space-between;padding:14px 0 0;font-size:15px;font-weight:800;border-top:2px solid var(--ink);margin-top:6px}
+.stmt-total .amt{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* ── File list ── */
+.file-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface)}
+.file-dot{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;color:white;font-size:11px;font-weight:700;flex-shrink:0}
+
+/* ── Chat ── */
+.chat-messages{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:14px;padding:20px}
+.msg-row{display:flex;align-items:flex-start;gap:10px;max-width:78%}
+.msg-row.user{align-self:flex-end;flex-direction:row-reverse}
+.msg-avatar{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;flex-shrink:0;color:white}
+.msg-bubble{padding:10px 14px;border-radius:14px;font-size:14px;line-height:1.5;white-space:pre-wrap}
+.msg-row.ai .msg-bubble{background:var(--surface);border:1px solid var(--line);color:var(--ink)}
+.msg-row.user .msg-bubble{background:var(--brand);color:white}
+
+/* ── Report tabs ── */
+.report-tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.report-tab{padding:10px 16px;font-size:13.5px;font-weight:600;color:var(--ink-3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .12s}
 .report-tab.active{color:var(--brand);border-color:var(--brand)}
-.report-tab:hover:not(.active){color:var(--text)}
+.report-tab:hover:not(.active){color:var(--ink)}
 
-/* statement table */
-.stmt-table{width:100%;border-collapse:collapse;font-size:13px}
-.stmt-table th{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-4);text-align:left;padding:8px 12px;border-bottom:2px solid var(--border)}
-.stmt-table td{padding:10px 12px;border-bottom:1px solid var(--border-subtle)}
-.stmt-table tr:hover td{background:var(--bg)}
-.stmt-table .row-section td{font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-4);background:var(--border-subtle);padding:6px 12px;border:none}
-.stmt-table .row-total td{font-weight:800;border-top:2px solid var(--border);border-bottom:2px solid var(--border)}
-.amount-col{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
-.amount-pos{color:var(--emerald)}.amount-neg{color:var(--red)}
-.evidence-link{font-size:11px;color:var(--brand);font-weight:600;cursor:pointer;white-space:nowrap}
-
-/* chat */
-.chat-wrap{background:white;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
-.chat-messages{height:380px;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:14px}
-.msg{display:flex;gap:10px;max-width:85%}
-.msg.user{align-self:flex-end;flex-direction:row-reverse}
-.msg-avatar{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:13px;flex-shrink:0}
-.msg.ai .msg-avatar{background:var(--brand-light);color:var(--brand)}
-.msg.user .msg-avatar{background:var(--brand);color:white}
-.msg-bubble{padding:11px 14px;border-radius:12px;font-size:13px;line-height:1.55}
-.msg.ai .msg-bubble{background:white;border:1px solid var(--border);color:var(--text)}
-.msg.user .msg-bubble{background:var(--brand);color:white}
-.msg-evidence{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
-.msg-ev-pill{font-size:11px;background:var(--brand-light);color:var(--brand);padding:3px 8px;border-radius:5px;font-weight:600}
-.chat-input-row{padding:14px 16px;border-top:1px solid var(--border);display:flex;gap:10px}
-.chat-input{flex:1;padding:10px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;outline:none}
-.chat-input:focus{border-color:var(--brand)}
-
-/* exception cards */
-.exc-card{background:white;border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;border-left:4px solid transparent}
-.exc-card.critical{border-left-color:var(--red)}
-.exc-card.warning{border-left-color:var(--amber)}
-.exc-card.info{border-left-color:var(--sky)}
-.exc-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-.exc-title{font-size:14px;font-weight:700;flex:1}
-.exc-body{font-size:13px;color:var(--text-2);line-height:1.5}
-
-/* entity ontology */
-.entity-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
-@media(max-width:700px){.entity-grid{grid-template-columns:1fr 1fr}}
-.entity-card{background:white;border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center}
+/* ── Ontology entities ── */
+.entity-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.entity-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;text-align:center}
 .entity-icon{font-size:28px;margin-bottom:8px}
-.entity-count{font-size:24px;font-weight:800;color:var(--text)}
-.entity-label{font-size:12px;color:var(--text-3);font-weight:600;margin-top:4px}
-.entity-list{background:white;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
-.entity-list-row{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border-subtle);font-size:13px}
-.entity-list-row:last-child{border:none}
+.entity-count{font-size:26px;font-weight:800}
+.entity-label{font-size:12px;font-weight:600;color:var(--ink-3);margin-top:4px}
 
-/* empty state */
-.empty-state{text-align:center;padding:60px 20px}
-.empty-icon{font-size:48px;margin-bottom:16px}
-.empty-title{font-size:20px;font-weight:700;margin-bottom:8px}
-.empty-sub{font-size:14px;color:var(--text-3);max-width:400px;margin:0 auto}
+/* ── Section eyebrow ── */
+.section-eyebrow{font-size:12px;font-weight:700;color:var(--brand);letter-spacing:.12em;text-transform:uppercase}
 
-/* modal */
-.modal-overlay{position:fixed;inset:0;background:rgba(17,24,39,.5);backdrop-filter:blur(4px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
-.modal-overlay.open{display:flex}
-.modal-card{background:white;border-radius:var(--radius-lg);padding:36px;width:100%;max-width:440px;box-shadow:var(--shadow-lg)}
-.modal-title{font-size:18px;font-weight:800;margin-bottom:6px}
-.modal-sub{font-size:14px;color:var(--text-3);margin-bottom:24px}
-
-/* section headers */
-.section-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-4);margin-bottom:10px}
-.content-header{margin-bottom:24px}
-.content-header h2{font-size:22px;font-weight:800;letter-spacing:-.4px}
-.content-header p{font-size:14px;color:var(--text-3);margin-top:4px}
-.divider{display:flex;align-items:center;gap:12px;margin:16px 0}
-.divider-line{flex:1;height:1px;background:var(--border)}
-.divider-text{font-size:12px;color:var(--text-4)}
+/* ── Responsive ── */
+@media(max-width:980px){
+  #appScreen.visible{grid-template-columns:1fr}
+  .sidebar{position:relative;height:auto}
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  .pipeline{grid-template-columns:1fr 1fr}
+}
+@media(max-width:600px){
+  #authScreen{grid-template-columns:1fr}
+  .auth-aside{display:none}
+}
 </style>
 </head>
 <body>
 
-<!-- ══════════════════════════════════════════
-     AUTH SCREEN
-══════════════════════════════════════════ -->
-<div id="authScreen">
-  <div class="auth-wrap">
-    <!-- Left panel -->
-    <div class="auth-panel">
-      <h2>Your company's financial memory, always traceable.</h2>
-      <div class="auth-feature">
-        <div class="auth-feature-icon">📂</div>
-        <div><div class="auth-feature-text">Upload any file format</div><div class="auth-feature-sub">Excel, CSV, ODS — Thai or English headers</div></div>
-      </div>
-      <div class="auth-feature">
-        <div class="auth-feature-icon">🤖</div>
-        <div><div class="auth-feature-text">Fully automatic processing</div><div class="auth-feature-sub">AI maps columns, detects period, builds ontology</div></div>
-      </div>
-      <div class="auth-feature">
-        <div class="auth-feature-icon">🔗</div>
-        <div><div class="auth-feature-text">Every number is traceable</div><div class="auth-feature-sub">Click any P&L line to see source rows</div></div>
-      </div>
-      <div class="auth-feature">
-        <div class="auth-feature-icon">💬</div>
-        <div><div class="auth-feature-text">Ask AI anything</div><div class="auth-feature-sub">"What drove the gross margin drop?" — cited answers</div></div>
+<!-- ════════════ AUTH SCREEN ════════════ -->
+<div id="authScreen" class="screen">
+  <!-- Visual side -->
+  <aside class="auth-aside">
+    <div class="auth-aside-noise"></div>
+    <div class="auth-aside-glow"></div>
+    <div class="auth-aside-top">
+      <span class="brand-mark" style="color:white">
+        <span class="brand-glyph" style="background:rgba(255,255,255,.12);box-shadow:none">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 13l4-1 1-4 2 7 3-4 4 2-3 2v6l-4-3-3 2 1-5-5-2z" fill="white"/></svg>
+        </span>
+        Ledger Spark
+      </span>
+    </div>
+    <div class="auth-aside-main">
+      <span class="chip" style="background:rgba(255,122,89,.18);color:#FFB199">
+        <span class="dot dot-pulse" style="color:var(--spark)"></span>&nbsp;AI-Powered &middot; Closes books automatically
+      </span>
+      <h2 style="font-size:38px;font-weight:800;letter-spacing:-.025em;line-height:1.08;margin-top:18px;color:white">
+        Close your books.<br>In minutes, not days.
+      </h2>
+      <p style="font-size:15px;color:rgba(255,255,255,.72);margin-top:14px;line-height:1.55">
+        Upload your raw files. Ledger Spark auto-maps columns, extracts entities, validates data, posts journals, and generates financial statements &mdash; fully automated.
+      </p>
+      <div class="auth-aside-quote">
+        <div class="row" style="gap:10px;margin-bottom:8px">
+          <span style="width:30px;height:30px;border-radius:50%;background:var(--spark);color:white;display:grid;place-items:center;font-weight:700;font-size:12px">N</span>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:white">Nin &middot; Owner, Sunday Roast Caf&eacute;</div>
+            <div style="font-size:11px;color:rgba(255,255,255,.55)">Bangkok &middot; SME user</div>
+          </div>
+        </div>
+        <p style="font-size:13.5px;color:rgba(255,255,255,.85);line-height:1.55;font-style:italic">
+          &ldquo;First time month-end didn&rsquo;t eat my Sunday. The auto-mapping is almost spooky.&rdquo;
+        </p>
       </div>
     </div>
-    <!-- Auth card -->
-    <div class="auth-card">
-      <div class="auth-logo">
-        <div class="auth-logo-icon"><svg viewBox="0 0 24 24"><path d="M3 3h18v2H3V3zm2 4h14v2H5V7zm-2 4h18v2H3v-2zm2 4h8v2H5v-2z"/></svg></div>
-        <span class="auth-logo-text">FinanceAI</span>
-      </div>
-      <div class="auth-tabs">
-        <div class="auth-tab active" onclick="switchAuthTab('login')">Sign in</div>
-        <div class="auth-tab" onclick="switchAuthTab('register')">Register</div>
-      </div>
-      <div id="authMsg" class="msg-box"></div>
-      <!-- Login fields -->
-      <div id="loginFields">
-        <div class="form-group">
-          <label class="form-label">Email address</label>
-          <input class="form-input" id="loginEmail" type="email" placeholder="you@company.com" autocomplete="email">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Password</label>
-          <input class="form-input" id="loginPassword" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
-        </div>
-        <button class="btn btn-brand btn-full" onclick="doLogin()">Sign in →</button>
-      </div>
-      <!-- Register fields -->
-      <div id="registerFields" style="display:none">
-        <div class="form-group">
-          <label class="form-label">Full name</label>
-          <input class="form-input" id="regName" type="text" placeholder="e.g. Somchai Jaidee">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Email address</label>
-          <input class="form-input" id="regEmail" type="email" placeholder="you@company.com">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Password</label>
-          <input class="form-input" id="regPassword" type="password" placeholder="Min. 6 characters" onkeydown="if(event.key==='Enter')doRegister()">
-          <span class="form-hint">Minimum 6 characters</span>
-        </div>
-        <button class="btn btn-brand btn-full" onclick="doRegister()">Create account →</button>
-      </div>
+    <div class="auth-aside-footer">
+      <span>SOC-2 &middot; in progress</span><span>&middot;</span><span>PDPA</span><span>&middot;</span><span>v2.0</span>
     </div>
-  </div>
+  </aside>
+
+  <!-- Form side -->
+  <section class="auth-form-side">
+    <div class="auth-form-inner">
+      <h1 id="authTitle">Sign in to Spark</h1>
+      <p id="authSub" style="margin-top:6px">Welcome back. Your workspace is ready.</p>
+
+      <div class="auth-mode-tabs">
+        <button class="auth-mode-tab active" id="tabLogin" onclick="switchAuthMode('login')">Sign in</button>
+        <button class="auth-mode-tab" id="tabSignup" onclick="switchAuthMode('signup')">Sign up</button>
+      </div>
+
+      <div class="col" style="gap:14px;margin-top:22px">
+        <div id="fieldName" class="field" style="display:none">
+          <label>Full name</label>
+          <input type="text" id="inputName" placeholder="Jane Smith">
+        </div>
+        <div class="field">
+          <label>Work email</label>
+          <input type="email" id="inputEmail" placeholder="jane@company.com" onkeydown="if(event.key==='Enter')submitAuth()">
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input type="password" id="inputPw" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" onkeydown="if(event.key==='Enter')submitAuth()">
+        </div>
+
+        <div id="authAlert" class="alert"></div>
+
+        <button class="btn btn-spark btn-lg btn-full" id="authBtn" onclick="submitAuth()">
+          <span id="authBtnText">Sign in</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+
+      <p style="margin-top:26px;font-size:12.5px;color:var(--ink-3);text-align:center">
+        By continuing you agree to our <a href="#" style="color:var(--ink-2);text-decoration:underline">terms</a> and <a href="#" style="color:var(--ink-2);text-decoration:underline">privacy policy</a>.
+      </p>
+    </div>
+  </section>
 </div>
 
-<!-- ══════════════════════════════════════════
-     APP SCREEN
-══════════════════════════════════════════ -->
+<!-- ════════════ APP SCREEN ════════════ -->
 <div id="appScreen">
-  <!-- Topbar -->
-  <div class="topbar">
-    <a class="topbar-brand" href="#">
-      <div class="topbar-brand-icon"><svg viewBox="0 0 24 24"><path d="M3 3h18v2H3V3zm2 4h14v2H5V7zm-2 4h18v2H3v-2zm2 4h8v2H5v-2z"/></svg></div>
-      FinanceAI
-    </a>
-    <select class="company-select" id="companySelect" onchange="onCompanyChange()" title="Switch company"></select>
-    <button class="btn btn-outline btn-sm" onclick="openNewCompanyModal()" title="Add new company">＋ New</button>
-    <div class="period-badge" id="periodBadge" style="display:none">
-      <div class="period-dot"></div>
-      <span id="periodLabel">Auto-detected</span>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div style="padding:4px 8px">
+      <span class="brand-mark">
+        <span class="brand-glyph">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 13l4-1 1-4 2 7 3-4 4 2-3 2v6l-4-3-3 2 1-5-5-2z" fill="white"/></svg>
+        </span>
+        Ledger Spark
+      </span>
     </div>
-    <div class="topbar-spacer"></div>
-    <div class="user-badge">
-      <div class="user-avatar" id="userAvatar">?</div>
-      <span id="userName" style="font-weight:600"></span>
+
+    <!-- Company context -->
+    <div class="sb-context">
+      <div class="sb-ctx-row">
+        <span>Company</span>
+        <select id="companySel" onchange="selectCompany(this.value)">
+          <option value="">&#8212; select &#8212;</option>
+        </select>
+      </div>
+      <div class="row" style="gap:6px;margin-top:2px;flex-wrap:wrap">
+        <span class="chip chip-brand" id="periodBadge" style="font-size:10.5px;padding:3px 9px;display:none">
+          <span class="dot" style="color:var(--brand)"></span>&nbsp;<span id="periodLabel">&#8212;</span>
+        </span>
+        <span class="chip chip-mint" id="liveChip" style="font-size:10.5px;padding:3px 9px;display:none">
+          <span class="dot dot-pulse" style="color:var(--mint)"></span>&nbsp;Live
+        </span>
+      </div>
     </div>
-    <button class="btn-logout" onclick="doLogout()">Logout</button>
-  </div>
 
-  <!-- Main content -->
-  <div class="main">
+    <!-- Nav items -->
+    <div class="sb-section">
+      <div class="sb-label">Workspace</div>
+      <div class="sb-item active" id="nav-overview" onclick="gotoTab('overview')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        <span>Overview</span>
+      </div>
+      <div class="sb-item" id="nav-upload" onclick="gotoTab('upload')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <span>Files &amp; Upload</span>
+      </div>
+      <div class="sb-item" id="nav-reports" onclick="gotoTab('reports')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <span>Reports</span>
+      </div>
+      <div class="sb-item" id="nav-chat" onclick="gotoTab('chat')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        <span>Ask Spark</span>
+      </div>
+    </div>
 
-    <!-- ── SETUP VIEW (no companies) ── -->
-    <div id="setupView">
-      <div class="setup-center">
-        <div class="setup-icon">🏢</div>
-        <div class="setup-title">Set up your business</div>
-        <div class="setup-sub">Create your company profile. After this, just upload your data files — the AI handles everything else automatically.</div>
-        <div id="setupMsg" class="msg-box"></div>
+    <div class="spacer"></div>
+
+    <!-- Upsell card -->
+    <div class="sb-upsell">
+      <div style="font-size:12px;font-weight:700">Need a hand?</div>
+      <p style="font-size:11.5px;color:var(--ink-3);line-height:1.45">Upload a file and Spark walks you through everything automatically.</p>
+    </div>
+
+    <!-- User -->
+    <div class="sb-user">
+      <span class="sb-avatar" id="userAvatar">U</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="userNameSb">&#8212;</div>
+        <div style="font-size:11px;color:var(--ink-3)">Workspace</div>
+      </div>
+      <button class="btn btn-sm btn-ghost" style="padding:4px 8px;font-size:11px" onclick="logout()">Exit</button>
+    </div>
+  </aside>
+
+  <!-- Main area -->
+  <main class="main-area">
+
+    <!-- ── SETUP VIEW (no company yet) ── -->
+    <div id="setupView" style="display:none">
+      <span class="section-eyebrow">Get started</span>
+      <h1 style="font-size:30px;font-weight:800;letter-spacing:-.02em;margin-top:6px">Set up your workspace</h1>
+      <p style="color:var(--ink-3);font-size:14px;margin-top:4px">Tell Spark about the business you&rsquo;re closing books for.</p>
+      <form class="card card-pad" style="max-width:560px;margin-top:24px;padding:28px;display:flex;flex-direction:column;gap:16px" onsubmit="createCompany(event)">
+        <div class="field">
+          <label>Company name</label>
+          <input type="text" id="setupName" placeholder="e.g. Sunday Roast Caf&eacute; Co., Ltd." required>
+          <span class="field-hint">The legal entity name on your statements.</span>
+        </div>
         <div class="form-grid">
-          <div class="form-group" style="grid-column:span 2">
-            <label class="form-label">Company name</label>
-            <input class="form-input" id="setupName" type="text" placeholder="e.g. Tin Trading Co., Ltd.">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Industry</label>
-            <select class="form-input" id="setupIndustry">
-              <option>Retail</option><option>Wholesale</option><option>Manufacturing</option>
-              <option>Food & Beverage</option><option>Services</option><option>Other</option>
+          <div class="field">
+            <label>Industry</label>
+            <select id="setupIndustry">
+              <option>Food &amp; Beverage</option><option>Retail</option><option>Manufacturing</option>
+              <option>Services</option><option>Construction</option><option>Wholesale</option>
+              <option>E-commerce</option><option>Other</option>
             </select>
           </div>
-          <div class="form-group">
-            <label class="form-label">Currency</label>
-            <select class="form-input" id="setupCurrency">
-              <option>THB</option><option>USD</option><option>EUR</option><option>SGD</option>
+          <div class="field">
+            <label>Reporting currency</label>
+            <select id="setupCurrency">
+              <option>THB</option><option>USD</option><option>SGD</option><option>EUR</option>
+              <option>GBP</option><option>JPY</option><option>MYR</option><option>VND</option>
             </select>
           </div>
         </div>
-        <button class="btn btn-brand btn-full" onclick="createCompany()" style="margin-top:8px">Create company →</button>
+        <div id="setupAlert" class="alert"></div>
+        <button type="submit" class="btn btn-spark btn-lg btn-full" id="setupBtn">
+          Create workspace
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </form>
+    </div>
+
+    <!-- ── OVERVIEW TAB ── -->
+    <div id="tabOverview" style="display:none">
+      <span class="section-eyebrow">Overview</span>
+      <h1 id="overviewTitle" style="font-size:30px;font-weight:800;letter-spacing:-.02em;margin-top:6px">Welcome to Ledger Spark</h1>
+      <p id="overviewSub" style="color:var(--ink-3);font-size:14px;margin-top:4px">Select a company or create one to get started.</p>
+
+      <div class="kpi-grid" style="margin-top:24px">
+        <div class="kpi"><span class="kpi-label">Revenue</span><span class="kpi-value" id="kpiRevenue">&#8212;</span><span class="kpi-sub" id="kpiRevSub">&#8212;</span></div>
+        <div class="kpi"><span class="kpi-label">Gross Profit</span><span class="kpi-value" id="kpiGP">&#8212;</span><span class="kpi-sub" id="kpiGPSub">&#8212;</span></div>
+        <div class="kpi"><span class="kpi-label">Net Profit</span><span class="kpi-value" id="kpiNP">&#8212;</span><span class="kpi-sub" id="kpiNPSub">&#8212;</span></div>
+        <div class="kpi"><span class="kpi-label">Files</span><span class="kpi-value" id="kpiFiles">0</span><span class="kpi-sub">uploaded</span></div>
+      </div>
+
+      <div class="card card-pad" style="margin-top:24px">
+        <h3 style="font-size:15px;font-weight:700;margin-bottom:14px">Next steps</h3>
+        <div class="col" style="gap:10px" id="nextStepsList"></div>
       </div>
     </div>
 
-    <!-- ── MAIN VIEW (company selected) ── -->
-    <div id="mainView">
+    <!-- ── UPLOAD TAB ── -->
+    <div id="tabUpload" style="display:none">
+      <div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:14px">
+        <div>
+          <span class="section-eyebrow">Files &amp; Uploads</span>
+          <h1 style="font-size:30px;font-weight:800;letter-spacing:-.02em;margin-top:6px">Bring in your source data</h1>
+          <p style="color:var(--ink-3);font-size:14px;margin-top:4px">Drop Excel or CSV exports. Spark auto-detects sales, purchases, inventory &amp; chart of accounts.</p>
+        </div>
+        <button class="btn btn-spark btn-lg" id="toReportsBtn" onclick="gotoTab('reports')" style="display:none">
+          View Reports
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </div>
 
-      <!-- Upload zone (always at top) -->
-      <div style="margin-bottom:20px">
-        <div class="upload-zone" id="uploadZone" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
-          <input type="file" id="fileInput" accept=".xlsx,.xls,.csv,.ods,.tsv" onchange="handleFileSelect(event)">
-          <div class="upload-icon">📂</div>
-          <div class="upload-title">Drop your data files here</div>
-          <div class="upload-sub">Supports .xlsx, .xls, .csv, .ods · Sales, Purchases, Inventory, Chart of Accounts</div>
-          <div class="upload-tags">
-            <span class="upload-tag">Sales</span>
-            <span class="upload-tag">Purchases</span>
-            <span class="upload-tag">Inventory</span>
-            <span class="upload-tag">Thai headers supported</span>
-          </div>
+      <!-- Drop zone -->
+      <div class="dropzone" id="dropzone" style="margin-top:24px"
+           ondragover="dz.onDragOver(event)" ondragleave="dz.onDragLeave(event)" ondrop="dz.onDrop(event)">
+        <input type="file" id="fileInput" multiple accept=".xlsx,.xls,.csv,.tsv,.txt" onchange="dz.onFileChange(event)">
+        <div class="dz-icon-wrap">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </div>
+        <h3 id="dzTitle" style="font-size:20px;font-weight:700;letter-spacing:-.01em">Drag files here, or click to browse</h3>
+        <p style="font-size:13px;color:var(--ink-3);margin-top:6px">.xlsx &middot; .xls &middot; .csv &middot; .tsv &middot; max 25 MB each</p>
+        <div class="row" style="justify-content:center;gap:8px;margin-top:16px;flex-wrap:wrap">
+          <span class="mono" style="font-size:11px;color:var(--ink-3);padding:4px 10px;border-radius:99px;background:var(--surface-2)">sales_*.csv</span>
+          <span class="mono" style="font-size:11px;color:var(--ink-3);padding:4px 10px;border-radius:99px;background:var(--surface-2)">purchases_*.xlsx</span>
+          <span class="mono" style="font-size:11px;color:var(--ink-3);padding:4px 10px;border-radius:99px;background:var(--surface-2)">inventory_*.csv</span>
         </div>
       </div>
 
-      <!-- Processing status -->
-      <div id="processingBar" class="processing-bar" style="display:none">
-        <div class="proc-header">
-          <div class="proc-spinner"></div>
-          <div class="proc-title">Processing your data — AI is mapping columns, extracting records, and generating statements…</div>
+      <!-- Processing bar -->
+      <div id="procBar" class="card card-pad" style="margin-top:20px;display:none">
+        <div class="row" style="margin-bottom:16px">
+          <span id="procSpinner" style="width:20px;height:20px;border:2.5px solid var(--brand-soft);border-top-color:var(--brand);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0"></span>
+          <span style="font-size:14px;font-weight:700;color:var(--brand)" id="procTitle">Processing&hellip;</span>
         </div>
-        <div class="proc-log" id="procLog"></div>
-      </div>
-
-      <!-- Uploaded files list -->
-      <div id="filesList" style="display:none;margin-bottom:24px">
-        <div class="section-label">Uploaded files</div>
-        <div id="filesContainer"></div>
-      </div>
-
-      <!-- Results section -->
-      <div id="resultsSection" style="display:none">
-
-        <!-- KPI stat boxes -->
-        <div class="kpi-grid">
-          <div class="stat-box">
-            <div class="stat-label">Revenue</div>
-            <div class="stat-value green" id="kpiRevenue">—</div>
-            <div class="stat-sub" id="kpiPeriod">—</div>
+        <div class="pipeline" id="procPipeline">
+          <div class="stage idle" id="stg0">
+            <div class="row" style="justify-content:space-between"><span class="stage-num">01</span></div>
+            <h4>Extract</h4><p>Parsing rows &rarr; records</p>
+            <div class="stage-meter"><div class="stage-meter-bar" id="stg0bar"></div></div>
           </div>
-          <div class="stat-box">
-            <div class="stat-label">Gross Profit</div>
-            <div class="stat-value" id="kpiGrossProfit">—</div>
-            <div class="stat-sub" id="kpiGM">—</div>
+          <div class="stage idle" id="stg1">
+            <div class="row" style="justify-content:space-between"><span class="stage-num">02</span></div>
+            <h4>Validate</h4><p>Rule + LLM checks</p>
+            <div class="stage-meter"><div class="stage-meter-bar" id="stg1bar"></div></div>
           </div>
-          <div class="stat-box">
-            <div class="stat-label">Net Profit</div>
-            <div class="stat-value brand" id="kpiNetProfit">—</div>
-            <div class="stat-sub" id="kpiNPM">—</div>
+          <div class="stage idle" id="stg2">
+            <div class="row" style="justify-content:space-between"><span class="stage-num">03</span></div>
+            <h4>Map</h4><p>Schema + ontology</p>
+            <div class="stage-meter"><div class="stage-meter-bar" id="stg2bar"></div></div>
+          </div>
+          <div class="stage idle" id="stg3">
+            <div class="row" style="justify-content:space-between"><span class="stage-num">04</span></div>
+            <h4>Generate</h4><p>Journals &rarr; statements</p>
+            <div class="stage-meter"><div class="stage-meter-bar" id="stg3bar"></div></div>
           </div>
         </div>
+        <div class="console" id="procConsole" style="margin-top:12px"></div>
+      </div>
 
-        <!-- Report tabs -->
+      <!-- File list -->
+      <div class="card card-pad" style="margin-top:20px">
+        <div class="row" style="justify-content:space-between;margin-bottom:12px">
+          <h3 style="font-size:15px;font-weight:700">Uploaded files (<span id="fileCountLabel">0</span>)</h3>
+        </div>
+        <div id="fileList">
+          <div style="padding:32px;text-align:center;color:var(--ink-3);font-size:13.5px">No files yet. Drop something above to get started.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── REPORTS TAB ── -->
+    <div id="tabReports" style="display:none">
+      <span class="section-eyebrow">Reports</span>
+      <h1 style="font-size:28px;font-weight:800;letter-spacing:-.02em;margin-top:6px">Financial Reports</h1>
+      <p id="reportsSub" style="color:var(--ink-3);font-size:14px;margin-top:4px">Run the engine first to populate reports.</p>
+
+      <div id="reportsEmpty" style="margin-top:24px">
+        <div class="card card-pad" style="text-align:center;padding:48px">
+          <div style="width:64px;height:64px;border-radius:16px;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center;margin:0 auto 14px">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </div>
+          <h3 style="font-size:18px;font-weight:700">No statements yet</h3>
+          <p style="font-size:14px;color:var(--ink-3);margin-top:6px">Upload a file and Spark will generate statements automatically.</p>
+          <button class="btn btn-spark btn-sm" style="margin-top:16px" onclick="gotoTab('upload')">Upload files &rarr;</button>
+        </div>
+      </div>
+
+      <div id="reportsContent" style="display:none">
         <div class="report-tabs">
-          <div class="report-tab active" onclick="switchTab('is')">Income Statement</div>
-          <div class="report-tab" onclick="switchTab('tb')">Trial Balance</div>
-          <div class="report-tab" onclick="switchTab('exc')">Exceptions</div>
-          <div class="report-tab" onclick="switchTab('ont')">Ontology</div>
-          <div class="report-tab" onclick="switchTab('chat')">Ask AI</div>
+          <div class="report-tab active" onclick="switchReportTab('is')">Income Statement</div>
+          <div class="report-tab" onclick="switchReportTab('tb')">Trial Balance</div>
+          <div class="report-tab" onclick="switchReportTab('ontology')">Ontology</div>
+          <div class="report-tab" onclick="switchReportTab('exceptions')">Exceptions</div>
         </div>
+        <div id="tabIs"></div>
+        <div id="tabTb" style="display:none"></div>
+        <div id="tabOntology" style="display:none"></div>
+        <div id="tabExceptions" style="display:none"></div>
+      </div>
+    </div>
 
-        <!-- Income Statement pane -->
-        <div id="pane-is">
-          <div id="isContent"><div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">No statement yet</div></div></div>
-        </div>
-
-        <!-- Trial Balance pane -->
-        <div id="pane-tb" style="display:none">
-          <div id="tbContent"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No trial balance yet</div></div></div>
-        </div>
-
-        <!-- Exceptions pane -->
-        <div id="pane-exc" style="display:none">
-          <div id="excContent"><div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">No exceptions</div></div></div>
-        </div>
-
-        <!-- Ontology pane -->
-        <div id="pane-ont" style="display:none">
-          <div id="ontContent"><div class="empty-state"><div class="empty-icon">🕸</div><div class="empty-title">No entities yet</div></div></div>
-        </div>
-
-        <!-- Chat pane -->
-        <div id="pane-chat" style="display:none">
-          <div class="chat-wrap">
-            <div class="chat-messages" id="chatMessages">
-              <div class="msg ai">
-                <div class="msg-avatar">🤖</div>
-                <div class="msg-bubble">Hi! I've processed your financial data. What would you like to explore? You can ask about revenue, costs, margins, exceptions, or any specific figure.</div>
-              </div>
+    <!-- ── CHAT TAB ── -->
+    <div id="tabChat" style="display:none;flex-direction:column;height:calc(100vh - 84px)">
+      <div>
+        <span class="section-eyebrow">Ask Spark</span>
+        <h1 style="font-size:28px;font-weight:800;letter-spacing:-.02em;margin-top:6px">Chat with your books</h1>
+        <p style="color:var(--ink-3);font-size:14px;margin-top:4px">Plain-language Q&amp;A on your data. Spark cites journal entries where possible.</p>
+      </div>
+      <div class="card" style="flex:1;margin-top:20px;display:flex;flex-direction:column;min-height:400px;max-height:520px;overflow:hidden">
+        <div class="chat-messages" id="chatMessages">
+          <div style="margin:auto;text-align:center;color:var(--ink-3);max-width:380px">
+            <div style="width:56px;height:56px;border-radius:14px;background:var(--spark-soft);color:var(--spark);display:grid;place-items:center;margin:0 auto 14px">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
             </div>
-            <div class="chat-input-row">
-              <input class="chat-input" id="chatInput" placeholder="Ask about any figure, line, or exception…" onkeydown="if(event.key==='Enter')sendChat()">
-              <button class="btn btn-brand btn-sm" onclick="sendChat()">Send →</button>
-            </div>
+            <h3 style="font-size:16px;font-weight:700;color:var(--ink)">Ask me anything</h3>
+            <p style="font-size:13px;margin-top:6px">I know your workspace and can explain what the engine did.</p>
           </div>
         </div>
-      </div><!-- /resultsSection -->
-
-      <!-- Empty state when no files yet -->
-      <div id="emptyState">
-        <div class="empty-state">
-          <div class="empty-icon">📊</div>
-          <div class="empty-title">Drop your first data file above</div>
-          <div class="empty-sub">Upload a sales, purchase, or inventory file and the AI will automatically generate your financial statements — no configuration needed.</div>
+        <div style="padding:14px 16px;border-top:1px solid var(--line)">
+          <div class="row" style="gap:8px;margin-bottom:10px;flex-wrap:wrap">
+            <button class="btn btn-outline btn-sm" style="font-size:12px" onclick="sendSuggestion('What were the top revenue items?')">Top revenue items</button>
+            <button class="btn btn-outline btn-sm" style="font-size:12px" onclick="sendSuggestion('Explain COGS breakdown')">COGS breakdown</button>
+            <button class="btn btn-outline btn-sm" style="font-size:12px" onclick="sendSuggestion('Any flagged exceptions?')">Flagged exceptions</button>
+          </div>
+          <form class="row" style="gap:10px" onsubmit="sendChat(event)">
+            <input type="text" id="chatInput" placeholder="Ask anything about your books&hellip;"
+              style="flex:1;padding:12px 16px;border-radius:12px;border:1px solid var(--line);font-size:14px;outline:none;font-family:inherit;transition:border-color .15s"
+              onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--line)'">
+            <button type="submit" class="btn btn-spark btn-lg" id="chatBtn">
+              Send
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+          </form>
         </div>
       </div>
+    </div>
 
-    </div><!-- /mainView -->
-  </div><!-- /main -->
-</div><!-- /appScreen -->
-
-<!-- ══════════════════════════════════════════
-     NEW COMPANY MODAL
-══════════════════════════════════════════ -->
-<div class="modal-overlay" id="companyModal">
-  <div class="modal-card">
-    <div class="modal-title">Add new company</div>
-    <div class="modal-sub">Create another company profile to manage multiple businesses separately.</div>
-    <div id="modalMsg" class="msg-box"></div>
-    <div class="form-group">
-      <label class="form-label">Company name</label>
-      <input class="form-input" id="modalName" type="text" placeholder="e.g. Tin Trading Co., Ltd.">
-    </div>
-    <div class="form-grid">
-      <div class="form-group">
-        <label class="form-label">Industry</label>
-        <select class="form-input" id="modalIndustry">
-          <option>Retail</option><option>Wholesale</option><option>Manufacturing</option>
-          <option>Food & Beverage</option><option>Services</option><option>Other</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Currency</label>
-        <select class="form-input" id="modalCurrency">
-          <option>THB</option><option>USD</option><option>EUR</option><option>SGD</option>
-        </select>
-      </div>
-    </div>
-    <div style="display:flex;gap:10px;margin-top:8px">
-      <button class="btn btn-outline" style="flex:1" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-brand" style="flex:1" onclick="createCompanyModal()">Create →</button>
-    </div>
-  </div>
+  </main>
 </div>
 
 <script>
-// ─── Session state ────────────────────────────────────────────────────────────
-const session = {
-  token: localStorage.getItem('fin_token') || '',
-  userName: localStorage.getItem('fin_name') || '',
+/* ════════════════════════════════════════════
+   SESSION STATE
+════════════════════════════════════════════ */
+const S = {
+  token: localStorage.getItem('ls_token') || '',
+  userName: localStorage.getItem('ls_name') || '',
   companyId: null,
-  companyName: '',
   periodId: null,
-  periodLabel: '',
+  companies: [],
+  summary: null,
   chatSessionId: null,
-  lastResult: null,
+  authMode: 'login',
 };
 
-// ─── Init ─────────────────────────────────────────────────────────────────────
-window.onload = function() {
-  if (session.token) {
-    showApp();
-  }
-};
+/* ════════════════════════════════════════════
+   API HELPER
+════════════════════════════════════════════ */
+async function api(method, path, body, isForm) {
+  const headers = {};
+  if (S.token) headers['Authorization'] = 'Bearer ' + S.token;
+  if (body && !isForm) headers['Content-Type'] = 'application/json';
 
-// ─── API helper ───────────────────────────────────────────────────────────────
-async function api(method, path, body = null, isForm = false) {
-  const opts = {
-    method,
-    headers: { Authorization: 'Bearer ' + session.token },
-  };
-  if (body) {
-    if (isForm) {
-      opts.body = body;
-    } else {
-      opts.headers['Content-Type'] = 'application/json';
-      opts.body = JSON.stringify(body);
-    }
-  }
-  const r = await fetch('/api' + path, opts);
-  if (r.status === 204) return {};
+  const opts = { method, headers };
+  if (body) opts.body = isForm ? body : JSON.stringify(body);
+
+  let r;
+  try { r = await fetch('/api' + path, opts); }
+  catch(e) { return { error: 'Network error: ' + e.message }; }
+
   if (r.status === 401) {
-    // Token expired or user deleted — clear and show login
-    localStorage.removeItem('fin_token');
-    localStorage.removeItem('fin_name');
-    session.token = '';
-    document.getElementById('authScreen').style.display = 'flex';
-    document.getElementById('appScreen').style.display = 'none';
-    return { error: 'Unauthorised', status: 401 };
+    localStorage.removeItem('ls_token'); localStorage.removeItem('ls_name');
+    S.token = ''; showAuth();
+    return { error: 'Session expired. Please sign in again.', status: 401 };
   }
-  const text = await r.text();
-  try {
-    const j = JSON.parse(text);
-    // Normalise FastAPI `detail` field to `error`
-    if (j && j.detail && !j.error) j.error = j.detail;
-    return j;
-  }
-  catch { return { error: text, status: r.status }; }
-}
 
-function fmt(n) {
-  if (n == null || isNaN(n)) return '—';
-  return (n < 0 ? '(' : '') + Math.abs(n).toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0}) + (n < 0 ? ')' : '');
-}
-function fmtThb(n) {
-  return '฿' + fmt(n);
-}
-function pct(v, total) {
-  if (!total) return '0%';
-  return (v / total * 100).toFixed(1) + '%';
-}
-function escHtml(s) {
-  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-function showMsg(id, text, type) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.textContent = text;
-  el.className = 'msg-box ' + type;
-}
-function clearMsg(id) {
-  const el = document.getElementById(id);
-  if (el) { el.textContent = ''; el.className = 'msg-box'; }
-}
-
-// ─── AUTH ─────────────────────────────────────────────────────────────────────
-function switchAuthTab(tab) {
-  document.querySelectorAll('.auth-tab').forEach((t, i) => {
-    t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register'));
-  });
-  document.getElementById('loginFields').style.display = tab === 'login' ? '' : 'none';
-  document.getElementById('registerFields').style.display = tab === 'register' ? '' : 'none';
-  clearMsg('authMsg');
-}
-
-async function doLogin() {
-  const email = document.getElementById('loginEmail').value.trim();
-  const pwd = document.getElementById('loginPassword').value;
-  if (!email || !pwd) { showMsg('authMsg', 'Enter email and password.', 'error'); return; }
-  clearMsg('authMsg');
-  const fd = new FormData();
-  fd.append('username', email);
-  fd.append('password', pwd);
-  const r = await fetch('/api/auth/login', { method: 'POST', body: fd });
   const data = await r.json().catch(() => ({}));
-  if (!r.ok) { showMsg('authMsg', data.detail || 'Login failed.', 'error'); return; }
-  localStorage.setItem('fin_token', data.access_token);
-  localStorage.setItem('fin_name', data.name || email.split('@')[0]);
-  session.token = data.access_token;
-  session.userName = data.name || email.split('@')[0];
+  if (!r.ok) {
+    const detail = data.detail;
+    const msg = Array.isArray(detail)
+      ? detail.map(e => (typeof e === 'object' ? (e.msg || JSON.stringify(e)) : String(e))).join(', ')
+      : String(detail || r.statusText || 'Unknown error');
+    return { error: msg, status: r.status };
+  }
+  return data;
+}
+
+/* ════════════════════════════════════════════
+   AUTH
+════════════════════════════════════════════ */
+function switchAuthMode(mode) {
+  S.authMode = mode;
+  document.getElementById('tabLogin').classList.toggle('active', mode === 'login');
+  document.getElementById('tabSignup').classList.toggle('active', mode === 'signup');
+  document.getElementById('fieldName').style.display = mode === 'signup' ? 'flex' : 'none';
+  document.getElementById('authTitle').textContent = mode === 'login' ? 'Sign in to Spark' : 'Create your account';
+  document.getElementById('authSub').textContent = mode === 'login'
+    ? 'Welcome back. Your workspace is ready.'
+    : 'Free to start. No card required.';
+  document.getElementById('authBtnText').textContent = mode === 'login' ? 'Sign in' : 'Create account';
+  clearAlert('authAlert');
+}
+
+async function submitAuth() {
+  const email = document.getElementById('inputEmail').value.trim();
+  const pw    = document.getElementById('inputPw').value;
+  const name  = document.getElementById('inputName').value.trim();
+
+  if (!email || !pw) { showAlert('authAlert','error','Please fill in all fields.'); return; }
+  setAuthBusy(true);
+
+  if (S.authMode === 'signup') {
+    if (!name) { showAlert('authAlert','error','Please enter your name.'); setAuthBusy(false); return; }
+    const res = await api('POST', '/auth/register', { name, email, password: pw });
+    if (res.error) { showAlert('authAlert','error', res.error); setAuthBusy(false); return; }
+    S.token = res.access_token; S.userName = res.name || name;
+  } else {
+    // FastAPI OAuth2 form expects application/x-www-form-urlencoded
+    const fd = new URLSearchParams({ username: email, password: pw });
+    let r;
+    try { r = await fetch('/api/auth/login', { method:'POST', body: fd }); }
+    catch(e) { showAlert('authAlert','error','Network error.'); setAuthBusy(false); return; }
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      const detail = data.detail;
+      const msg = Array.isArray(detail)
+        ? detail.map(e => (typeof e==='object'?(e.msg||JSON.stringify(e)):String(e))).join(', ')
+        : String(detail || 'Invalid credentials');
+      showAlert('authAlert','error', msg);
+      setAuthBusy(false); return;
+    }
+    S.token = data.access_token; S.userName = data.name || email.split('@')[0];
+  }
+
+  localStorage.setItem('ls_token', S.token);
+  localStorage.setItem('ls_name', S.userName);
+  setAuthBusy(false);
   showApp();
 }
 
-async function doRegister() {
-  const name = document.getElementById('regName').value.trim();
-  const email = document.getElementById('regEmail').value.trim();
-  const pwd = document.getElementById('regPassword').value;
-  if (!name || !email || !pwd) { showMsg('authMsg', 'Fill in all fields.', 'error'); return; }
-  if (pwd.length < 6) { showMsg('authMsg', 'Password must be at least 6 characters.', 'error'); return; }
-  clearMsg('authMsg');
-  const r = await api('POST', '/auth/register', { name, email, password: pwd });
-  if (r.error || r.detail) { showMsg('authMsg', r.detail || r.error || 'Registration failed.', 'error'); return; }
-  localStorage.setItem('fin_token', r.access_token);
-  localStorage.setItem('fin_name', r.name || name);
-  session.token = r.access_token;
-  session.userName = r.name || name;
-  showApp();
+function setAuthBusy(busy) {
+  document.getElementById('authBtn').disabled = busy;
+  document.getElementById('authBtnText').textContent = busy
+    ? 'Please wait…'
+    : (S.authMode === 'login' ? 'Sign in' : 'Create account');
 }
 
-function doLogout() {
-  localStorage.removeItem('fin_token');
-  localStorage.removeItem('fin_name');
-  session.token = '';
-  session.companyId = null;
-  document.getElementById('authScreen').style.display = 'flex';
+function logout() {
+  localStorage.removeItem('ls_token'); localStorage.removeItem('ls_name');
+  S.token = ''; S.companyId = null; S.periodId = null; S.summary = null;
+  showAuth();
+}
+
+function showAuth() {
+  document.getElementById('authScreen').style.display = 'grid';
+  document.getElementById('appScreen').classList.remove('visible');
   document.getElementById('appScreen').style.display = 'none';
-  switchAuthTab('login');
 }
 
-// ─── APP SHELL ────────────────────────────────────────────────────────────────
-function showApp() {
+/* ════════════════════════════════════════════
+   APP INIT
+════════════════════════════════════════════ */
+async function showApp() {
   document.getElementById('authScreen').style.display = 'none';
-  document.getElementById('appScreen').style.display = 'flex';
-  document.getElementById('appScreen').style.flexDirection = 'column';
-  document.getElementById('userName').textContent = session.userName;
-  document.getElementById('userAvatar').textContent = session.userName.charAt(0).toUpperCase();
-  loadCompanies();
+  document.getElementById('appScreen').style.display = '';
+  document.getElementById('appScreen').classList.add('visible');
+  document.getElementById('userNameSb').textContent = S.userName;
+  document.getElementById('userAvatar').textContent = (S.userName[0] || 'U').toUpperCase();
+  await loadCompanies();
 }
 
 async function loadCompanies() {
-  const companies = await api('GET', '/companies/');
-  if (!companies || companies.error || !Array.isArray(companies)) {
-    showSetup();
-    return;
-  }
-  if (!companies.length) {
-    showSetup();
-    return;
-  }
-  // Populate dropdown
-  const sel = document.getElementById('companySelect');
-  sel.innerHTML = companies.map(c =>
-    `<option value="${c.id}">${escHtml(c.name)}</option>`
-  ).join('');
-  // Auto-select first
-  const firstId = companies[0].id;
-  sel.value = firstId;
-  await selectCompany(firstId, companies[0].name);
-}
+  const data = await api('GET', '/companies/');
+  if (data.error) { if (data.status !== 401) showSetupView(); return; }
 
-async function onCompanyChange() {
-  const sel = document.getElementById('companySelect');
-  const id = parseInt(sel.value);
-  const name = sel.options[sel.selectedIndex].text;
-  await selectCompany(id, name);
-}
+  S.companies = data;
+  const sel = document.getElementById('companySel');
+  sel.innerHTML = '<option value="">— select company —</option>';
+  data.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c.id; o.textContent = c.name; sel.appendChild(o);
+  });
 
-async function selectCompany(id, name) {
-  session.companyId = id;
-  session.companyName = name;
-  session.chatSessionId = null;
-
-  // Ensure period
-  const p = await api('POST', `/companies/${id}/ensure-period`);
-  if (p && p.id) {
-    session.periodId = p.id;
-    session.periodLabel = p.label || 'Auto-detected';
-    updatePeriodBadge(p.label);
-  }
-
-  // Load summary
-  const summary = await api('GET', `/companies/${id}/summary`);
-  showMain();
-
-  if (summary && summary.files && summary.files.length > 0) {
-    renderFilesList(summary.files);
-    if (summary.income_statement) {
-      renderResults({
-        income_statement: summary.income_statement,
-        entity_counts: summary.entity_counts || {},
-        period_label: summary.period ? summary.period.label : '',
-      });
-    }
-    if (summary.period && summary.period.label) {
-      updatePeriodBadge(summary.period.label);
-    }
+  if (data.length === 0) {
+    showSetupView();
   } else {
-    // No files yet — show empty state
-    document.getElementById('filesList').style.display = 'none';
-    document.getElementById('resultsSection').style.display = 'none';
-    document.getElementById('emptyState').style.display = '';
+    sel.value = data[0].id;
+    await selectCompany(data[0].id);
   }
 }
 
-function updatePeriodBadge(label) {
-  if (!label || label === 'Auto-detected') {
-    document.getElementById('periodBadge').style.display = 'none';
-    return;
-  }
-  document.getElementById('periodLabel').textContent = label;
-  document.getElementById('periodBadge').style.display = 'flex';
-  session.periodLabel = label;
+async function selectCompany(id) {
+  if (!id) return;
+  S.companyId = parseInt(id);
+
+  const period = await api('POST', '/companies/' + id + '/ensure-period');
+  if (period.error) return;
+  S.periodId = period.id;
+  document.getElementById('periodLabel').textContent = period.label;
+  document.getElementById('periodBadge').style.display = 'inline-flex';
+  document.getElementById('liveChip').style.display = 'inline-flex';
+
+  await loadSummary();
+  showTabView('overview');
 }
 
-function showSetup() {
-  document.getElementById('companySelect').innerHTML = '';
-  document.getElementById('periodBadge').style.display = 'none';
+async function loadSummary() {
+  if (!S.companyId) return;
+  const data = await api('GET', '/companies/' + S.companyId + '/summary');
+  if (data.error) return;
+  S.summary = data;
+  if (data.period && data.period.label && data.period.label !== 'Auto-detected') {
+    document.getElementById('periodLabel').textContent = data.period.label;
+    S.periodId = data.period.id;
+  }
+  renderOverview(data);
+  renderFileList(data.files || []);
+  if (data.income_statement) renderReports(data);
+}
+
+/* ════════════════════════════════════════════
+   VIEWS
+════════════════════════════════════════════ */
+function showSetupView() {
+  ['setupView','tabOverview','tabUpload','tabReports','tabChat'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
   document.getElementById('setupView').style.display = 'block';
-  document.getElementById('mainView').style.display = 'none';
 }
 
-function showMain() {
+function showTabView(tab) {
   document.getElementById('setupView').style.display = 'none';
-  document.getElementById('mainView').style.display = 'block';
-}
-
-// ─── COMPANY CREATION ─────────────────────────────────────────────────────────
-async function createCompany() {
-  const name = document.getElementById('setupName').value.trim();
-  if (!name) { showMsg('setupMsg', 'Enter a company name.', 'error'); return; }
-  clearMsg('setupMsg');
-  const r = await api('POST', '/companies/', {
-    name,
-    industry: document.getElementById('setupIndustry').value,
-    currency: document.getElementById('setupCurrency').value,
+  const TABS = ['overview','upload','reports','chat'];
+  TABS.forEach(t => {
+    const cap = t.charAt(0).toUpperCase() + t.slice(1);
+    const el  = document.getElementById('tab' + cap);
+    const nav = document.getElementById('nav-' + t);
+    if (el)  el.style.display = 'none';
+    if (nav) nav.classList.remove('active');
   });
-  if (r.error || r.detail) { showMsg('setupMsg', r.detail || r.error || 'Failed.', 'error'); return; }
-  await loadCompanies();
+  const capTab = tab.charAt(0).toUpperCase() + tab.slice(1);
+  const tabEl  = document.getElementById('tab' + capTab);
+  const navEl  = document.getElementById('nav-' + tab);
+  if (tabEl) tabEl.style.display = tab === 'chat' ? 'flex' : 'block';
+  if (navEl) navEl.classList.add('active');
 }
 
-function openNewCompanyModal() {
-  document.getElementById('modalName').value = '';
-  clearMsg('modalMsg');
-  document.getElementById('companyModal').classList.add('open');
+function gotoTab(tab) {
+  if (!S.companyId) { showSetupView(); return; }
+  showTabView(tab);
 }
-function closeModal() {
-  document.getElementById('companyModal').classList.remove('open');
-}
-async function createCompanyModal() {
-  const name = document.getElementById('modalName').value.trim();
-  if (!name) { showMsg('modalMsg', 'Enter a company name.', 'error'); return; }
-  clearMsg('modalMsg');
-  const r = await api('POST', '/companies/', {
-    name,
-    industry: document.getElementById('modalIndustry').value,
-    currency: document.getElementById('modalCurrency').value,
-  });
-  if (r.error || r.detail) { showMsg('modalMsg', r.detail || r.error || 'Failed.', 'error'); return; }
-  closeModal();
-  await loadCompanies();
-}
-document.getElementById('companyModal').addEventListener('click', function(e) {
-  if (e.target === this) closeModal();
-});
 
-// ─── FILE UPLOAD ──────────────────────────────────────────────────────────────
-function handleDragOver(e) {
+/* ════════════════════════════════════════════
+   COMPANY SETUP
+════════════════════════════════════════════ */
+async function createCompany(e) {
   e.preventDefault();
-  document.getElementById('uploadZone').classList.add('drag-over');
-}
-function handleDragLeave(e) {
-  document.getElementById('uploadZone').classList.remove('drag-over');
-}
-function handleDrop(e) {
-  e.preventDefault();
-  document.getElementById('uploadZone').classList.remove('drag-over');
-  const file = e.dataTransfer.files[0];
-  if (file) processUpload(file);
-}
-function handleFileSelect(e) {
-  const file = e.target.files[0];
-  if (file) processUpload(file);
-  e.target.value = ''; // reset so same file can be re-uploaded
-}
+  const name     = document.getElementById('setupName').value.trim();
+  const industry = document.getElementById('setupIndustry').value;
+  const currency = document.getElementById('setupCurrency').value;
+  if (!name) { showAlert('setupAlert','error','Please enter a company name.'); return; }
 
-async function processUpload(file) {
-  if (!session.companyId) { alert('Select a company first.'); return; }
+  const btn = document.getElementById('setupBtn');
+  btn.disabled = true; btn.textContent = 'Creating…';
 
-  // Show processing bar
-  document.getElementById('processingBar').style.display = '';
-  document.getElementById('emptyState').style.display = 'none';
-  document.getElementById('procLog').innerHTML = '<p>📤 Uploading ' + escHtml(file.name) + '…</p>';
-
-  const fd = new FormData();
-  fd.append('company_id', session.companyId);
-  fd.append('file', file);
-
-  const r = await fetch('/api/upload/auto', {
-    method: 'POST',
-    headers: { Authorization: 'Bearer ' + session.token },
-    body: fd,
-  });
-  const data = await r.json().catch(() => ({}));
-
-  document.getElementById('processingBar').style.display = 'none';
-
-  if (!r.ok || data.error) {
-    alert('Upload failed: ' + (data.detail || data.error || 'Unknown error'));
+  const res = await api('POST', '/companies/', { name, industry, currency });
+  if (res.error) {
+    showAlert('setupAlert','error', res.error);
+    btn.disabled = false; btn.innerHTML = 'Create workspace';
     return;
   }
 
-  // Update period badge
-  if (data.period_label) {
-    session.periodLabel = data.period_label;
-    session.periodId = data.period_id;
-    updatePeriodBadge(data.period_label);
-  }
-
-  // Refresh file list and results
-  const summary = await api('GET', `/companies/${session.companyId}/summary`);
-  if (summary && summary.files) {
-    renderFilesList(summary.files);
-  }
-  renderResults(data);
+  S.companies.push(res);
+  const sel = document.getElementById('companySel');
+  const o = document.createElement('option'); o.value = res.id; o.textContent = res.name;
+  sel.appendChild(o); sel.value = res.id;
+  btn.disabled = false;
+  await selectCompany(res.id);
 }
 
-function renderFilesList(files) {
-  if (!files || !files.length) {
-    document.getElementById('filesList').style.display = 'none';
-    return;
-  }
-  const icons = { sales: '📊', purchase: '🧾', inventory: '📦', coa: '📒', unknown: '📄' };
-  const badgeClass = { sales: 'badge-emerald', purchase: 'badge-brand', inventory: 'badge-amber', coa: 'badge-gray', unknown: 'badge-gray' };
-  document.getElementById('filesContainer').innerHTML = files.map(f => `
-    <div class="file-row">
-      <div class="file-icon">${icons[f.file_type] || '📄'}</div>
-      <div style="flex:1">
-        <div class="file-name">${escHtml(f.filename)}</div>
-        <div class="file-meta">${(f.row_count || 0).toLocaleString()} rows</div>
-      </div>
-      <span class="badge ${badgeClass[f.file_type] || 'badge-gray'}">${escHtml(f.file_type || 'unknown')}</span>
-    </div>
-  `).join('');
-  document.getElementById('filesList').style.display = '';
-}
+/* ════════════════════════════════════════════
+   OVERVIEW
+════════════════════════════════════════════ */
+function renderOverview(data) {
+  const company = data.company, inc = data.income_statement, files = data.files || [];
+  const cur = company.currency || 'THB';
+  const fmt = n => (n || 0).toLocaleString('en-US');
 
-// ─── RESULTS RENDERING ────────────────────────────────────────────────────────
-function renderResults(data) {
-  const is = data.income_statement;
-  if (!is) return;
+  document.getElementById('overviewTitle').textContent = company.name;
+  document.getElementById('overviewSub').textContent   = (data.period.label || '') + ' · ' + cur;
 
-  const summary = is.summary || {};
-  const revenue = summary.revenue || 0;
-  const gp = summary.gross_profit || 0;
-  const np = summary.net_profit || 0;
-  const opex = summary.operating_expenses || 0;
-
-  // KPIs
-  document.getElementById('kpiRevenue').textContent = fmtThb(revenue);
-  document.getElementById('kpiGrossProfit').textContent = fmtThb(gp);
-  document.getElementById('kpiNetProfit').textContent = fmtThb(np);
-  document.getElementById('kpiPeriod').textContent = data.period_label || session.periodLabel || '';
-  document.getElementById('kpiGM').textContent = revenue > 0 ? 'GM ' + pct(gp, revenue) : '—';
-  document.getElementById('kpiNPM').textContent = revenue > 0 ? 'NPM ' + pct(np, revenue) : '—';
-
-  document.getElementById('kpiNetProfit').className = 'stat-value ' + (np >= 0 ? 'brand' : 'red');
-
-  // Income statement table
-  const lines = is.lines || [];
-  let isHtml = `
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <div style="font-size:15px;font-weight:800">Income Statement — ${escHtml(data.period_label || session.periodLabel || '')}</div>
-      <span style="font-size:12px;color:var(--text-4)">Currency: THB</span>
-    </div>
-    <table class="stmt-table">
-      <thead><tr><th style="width:50%">Line item</th><th>Account</th><th class="amount-col">Amount (฿)</th><th style="width:90px">Evidence</th></tr></thead>
-      <tbody>`;
-
-  let currentSection = '';
-  const sections = { revenue: 'REVENUE', cogs: 'COST OF GOODS SOLD', gross_profit: null, expense: 'OPERATING EXPENSES', net_profit: null };
-  const sectionOrder = ['revenue', 'cogs', 'gross_profit', 'expense', 'net_profit'];
-
-  // Group lines by type
-  const byType = {};
-  lines.forEach(l => {
-    if (!byType[l.line_type]) byType[l.line_type] = [];
-    byType[l.line_type].push(l);
-  });
-
-  sectionOrder.forEach(type => {
-    const typLines = byType[type] || [];
-    const sectionHeader = sections[type];
-    if (sectionHeader) {
-      isHtml += `<tr class="row-section"><td colspan="4">${sectionHeader}</td></tr>`;
-    }
-    typLines.forEach(l => {
-      const isTotal = type === 'gross_profit' || type === 'net_profit';
-      const amtClass = l.amount >= 0 ? 'amount-pos' : 'amount-neg';
-      const evLink = l.evidence_count > 0 ? `<a class="evidence-link">⟶ ${l.evidence_count} rows</a>` : '';
-      if (isTotal) {
-        isHtml += `<tr class="row-total"><td><strong>${escHtml(l.line_name)}</strong></td><td></td><td class="amount-col ${amtClass}"><strong>${fmtThb(l.amount)}</strong></td><td></td></tr>`;
-      } else {
-        isHtml += `<tr><td>${escHtml(l.line_name)}</td><td style="color:var(--text-4);font-size:12px">${escHtml(l.account_code || '')}</td><td class="amount-col ${amtClass}">${fmt(l.amount)}</td><td>${evLink}</td></tr>`;
-      }
-    });
-  });
-
-  isHtml += `</tbody></table>
-    <div style="margin-top:12px;font-size:12px;color:var(--text-4);font-style:italic">
-      ℹ️ All journal entries produced by deterministic double-entry rules. LLM used only for column interpretation and chat answers.
-    </div>`;
-  document.getElementById('isContent').innerHTML = isHtml;
-
-  // Trial balance
-  renderTrialBalance(data.trial_balance || []);
-
-  // Exceptions
-  renderExceptions(data.validation_summary || null);
-
-  // Ontology
-  renderOntology(data.entity_counts || {});
-
-  document.getElementById('resultsSection').style.display = '';
-  document.getElementById('emptyState').style.display = 'none';
-  session.lastResult = data;
-}
-
-function renderTrialBalance(items) {
-  if (!items || !items.length) {
-    document.getElementById('tbContent').innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No trial balance data</div></div>';
-    return;
-  }
-  let totalDebit = 0, totalCredit = 0;
-  let rows = items.map(r => {
-    totalDebit += r.total_debit || 0;
-    totalCredit += r.total_credit || 0;
-    return `<tr>
-      <td style="color:var(--text-4);font-size:12px">${escHtml(r.account_code || '')}</td>
-      <td>${escHtml(r.account_name || '')}</td>
-      <td class="amount-col">${r.total_debit > 0 ? fmt(r.total_debit) : '—'}</td>
-      <td class="amount-col">${r.total_credit > 0 ? fmt(r.total_credit) : '—'}</td>
-    </tr>`;
-  }).join('');
-  document.getElementById('tbContent').innerHTML = `
-    <table class="stmt-table">
-      <thead><tr><th>Code</th><th>Account</th><th class="amount-col">Debit (฿)</th><th class="amount-col">Credit (฿)</th></tr></thead>
-      <tbody>${rows}
-        <tr class="row-total">
-          <td colspan="2"><strong>TOTALS</strong></td>
-          <td class="amount-col"><strong>${fmt(totalDebit)}</strong></td>
-          <td class="amount-col"><strong>${fmt(totalCredit)}</strong></td>
-        </tr>
-      </tbody>
-    </table>`;
-}
-
-function renderExceptions(summary) {
-  if (!summary) {
-    document.getElementById('excContent').innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">No exceptions</div><div class="empty-sub">All validations passed.</div></div>';
-    return;
-  }
-  const warnings = summary.warnings || [];
-  const criticals = summary.criticals || [];
-  if (!warnings.length && !criticals.length) {
-    document.getElementById('excContent').innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">No exceptions</div><div class="empty-sub">All validations passed.</div></div>';
-    return;
-  }
-  let html = '';
-  criticals.forEach(m => {
-    html += `<div class="exc-card critical"><div class="exc-head"><span style="font-size:18px">🔴</span><div class="exc-title">${escHtml(m)}</div><span class="badge badge-red">Critical</span></div></div>`;
-  });
-  warnings.forEach(m => {
-    html += `<div class="exc-card warning"><div class="exc-head"><span style="font-size:18px">🟡</span><div class="exc-title">${escHtml(m)}</div><span class="badge badge-amber">Warning</span></div></div>`;
-  });
-  document.getElementById('excContent').innerHTML = html;
-}
-
-function renderOntology(counts) {
-  const icons = { Branch: '🏪', SKU: '📦', Supplier: '🏭', Customer: '👤', Account: '💰' };
-  if (!counts || Object.keys(counts).length === 0) {
-    document.getElementById('ontContent').innerHTML = '<div class="empty-state"><div class="empty-icon">🕸</div><div class="empty-title">No entities extracted yet</div><div class="empty-sub">Upload sales, purchase, or inventory files to build the ontology.</div></div>';
-    return;
-  }
-  let gridHtml = '<div class="entity-grid">';
-  Object.entries(counts).forEach(([type, count]) => {
-    gridHtml += `
-      <div class="entity-card">
-        <div class="entity-icon">${icons[type] || '🔷'}</div>
-        <div class="entity-count">${count}</div>
-        <div class="entity-label">${escHtml(type)}</div>
-      </div>`;
-  });
-  gridHtml += '</div>';
-  gridHtml += `<div style="font-size:13px;color:var(--text-3);margin-top:8px;font-style:italic">ℹ️ Entities are automatically extracted from your data. Branch, SKU, Supplier, and Customer names are normalised and deduplicated.</div>`;
-  document.getElementById('ontContent').innerHTML = gridHtml;
-}
-
-// ─── TABS ─────────────────────────────────────────────────────────────────────
-function switchTab(tab) {
-  const panes = ['is', 'tb', 'exc', 'ont', 'chat'];
-  const labels = ['Income Statement', 'Trial Balance', 'Exceptions', 'Ontology', 'Ask AI'];
-  const tabs = document.querySelectorAll('.report-tab');
-  tabs.forEach((t, i) => {
-    const id = panes[i];
-    const el = document.getElementById('pane-' + id);
-    const active = id === tab;
-    t.classList.toggle('active', active);
-    if (el) el.style.display = active ? '' : 'none';
-  });
-}
-
-// ─── AI CHAT ──────────────────────────────────────────────────────────────────
-async function sendChat() {
-  const input = document.getElementById('chatInput');
-  const msg = input.value.trim();
-  if (!msg || !session.periodId) return;
-  input.value = '';
-
-  appendMsg('user', msg);
-  const thinking = appendMsg('ai', '…thinking…');
-
-  const r = await api('POST', `/chat/${session.periodId}`, {
-    message: msg,
-    session_id: session.chatSessionId,
-  });
-
-  thinking.remove();
-  if (r.answer) {
-    session.chatSessionId = r.session_id;
-    appendMsg('ai', r.answer, r.evidence || []);
+  if (inc) {
+    document.getElementById('kpiRevenue').textContent = cur + ' ' + fmt(inc.revenue);
+    document.getElementById('kpiRevSub').textContent  = '↗ Total revenue';
+    document.getElementById('kpiRevSub').className    = 'kpi-sub up';
+    document.getElementById('kpiGP').textContent      = cur + ' ' + fmt(inc.gross_profit);
+    const gpPct = inc.revenue > 0 ? ((inc.gross_profit / inc.revenue) * 100).toFixed(1) : '0';
+    document.getElementById('kpiGPSub').textContent   = gpPct + '% margin';
+    document.getElementById('kpiGPSub').className     = 'kpi-sub ' + (inc.gross_profit >= 0 ? 'up' : 'down');
+    document.getElementById('kpiNP').textContent      = cur + ' ' + fmt(inc.net_profit);
+    document.getElementById('kpiNPSub').textContent   = inc.net_profit >= 0 ? '↗ Profitable' : '↘ Loss';
+    document.getElementById('kpiNPSub').className     = 'kpi-sub ' + (inc.net_profit >= 0 ? 'up' : 'down');
   } else {
-    appendMsg('ai', 'Sorry, I encountered an error. Please try again.');
+    ['kpiRevenue','kpiGP','kpiNP'].forEach(id => document.getElementById(id).textContent = '—');
+    ['kpiRevSub','kpiGPSub','kpiNPSub'].forEach(id => { document.getElementById(id).textContent = 'upload to generate'; document.getElementById(id).className = 'kpi-sub'; });
   }
-}
+  document.getElementById('kpiFiles').textContent = files.length;
 
-function appendMsg(role, text, evidence = []) {
-  const box = document.getElementById('chatMessages');
-  const div = document.createElement('div');
-  div.className = 'msg ' + role;
-  const avatar = role === 'ai' ? '🤖' : session.userName.charAt(0).toUpperCase();
-  let evHtml = '';
-  if (evidence && evidence.length) {
-    evHtml = '<div class="msg-evidence">' + evidence.map(e =>
-      `<span class="msg-ev-pill">${escHtml(typeof e === 'string' ? e : JSON.stringify(e))}</span>`
-    ).join('') + '</div>';
-  }
-  div.innerHTML = `
-    <div class="msg-avatar">${avatar}</div>
-    <div><div class="msg-bubble">${escHtml(text).replace(/\n/g,'<br>')}</div>${evHtml}</div>`;
-  box.appendChild(div);
-  box.scrollTop = box.scrollHeight;
-  return div;
-}
-</script>
-</body>
-</html>
+  const list  = document.getElementById('nextStepsList');
+  const hasInc = !!inc;
+  const steps = [
+    { done: true,           label: 'Create a workspace',              fn: '' },
+    { done: files.length>0, label: 'Upload source files',             fn: "gotoTab('upload')" },
+    { done: hasInc,         label: 'Generate financial statements',   fn: "gotoTab('upload')" },
+    { done: hasInc,         label: 'Open financial reports',          fn: "gotoTab('reports')" },
+  ];
+  const chk = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+  list.innerHTML = steps.map(s => `
+    <div class="row" onclick="${s.fn}" style="padding:12px 14px;border-radius:10px;background:${s.done?'var(--mint-soft)':'var(--surface)'};border:1px sol
