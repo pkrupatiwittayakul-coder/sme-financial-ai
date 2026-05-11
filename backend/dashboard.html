@@ -534,8 +534,22 @@ async function api(method, path, body = null, isForm = false) {
   }
   const r = await fetch('/api' + path, opts);
   if (r.status === 204) return {};
+  if (r.status === 401) {
+    // Token expired or user deleted — clear and show login
+    localStorage.removeItem('fin_token');
+    localStorage.removeItem('fin_name');
+    session.token = '';
+    document.getElementById('authScreen').style.display = 'flex';
+    document.getElementById('appScreen').style.display = 'none';
+    return { error: 'Unauthorised', status: 401 };
+  }
   const text = await r.text();
-  try { return JSON.parse(text); }
+  try {
+    const j = JSON.parse(text);
+    // Normalise FastAPI `detail` field to `error`
+    if (j && j.detail && !j.error) j.error = j.detail;
+    return j;
+  }
   catch { return { error: text, status: r.status }; }
 }
 
@@ -630,7 +644,7 @@ function showApp() {
 
 async function loadCompanies() {
   const companies = await api('GET', '/companies/');
-  if (!companies || companies.error) {
+  if (!companies || companies.error || !Array.isArray(companies)) {
     showSetup();
     return;
   }
@@ -706,13 +720,13 @@ function updatePeriodBadge(label) {
 function showSetup() {
   document.getElementById('companySelect').innerHTML = '';
   document.getElementById('periodBadge').style.display = 'none';
-  document.getElementById('setupView').style.display = '';
+  document.getElementById('setupView').style.display = 'block';
   document.getElementById('mainView').style.display = 'none';
 }
 
 function showMain() {
   document.getElementById('setupView').style.display = 'none';
-  document.getElementById('mainView').style.display = '';
+  document.getElementById('mainView').style.display = 'block';
 }
 
 // ─── COMPANY CREATION ─────────────────────────────────────────────────────────
