@@ -1,0 +1,42 @@
+# Environment
+.env
+.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Database
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+
+# Uploads / reports (generated at runtime)
+backend/storage/uploads/
+backend/storage/reports/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

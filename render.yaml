@@ -1,0 +1,36 @@
+services:
+  # ── Backend: FastAPI ──────────────────────────────────────────────────────
+  - type: web
+    name: sme-finance-backend
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DATABASE_URL
+        value: sqlite:////tmp/sme_financial.db
+      - key: UPLOAD_DIR
+        value: /tmp/sme_uploads
+      - key: REPORT_DIR
+        value: /tmp/sme_reports
+      - key: LLM_MODEL
+        value: claude-haiku-4-5-20251001
+      - key: ANTHROPIC_API_KEY
+        sync: false   # Set this manually in Render dashboard
+
+  # ── Frontend: Streamlit ───────────────────────────────────────────────────
+  - type: web
+    name: sme-finance-frontend
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: streamlit run frontend/app.py --server.port $PORT --server.address 0.0.0.0 --server.headless true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: BACKEND_URL
+        fromService:
+          name: sme-finance-backend
+          type: web
+          property: host
+          envVarKey: RENDER_EXTERNAL_URL
