@@ -292,7 +292,25 @@ a{color:inherit;text-decoration:none}
         <button class="auth-mode-tab" id="tabSignup" onclick="switchAuthMode('signup')">Sign up</button>
       </div>
 
-      <div class="col" style="gap:14px;margin-top:22px">
+      <!-- Google Sign-In button (shown when GSI is loaded) -->
+      <div id="googleBtnWrap" style="margin-top:20px;display:none">
+        <div id="g_id_onload"
+          data-client_id=""
+          data-callback="handleGoogleCredential"
+          data-auto_prompt="false">
+        </div>
+        <div id="googleSignInBtn" style="display:flex;justify-content:center"></div>
+        <div class="row" style="gap:12px;margin:16px 0">
+          <div style="flex:1;height:1px;background:var(--line)"></div>
+          <span style="font-size:11px;color:var(--ink-4);font-weight:600;letter-spacing:.08em">OR</span>
+          <div style="flex:1;height:1px;background:var(--line)"></div>
+        </div>
+      </div>
+
+      <!-- Fallback divider (no Google) -->
+      <div id="noGoogleDivider" style="margin-top:16px"></div>
+
+      <div class="col" style="gap:14px">
         <div id="fieldName" class="field" style="display:none">
           <label>Full name</label>
           <input type="text" id="inputName" placeholder="Jane Smith">
@@ -314,7 +332,7 @@ a{color:inherit;text-decoration:none}
         </button>
       </div>
 
-      <p style="margin-top:26px;font-size:12.5px;color:var(--ink-3);text-align:center">
+      <p style="margin-top:22px;font-size:12.5px;color:var(--ink-3);text-align:center">
         By continuing you agree to our <a href="#" style="color:var(--ink-2);text-decoration:underline">terms</a> and <a href="#" style="color:var(--ink-2);text-decoration:underline">privacy policy</a>.
       </p>
     </div>
@@ -661,35 +679,78 @@ async function submitAuth() {
   const name  = document.getElementById('inputName').value.trim();
 
   if (!email || !pw) { showAlert('authAlert','error','Please fill in all fields.'); return; }
+  if (S.authMode === 'signup' && !name) {
+    showAlert('authAlert','error','Please enter your full name.'); return;
+  }
   setAuthBusy(true);
 
-  if (S.authMode === 'signup') {
-    if (!name) { showAlert('authAlert','error','Please enter your name.'); setAuthBusy(false); return; }
-    const res = await api('POST', '/auth/register', { name, email, password: pw });
-    if (res.error) { showAlert('authAlert','error', res.error); setAuthBusy(false); return; }
-    S.token = res.access_token; S.userName = res.name || name;
-  } else {
-    // FastAPI OAuth2 form expects application/x-www-form-urlencoded
-    const fd = new URLSearchParams({ username: email, password: pw });
-    let r;
-    try { r = await fetch('/api/auth/login', { method:'POST', body: fd }); }
-    catch(e) { showAlert('authAlert','error','Network error.'); setAuthBusy(false); return; }
-    const data = await r.json().catch(() => ({}));
-    if (!r.ok) {
-      const detail = data.detail;
-      const msg = Array.isArray(detail)
-        ? detail.map(e => (typeof e==='object'?(e.msg||JSON.stringify(e)):String(e))).join(', ')
-        : String(detail || 'Invalid credentials');
-      showAlert('authAlert','error', msg);
-      setAuthBusy(false); return;
-    }
-    S.token = data.access_token; S.userName = data.name || email.split('@')[0];
-  }
+  const endpoint = S.authMode === 'signup' ? '/auth/register' : '/auth/login';
+  const payload  = S.authMode === 'signup'
+    ? { name, email, password: pw }
+    : { email, password: pw };
 
+  // Both endpoints now accept JSON (fixed backend)
+  const res = await api('POST', endpoint, payload);
+  if (res.error) { showAlert('authAlert','error', res.error); setAuthBusy(false); return; }
+
+  S.token    = res.access_token;
+  S.userName = res.name || email.split('@')[0];
   localStorage.setItem('ls_token', S.token);
-  localStorage.setItem('ls_name', S.userName);
+  localStorage.setItem('ls_name',  S.userName);
   setAuthBusy(false);
   showApp();
+}
+
+/* ── Google Sign-In callback ── */
+async function handleGoogleCredential(response) {
+  setAuthBusy(true);
+  clearAlert('authAlert');
+  const res = await api('POST', '/auth/google', { credential: response.credential });
+  if (res.error) {
+    showAlert('authAlert', 'error', res.error);
+    setAuthBusy(false);
+    return;
+  }
+  S.token    = res.access_token;
+  S.userName = res.name || 'User';
+  localStorage.setItem('ls_token', S.token);
+  localStorage.setItem('ls_name',  S.userName);
+  setAuthBusy(false);
+  showApp();
+}
+
+/* ── Load Google Identity Services ── */
+function initGoogleSignIn() {
+  // Ask backend for the client_id (avoids hardcoding in HTML)
+  fetch('/api/auth/google-config')
+    .then(r => r.json())
+    .then(data => {
+      if (!data.client_id) return; // not configured — hide the button
+      // Inject GSI script
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      script.onload = () => {
+        // Set client_id on the onload div
+        document.getElementById('g_id_onload').setAttribute('data-client_id', data.client_id);
+        // Render the button
+        if (window.google && window.google.accounts) {
+          google.accounts.id.initialize({
+            client_id: data.client_id,
+            callback: handleGoogleCredential,
+          });
+          google.accounts.id.renderButton(
+            document.getElementById('googleSignInBtn'),
+            { theme: 'outline', size: 'large', width: 380, text: 'continue_with', shape: 'rectangular' }
+          );
+          document.getElementById('googleBtnWrap').style.display = 'block';
+          document.getElementById('noGoogleDivider').style.display = 'none';
+        }
+      };
+      document.head.appendChild(script);
+    })
+    .catch(() => {}); // silently ignore if endpoint not ready
 }
 
 function setAuthBusy(busy) {
@@ -843,31 +904,4 @@ function renderOverview(data) {
   document.getElementById('overviewTitle').textContent = company.name;
   document.getElementById('overviewSub').textContent   = (data.period.label || '') + ' · ' + cur;
 
-  if (inc) {
-    document.getElementById('kpiRevenue').textContent = cur + ' ' + fmt(inc.revenue);
-    document.getElementById('kpiRevSub').textContent  = '↗ Total revenue';
-    document.getElementById('kpiRevSub').className    = 'kpi-sub up';
-    document.getElementById('kpiGP').textContent      = cur + ' ' + fmt(inc.gross_profit);
-    const gpPct = inc.revenue > 0 ? ((inc.gross_profit / inc.revenue) * 100).toFixed(1) : '0';
-    document.getElementById('kpiGPSub').textContent   = gpPct + '% margin';
-    document.getElementById('kpiGPSub').className     = 'kpi-sub ' + (inc.gross_profit >= 0 ? 'up' : 'down');
-    document.getElementById('kpiNP').textContent      = cur + ' ' + fmt(inc.net_profit);
-    document.getElementById('kpiNPSub').textContent   = inc.net_profit >= 0 ? '↗ Profitable' : '↘ Loss';
-    document.getElementById('kpiNPSub').className     = 'kpi-sub ' + (inc.net_profit >= 0 ? 'up' : 'down');
-  } else {
-    ['kpiRevenue','kpiGP','kpiNP'].forEach(id => document.getElementById(id).textContent = '—');
-    ['kpiRevSub','kpiGPSub','kpiNPSub'].forEach(id => { document.getElementById(id).textContent = 'upload to generate'; document.getElementById(id).className = 'kpi-sub'; });
-  }
-  document.getElementById('kpiFiles').textContent = files.length;
-
-  const list  = document.getElementById('nextStepsList');
-  const hasInc = !!inc;
-  const steps = [
-    { done: true,           label: 'Create a workspace',              fn: '' },
-    { done: files.length>0, label: 'Upload source files',             fn: "gotoTab('upload')" },
-    { done: hasInc,         label: 'Generate financial statements',   fn: "gotoTab('upload')" },
-    { done: hasInc,         label: 'Open financial reports',          fn: "gotoTab('reports')" },
-  ];
-  const chk = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
-  list.innerHTML = steps.map(s => `
-    <div class="row" onclick="${s.fn}" style="padding:12px 14px;border-radius:10px;background:${s.done?'var(--mint-soft)':'var(--surface)'};border:1px sol
+  
