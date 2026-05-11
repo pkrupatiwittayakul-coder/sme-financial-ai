@@ -214,5 +214,31 @@ class ChatMessage(Base):
     session = relationship("ChatSession", back_populates="messages")
 
 
+
+class FileSheet(Base):
+    """Track individual sheets within a multi-sheet Excel file."""
+    __tablename__ = "file_sheets"
+    id = Column(Integer, primary_key=True, index=True)
+    file_id = Column(Integer, ForeignKey("files.id"))
+    sheet_name = Column(String)
+    row_count = Column(Integer, default=0)
+    columns = Column(JSON)
+
+
+class StatementEvidence(Base):
+    """
+    Evidence trail: links each StatementLine back to source BusinessRecords.
+    Satisfies: 'every statement line should answer where did this number come from'.
+    """
+    __tablename__ = "statement_evidence"
+    id = Column(Integer, primary_key=True, index=True)
+    statement_line_id = Column(Integer, ForeignKey("statement_lines.id"))
+    business_record_id = Column(Integer, ForeignKey("business_records.id"), nullable=True)
+    raw_record_id = Column(Integer, ForeignKey("raw_records.id"), nullable=True)
+    file_id = Column(Integer, ForeignKey("files.id"), nullable=True)
+    journal_entry_id = Column(Integer, ForeignKey("journal_entries.id"), nullable=True)
+    amount_contribution = Column(Float, default=0.0)
+
+
 def init_db():
     Base.metadata.create_all(bind=engine)

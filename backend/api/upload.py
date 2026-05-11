@@ -1,12 +1,14 @@
-"""File upload endpoint."""
+"""File upload endpoint — requires authentication."""
 import os
 import shutil
-from fastapi import APIRouter, UploadFile, File as FastFile, Depends, Form
+from fastapi import APIRouter, UploadFile, File as FastFile, Depends, Form, HTTPException
 from sqlalchemy.orm import Session
 from backend.database import get_db, File as FileModel, RawRecord
 from backend.config import UPLOAD_DIR
 from backend.services.file_parser import parse_file
 from backend.services.file_classifier import classify_file
+from backend.services.auth_service import get_current_user
+from backend.services.ownership import assert_period_owned
 import json
 
 router = APIRouter()
@@ -17,39 +19,45 @@ async def upload_file(
     period_id: int = Form(...),
     file: UploadFile = FastFile(...),
     db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
 ):
-    # Save the file to disk
-    dest_path = os.path.join(UPLOAD_DIR, f"p{period_id}_{file.filename}")
-    with open(dest_path, "wb") as f:
-        shutil.copyfileobj(file.file, f)
+    """Upload a raw SME file (Excel / CSV / ODS / TSV). Auth required."""
+    # Ownership check
+    assert_period_owned(period_id, current_user.id, db)
+
+    # Save to disk
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+    dest = os.path.join(UPLOAD_DIR, f"p{period_id}_{file.filename}")
+    with open(dest, "wb") as out:
+        shutil.copyfileobj(file.file, out)
 
     # Parse
     try:
-        rows, columns, row_count = parse_file(dest_path)
+        rows, columns = parse_file(dest)
     except Exception as e:
-        return {"error": str(e), "filename": file.filename}
+        raise HTTPException(422, f"Could not parse file: {e}")
 
     # Classify
-    file_type, business_process, confidence = classify_file(file.filename, columns)
+    file_type, business_process, confidence = classify_file(file.filename, columns, rows[:20])
 
-    # Save file metadata
+    # Persist file metadata
     db_file = FileModel(
         period_id=period_id,
         filename=file.filename,
-        path=dest_path,
+        path=dest,
         file_type=file_type,
         business_process=business_process,
         classification_confidence=confidence,
-        row_count=row_count,
+        row_count=len(rows),
     )
     db.add(db_file)
     db.commit()
     db.refresh(db_file)
 
-    # Save raw records
+    # Persist raw records
     for i, row in enumerate(rows):
-        raw = RawRecord(file_id=db_file.id, row_number=i, raw_data=row)
-        db.add(raw)
+        rr = RawRecord(file_id=db_file.id, row_number=i + 1, raw_data=row)
+        db.add(rr)
     db.commit()
 
     return {
@@ -57,24 +65,7 @@ async def upload_file(
         "filename": file.filename,
         "file_type": file_type,
         "business_process": business_process,
-        "classification_confidence": confidence,
-        "row_count": row_count,
+        "classification_confidence": round(confidence, 3),
+        "row_count": len(rows),
         "columns": columns,
-        "sample_rows": rows[:3],
     }
-
-
-@router.get("/files/{period_id}")
-def list_files(period_id: int, db: Session = Depends(get_db)):
-    files = db.query(FileModel).filter(FileModel.period_id == period_id).all()
-    return [
-        {
-            "id": f.id,
-            "filename": f.filename,
-            "file_type": f.file_type,
-            "business_process": f.business_process,
-            "classification_confidence": f.classification_confidence,
-            "row_count": f.row_count,
-        }
-        for f in files
-    ]
