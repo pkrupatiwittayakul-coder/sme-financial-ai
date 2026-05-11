@@ -198,3 +198,54 @@ def get_exceptions(
             for v in sorted_v[:50]
         ],
     }
+
+
+@router.get("/income/{period_id}")
+def get_income_statement(
+    period_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """Retrieve the latest income statement lines for a period."""
+    assert_period_owned(period_id, current_user.id, db)
+    fs = db.query(FinancialStatement).filter(
+        FinancialStatement.period_id == period_id,
+        FinancialStatement.statement_type == "income_statement",
+    ).order_by(FinancialStatement.id.desc()).first()
+    if not fs:
+        raise HTTPException(404, "No income statement yet — run the pipeline first.")
+    lines = db.query(StatementLine).filter(StatementLine.statement_id == fs.id).all()
+    return {
+        "statement_id": fs.id,
+        "period_id": period_id,
+        "generated_at": fs.generated_at.isoformat() if fs.generated_at else None,
+        "lines": [
+            {"line_name": l.line_name, "amount": l.amount,
+             "account_code": l.account_code, "line_type": l.line_type,
+             "evidence_count": l.evidence_count}
+            for l in lines
+        ],
+    }
+
+
+@router.get("/trial-balance/{period_id}")
+def get_trial_balance(
+    period_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """Return a trial balance computed live from journal entries."""
+    assert_period_owned(period_id, current_user.id, db)
+    from backend.services.statement_generator import generate_trial_balance
+    entries_orm = db.query(JournalEntry).filter(JournalEntry.period_id == period_id).all()
+    if not entries_orm:
+        raise HTTPException(404, "No journal entries — run the pipeline first.")
+    entries = []
+    for je in entries_orm:
+        lines = db.query(JournalLine).filter(JournalLine.entry_id == je.id).all()
+        entries.append({
+            "lines": [{"account_code": l.account_code, "account_name": l.account_name,
+                       "debit": l.debit, "credit": l.credit} for l in lines]
+        })
+    tb = generate_trial_balance(entries)
+    return {"period_id": period_id, "trial_balance": tb}

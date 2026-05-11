@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from backend.database import init_db
 from backend.config import ANTHROPIC_API_KEY
-from backend.api import auth, companies, upload, classify, schema, records, statements, chat, agents
+from backend.api import auth, companies, upload, classify, schema, records, statements, chat, agents, pipeline
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +38,7 @@ app.include_router(records.router,     prefix="/api/records",    tags=["Records"
 app.include_router(agents.router,      prefix="/api/agents",     tags=["Agents"])
 app.include_router(statements.router,  prefix="/api/statements", tags=["Statements"])
 app.include_router(chat.router,        prefix="/api/chat",       tags=["Chat"])
+app.include_router(pipeline.router,    prefix="/api/pipeline",   tags=["Pipeline"])
 
 # ── Static / SPA ─────────────────────────────────────────────────────────────
 _DASHBOARD = os.path.join(os.path.dirname(__file__), "dashboard.html")
