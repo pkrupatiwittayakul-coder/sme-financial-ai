@@ -40,14 +40,14 @@ def build_context(
         warnings = [v for v in validations if v.get("status") == "warning"]
         parts.append(f"## Validation Summary: {len(critical)} critical issues, {len(warnings)} warnings")
         for v in critical[:5]:
-            parts.append(f"  ⚠ CRITICAL: {v['message']}")
+            parts.append(f"  WARNING CRITICAL: {v['message']}")
         parts.append("")
 
     if importance_scores:
         top = sorted(importance_scores, key=lambda x: -x.get("total_score", 0))[:5]
         parts.append("## Top Risk Records")
         for s in top:
-            parts.append(f"  - {s['object_type']} #{s['object_id']}: score={s['total_score']} ({s['level']}) — {s['reason'][:80]}")
+            parts.append(f"  - {s['object_type']} #{s['object_id']}: score={s['total_score']} ({s['level']}) -- {s['reason'][:80]}")
         parts.append("")
 
     return "\n".join(parts)
@@ -77,7 +77,7 @@ def ask_chat(
     """
     if not ANTHROPIC_API_KEY:
         return {
-            "answer": "⚠️ No Anthropic API key configured. Please add ANTHROPIC_API_KEY to your .env file.",
+            "answer": "No Anthropic API key configured. Please add ANTHROPIC_API_KEY to your .env file.",
             "evidence_summary": [],
             "model_used": "none",
         }
@@ -125,4 +125,20 @@ def ask_chat(
         # Simple evidence extraction (what the answer references)
         evidence = []
         evidence_keywords = ["revenue", "cogs", "gross profit", "validation",
-                             "critical", "warnin
+                             "critical", "warning", "inventory", "supplier", "sales"]
+        for kw in evidence_keywords:
+            if kw.lower() in answer.lower():
+                evidence.append(kw.title())
+
+        return {
+            "answer": answer,
+            "evidence_summary": list(set(evidence)),
+            "model_used": LLM_MODEL,
+        }
+
+    except Exception as e:
+        return {
+            "answer": f"Error communicating with Claude API: {str(e)}",
+            "evidence_summary": [],
+            "model_used": LLM_MODEL,
+        }
