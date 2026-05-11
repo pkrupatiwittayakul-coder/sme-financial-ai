@@ -1,11 +1,11 @@
-"""Company and Period management endpoints."""
+"""Company and Period management endpoints (scoped per authenticated user)."""
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from typing import Optional, List
-from backend.database import get_db, Company, Period
+from typing import Optional
+from backend.database import get_db, Company, Period, Account
 from backend.services.accounting_mapper import build_default_accounts
-from backend.database import Account
+from backend.services.auth_service import get_current_user
 
 router = APIRouter()
 
@@ -24,8 +24,17 @@ class PeriodCreate(BaseModel):
 
 
 @router.post("/")
-def create_company(data: CompanyCreate, db: Session = Depends(get_db)):
-    company = Company(name=data.name, industry=data.industry, currency=data.currency)
+def create_company(
+    data: CompanyCreate,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    company = Company(
+        name=data.name,
+        industry=data.industry,
+        currency=data.currency,
+        user_id=current_user.id,
+    )
     db.add(company)
     db.commit()
     db.refresh(company)
@@ -33,14 +42,30 @@ def create_company(data: CompanyCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/")
-def list_companies(db: Session = Depends(get_db)):
-    companies = db.query(Company).all()
-    return [{"id": c.id, "name": c.name, "industry": c.industry, "currency": c.currency}
-            for c in companies]
+def list_companies(
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    companies = db.query(Company).filter(Company.user_id == current_user.id).all()
+    return [
+        {"id": c.id, "name": c.name, "industry": c.industry, "currency": c.currency}
+        for c in companies
+    ]
 
 
 @router.post("/periods")
-def create_period(data: PeriodCreate, db: Session = Depends(get_db)):
+def create_period(
+    data: PeriodCreate,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    company = db.query(Company).filter(
+        Company.id == data.company_id,
+        Company.user_id == current_user.id,
+    ).first()
+    if not company:
+        raise HTTPException(404, "Company not found")
+
     period = Period(
         company_id=data.company_id,
         label=data.label,
@@ -51,7 +76,6 @@ def create_period(data: PeriodCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(period)
 
-    # Seed default chart of accounts
     for acc_data in build_default_accounts(period.id):
         acc = Account(**acc_data)
         db.add(acc)
@@ -61,7 +85,26 @@ def create_period(data: PeriodCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/periods/{company_id}")
-def list_periods(company_id: int, db: Session = Depends(get_db)):
+def list_periods(
+    company_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    company = db.query(Company).filter(
+        Company.id == company_id,
+        Company.user_id == current_user.id,
+    ).first()
+    if not company:
+        raise HTTPException(404, "Company not found")
+
     periods = db.query(Period).filter(Period.company_id == company_id).all()
-    return [{"id": p.id, "label": p.label, "start_date": p.start_date,
-             "end_date": p.end_date, "status": p.status} for p in periods]
+    return [
+        {
+            "id": p.id,
+            "label": p.label,
+            "start_date": p.start_date,
+            "end_date": p.end_date,
+            "status": p.status,
+        }
+        for p in periods
+    ]

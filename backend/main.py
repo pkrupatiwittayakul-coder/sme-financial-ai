@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from backend.database import init_db
-from backend.api import companies, upload, classify, schema, records, statements, chat
+from backend.api import companies, upload, classify, schema, records, statements, chat, auth
 
 app = FastAPI(
     title="SME Financial Intelligence System",
@@ -21,6 +21,7 @@ app.add_middleware(
 )
 
 # Register routers
+app.include_router(auth.router,      prefix="/api/auth",      tags=["Auth"])
 app.include_router(companies.router, prefix="/api/companies", tags=["Companies"])
 app.include_router(upload.router,    prefix="/api/upload",    tags=["Upload"])
 app.include_router(classify.router,  prefix="/api/classify",  tags=["Classify"])

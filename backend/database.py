@@ -19,14 +19,26 @@ def get_db():
 
 # ─── ORM Models ──────────────────────────────────────────────────────────────
 
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    email = Column(String, unique=True, nullable=False, index=True)
+    password_hash = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    companies = relationship("Company", back_populates="owner")
+
+
 class Company(Base):
     __tablename__ = "companies"
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     name = Column(String, nullable=False)
     industry = Column(String)
     currency = Column(String, default="THB")
     created_at = Column(DateTime, default=datetime.utcnow)
     periods = relationship("Period", back_populates="company")
+    owner = relationship("User", back_populates="companies")
 
 
 class Period(Base):
@@ -188,19 +200,4 @@ class ChatSession(Base):
     id = Column(Integer, primary_key=True, index=True)
     period_id = Column(Integer, ForeignKey("periods.id"))
     created_at = Column(DateTime, default=datetime.utcnow)
-    messages = relationship("ChatMessage", back_populates="session")
-
-
-class ChatMessage(Base):
-    __tablename__ = "chat_messages"
-    id = Column(Integer, primary_key=True, index=True)
-    session_id = Column(Integer, ForeignKey("chat_sessions.id"))
-    role = Column(String)           # user / assistant
-    content = Column(Text)
-    evidence = Column(JSON)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    session = relationship("ChatSession", back_populates="messages")
-
-
-def init_db():
-    Base.metadata.create_all(bind=engine)
+    messages = relationship("Cha
