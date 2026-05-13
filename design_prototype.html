@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SME Financial AI — Design Prototype</title>
+<style>
+  :root {
+    --brand: #4F46E5;
+    --brand-light: #EEF2FF;
+    --brand-dark: #3730A3;
+    --emerald: #059669;
+    --emerald-light: #ECFDF5;
+    --amber: #D97706;
+    --amber-light: #FFFBEB;
+    --red: #DC2626;
+    --red-light: #FEF2F2;
+    --sky: #0284C7;
+    --sky-light: #F0F9FF;
+    --violet: #7C3AED;
+    --bg: #F9FAFB;
+    --surface: #FFFFFF;
+    --border: #E5E7EB;
+    --border-subtle: #F3F4F6;
+    --text: #111827;
+    --text-2: #374151;
+    --text-3: #6B7280;
+    --text-4: #9CA3AF;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-lg: 16px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+    --shadow: 0 4px 12px rgba(0,0,0,.08), 0 1px 3px rgba(0,0,0,.04);
+    --shadow-lg: 0 20px 48px rgba(0,0,0,.12), 0 4px 12px rgba(0,0,0,.06);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif; background: #E8EAF0; color: var(--text); }
+
+  /* ── NAV ── */
+  .proto-nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+    background: #1E1B4B; color: white;
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 20px; font-size: 13px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.3);
+  }
+  .proto-nav .logo { font-weight: 700; font-size: 15px; letter-spacing: -.3px; margin-right: 12px; color: #A5B4FC; }
+  .proto-nav button {
+    background: transparent; border: 1px solid rgba(255,255,255,.2);
+    color: rgba(255,255,255,.7); padding: 5px 12px; border-radius: 6px;
+    cursor: pointer; font-size: 12px; font-weight: 500; transition: all .15s;
+  }
+  .proto-nav button.active, .proto-nav button:hover { background: var(--brand); border-color: var(--brand); color: white; }
+  .proto-nav .spacer { flex: 1; }
+  .proto-nav .tag { font-size: 11px; color: rgba(255,255,255,.4); padding: 3px 8px; background: rgba(255,255,255,.08); border-radius: 4px; }
+
+  /* ── CANVAS ── */
+  .canvas { padding-top: 52px; min-height: 100vh; }
+  .screen { display: none; padding: 32px; }
+  .screen.active { display: block; }
+
+  /* ── DEVICE FRAME ── */
+  .device { max-width: 1280px; margin: 0 auto; background: var(--surface); border-radius: 20px; box-shadow: var(--shadow-lg); overflow: hidden; border: 1px solid var(--border); }
+
+  /* ── SHARED TOPBAR ── */
+  .topbar {
+    display: flex; align-items: center; gap: 12px;
+    padding: 0 28px; height: 60px;
+    border-bottom: 1px solid var(--border);
+    background: white;
+  }
+  .topbar .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 16px; color: var(--brand); text-decoration: none; }
+  .topbar .brand-icon { width: 32px; height: 32px; background: var(--brand); border-radius: 8px; display: grid; place-items: center; }
+  .topbar .brand-icon svg { width: 18px; height: 18px; fill: white; }
+  .topbar .nav-links { display: flex; gap: 4px; margin-left: 24px; }
+  .topbar .nav-links a { font-size: 14px; color: var(--text-3); padding: 6px 12px; border-radius: 6px; text-decoration: none; font-weight: 500; }
+  .topbar .nav-links a:hover { color: var(--text); background: var(--bg); }
+  .topbar .spacer { flex: 1; }
+  .topbar .btn-ghost { background: none; border: 1px solid var(--border); color: var(--text-2); padding: 7px 16px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; }
+  .topbar .btn-primary { background: var(--brand); color: white; border: none; padding: 8px 18px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+
+  /* ── BUTTONS ── */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: 9px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; transition: all .15s; }
+  .btn-brand { background: var(--brand); color: white; }
+  .btn-brand:hover { background: var(--brand-dark); }
+  .btn-outline { background: white; color: var(--text-2); border: 1.5px solid var(--border); }
+  .btn-outline:hover { border-color: var(--brand); color: var(--brand); }
+  .btn-sm { padding: 6px 12px; font-size: 13px; }
+  .btn-lg { padding: 12px 28px; font-size: 16px; border-radius: 10px; }
+  .btn-emerald { background: var(--emerald); color: white; }
+
+  /* ── BADGE ── */
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+  .badge-brand { background: var(--brand-light); color: var(--brand); }
+  .badge-emerald { background: var(--emerald-light); color: var(--emerald); }
+  .badge-amber { background: var(--amber-light); color: var(--amber); }
+  .badge-red { background: var(--red-light); color: var(--red); }
+  .badge-gray { background: #F3F4F6; color: #6B7280; }
+
+  /* ── CARD ── */
+  .card { background: white; border-radius: var(--radius); border: 1px solid var(--border); padding: 20px; }
+  .card-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .card-sub { font-size: 13px; color: var(--text-3); }
+
+  /* ═══════════════════════════════════════════
+     SCREEN 1 — LANDING PAGE
+  ══════════════════════════════════════════ */
+  .landing-hero {
+    padding: 72px 64px 0;
+    background: linear-gradient(180deg, #FAFBFF 0%, white 100%);
+  }
+  .landing-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--brand-light); color: var(--brand);
+    padding: 5px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;
+    margin-bottom: 24px;
+  }
+  .landing-pill .dot { width: 7px; height: 7px; background: var(--brand); border-radius: 50%; }
+  .landing-h1 { font-size: 52px; font-weight: 800; line-height: 1.12; letter-spacing: -1.5px; color: var(--text); max-width: 700px; }
+  .landing-h1 em { font-style: normal; color: var(--brand); }
+  .landing-sub { font-size: 18px; color: var(--text-3); line-height: 1.6; max-width: 560px; margin-top: 20px; }
+  .landing-cta { display: flex; gap: 12px; margin-top: 36px; align-items: center; }
+  .landing-cta .note { font-size: 13px; color: var(--text-4); }
+  .landing-cta .note span { color: var(--emerald); font-weight: 600; }
+
+  /* pipeline strip */
+  .pipeline {
+    display: flex; align-items: center; gap: 0;
+    background: white; border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 6px;
+    margin: 52px 64px 0;
+    box-shadow: var(--shadow-sm);
+  }
+  .pipe-step {
+    flex: 1; display: flex; align-items: center; gap: 10px;
+    padding: 14px 16px; border-radius: 10px;
+  }
+  .pipe-step:hover { background: var(--brand-light); }
+  .pipe-icon { width: 36px; height: 36px; border-radius: 9px; display: grid; place-items: center; font-size: 16px; flex-shrink: 0; }
+  .pipe-label { font-size: 12px; font-weight: 600; color: var(--text); line-height: 1.3; }
+  .pipe-sub { font-size: 11px; color: var(--text-4); }
+  .pipe-arrow { color: var(--text-4); font-size: 16px; flex-shrink: 0; margin: 0 -4px; }
+
+  /* features grid */
+  .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; padding: 52px 64px; }
+  .feat { padding: 24px; border-radius: var(--radius); border: 1px solid var(--border); background: white; }
+  .feat-icon { width: 44px; height: 44px; border-radius: 10px; display: grid; place-items: center; font-size: 20px; margin-bottom: 14px; }
+  .feat-title { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+  .feat-desc { font-size: 13px; color: var(--text-3); line-height: 1.55; }
+
+  /* CTA band */
+  .cta-band { margin: 0 64px 64px; background: linear-gradient(135deg, var(--brand), var(--violet)); border-radius: var(--radius-lg); padding: 48px 52px; color: white; display: flex; align-items: center; justify-content: space-between; }
+  .cta-band h2 { font-size: 28px; font-weight: 800; letter-spacing: -.5px; }
+  .cta-band p { font-size: 15px; opacity: .8; margin-top: 6px; }
+  .cta-band .btn-white { background: white; color: var(--brand); font-size: 15px; padding: 12px 28px; border-radius: 10px; font-weight: 700; cursor: pointer; border: none; }
+
+  /* ═══════════════════════════════════════════
+     SCREEN 2 — AUTH MODAL OVERLAY
+  ══════════════════════════════════════════ */
+  .auth-overlay {
+    background: rgba(17,24,39,.5); backdrop-filter: blur(4px);
+    min-height: 600px; display: flex; align-items: center; justify-content: center;
+    padding: 40px;
+  }
+  .auth-card {
+    width: 420px; background: white; border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg); padding: 36px; border: 1px solid var(--border);
+  }
+  .auth-tabs { display: flex; background: var(--bg); border-radius: 9px; padding: 3px; margin-bottom: 28px; }
+  .auth-tab { flex: 1; text-align: center; padding: 8px; border-radius: 7px; font-size: 14px; font-weight: 600; color: var(--text-3); cursor: pointer; }
+  .auth-tab.active { background: white; color: var(--text); box-shadow: var(--shadow-sm); }
+  .form-label { font-size: 13px; font-weight: 600; color: var(--text-2); margin-bottom: 6px; display: block; }
+  .form-input { width: 100%; padding: 10px 13px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; color: var(--text); background: white; margin-bottom: 16px; }
+  .form-input:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px rgba(79,70,229,.1); }
+  .form-hint { font-size: 12px; color: var(--text-4); margin-top: -12px; margin-bottom: 16px; }
+  .divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; }
+  .divider-line { flex: 1; height: 1px; background: var(--border); }
+  .divider-text { font-size: 12px; color: var(--text-4); }
+
+  /* ═══════════════════════════════════════════
+     SCREEN 3 — STEP 1: UPLOAD + COMPANY
+  ══════════════════════════════════════════ */
+  .app-layout { display: flex; min-height: calc(100vh - 140px); }
+  .app-sidebar {
+    width: 240px; flex-shrink: 0; padding: 24px 16px;
+    border-right: 1px solid var(--border); background: white;
+  }
+  .sidebar-step {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 10px 12px; border-radius: 9px; margin-bottom: 4px; cursor: pointer;
+  }
+  .sidebar-step.active { background: var(--brand-light); }
+  .sidebar-step.done .step-num { background: var(--emerald); color: white; }
+  .sidebar-step.done .step-title { color: var(--text-3); text-decoration: line-through; }
+  .step-num {
+    width: 26px; height: 26px; border-radius: 50%;
+    display: grid; place-items: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0; margin-top: 1px;
+    background: var(--border); color: var(--text-3);
+  }
+  .sidebar-step.active .step-num { background: var(--brand); color: white; }
+  .step-title { font-size: 13px; font-weight: 600; color: var(--text-2); }
+  .step-desc { font-size: 11px; color: var(--text-4); margin-top: 2px; }
+  .sidebar-step.active .step-title { color: var(--brand); }
+
+  .app-content { flex: 1; padding: 32px; background: var(--bg); overflow: auto; }
+  .content-header { margin-bottom: 28px; }
+  .content-header h2 { font-size: 22px; font-weight: 800; letter-spacing: -.4px; }
+  .content-header p { font-size: 14px; color: var(--text-3); margin-top: 4px; }
+
+  /* Upload zone */
+  .upload-zone {
+    border: 2px dashed var(--border); border-radius: var(--radius);
+    padding: 48px 32px; text-align: center; background: white;
+    transition: all .2s; cursor: pointer; margin-bottom: 20px;
+  }
+  .upload-zone:hover { border-color: var(--brand); background: var(--brand-light); }
+  .upload-zone.has-file { border-style: solid; border-color: var(--emerald); background: var(--emerald-light); }
+  .upload-icon { font-size: 40px; margin-bottom: 14px; }
+  .upload-title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .upload-sub { font-size: 13px; color: var(--text-3); }
+  .upload-tags { display: flex; gap: 6px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
+  .upload-tag { background: var(--bg); border: 1px solid var(--border); border-radius: 5px; padding: 2px 8px; font-size: 11px; color: var(--text-3); font-weight: 600; }
+
+  /* uploaded file row */
+  .file-row {
+    display: flex; align-items: center; gap: 12px;
+    background: white; border: 1px solid var(--border); border-radius: 9px; padding: 12px 16px; margin-bottom: 8px;
+  }
+  .file-icon { width: 36px; height: 36px; background: var(--brand-light); border-radius: 8px; display: grid; place-items: center; font-size: 18px; flex-shrink: 0; }
+  .file-name { font-size: 14px; font-weight: 600; flex: 1; }
+  .file-meta { font-size: 12px; color: var(--text-4); }
+  .file-badge { }
+
+  /* Company form */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: span 2; }
+
+  /* ═══════════════════════════════════════════
+     SCREEN 4 — STEP 2: ONTOLOGY GRAPH
+  ══════════════════════════════════════════ */
+  .graph-layout { display: flex; height: 580px; }
+  .graph-canvas {
+    flex: 1; background: #F8F9FD; position: relative; overflow: hidden;
+    border-right: 1px solid var(--border);
+  }
+  .graph-svg { width: 100%; height: 100%; }
+  .graph-panel { width: 280px; flex-shrink: 0; padding: 20px; overflow-y: auto; }
+  .graph-legend { margin-bottom: 20px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-2); margin-bottom: 6px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  /* ═══════════════════════════════════════════
+     SCREEN 5 — STEP 3: AGENT SIMULATION
+  ══════════════════════════════════════════ */
+  .agents-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .agent-card {
+    background: white; border: 1.5px solid var(--border); border-radius: var(--radius);
+    padding: 18px; transition: all .2s;
+  }
+  .agent-card.running { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(79,70,229,.1); }
+  .agent-card.done { border-color: var(--emerald); }
+  .agent-card.warn { border-color: var(--amber); }
+  .agent-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+  .agent-icon { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; font-size: 18px; }
+  .agent-name { font-size: 13px; font-weight: 700; color: var(--text); }
+  .agent-sub { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+  .progress-bar { height: 5px; background: var(--bg); border-radius: 3px; overflow: hidden; margin: 10px 0; }
+  .progress-fill { height: 100%; border-radius: 3px; background: var(--brand); }
+  .progress-fill.done { background: var(--emerald); }
+  .progress-fill.warn { background: var(--amber); }
+  .agent-stats { display: flex; gap: 10px; margin-top: 10px; }
+  .agent-stat { font-size: 11px; color: var(--text-3); }
+  .agent-stat span { color: var(--text); font-weight: 700; }
+  .agent-log { margin-top: 10px; font-size: 11px; color: var(--brand); font-family: monospace; background: var(--brand-light); padding: 6px 8px; border-radius: 5px; }
+  .agent-log.done { color: var(--emerald); background: var(--emerald-light); }
+  .agent-log.warn { color: var(--amber); background: var(--amber-light); }
+
+  /* exceptions panel */
+  .exceptions-panel { background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+  .exc-title { font-size: 14px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .exc-row { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border-subtle); }
+  .exc-row:last-child { border: none; }
+  .exc-icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+  .exc-text { font-size: 13px; color: var(--text-2); }
+  .exc-detail { font-size: 12px; color: var(--text-4); margin-top: 2px; }
+
+  /* ═══════════════════════════════════════════
+     SCREEN 6 — STEP 4: REPORTS
+  ══════════════════════════════════════════ */
+  .report-tabs { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 24px; }
+  .report-tab { padding: 10px 18px; font-size: 14px; font-weight: 600; color: var(--text-3); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+  .report-tab.active { color: var(--brand); border-color: var(--brand); }
+
+  .statement-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .statement-table th { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-4); text-align: left; padding: 8px 12px; border-bottom: 2px solid var(--border); }
+  .statement-table td { padding: 10px 12px; border-bottom: 1px solid var(--border-subtle); }
+  .statement-table tr:hover td { background: var(--bg); }
+  .statement-table .row-section { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-4); background: var(--border-subtle); }
+  .statement-table .row-section td { padding: 6px 12px; }
+  .statement-table .row-total td { font-weight: 800; border-top: 2px solid var(--border); }
+  .evidence-link { font-size: 11px; color: var(--brand); cursor: pointer; text-decoration: none; font-weight: 600; white-space: nowrap; }
+  .evidence-link:hover { text-decoration: underline; }
+  .amount-col { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; color: var(--text); }
+  .amount-neg { color: var(--red); }
+  .amount-pos { color: var(--emerald); }
+
+  /* AI chat */
+  .chat-box { display: flex; flex-direction: column; height: 420px; }
+  .chat-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+  .msg { display: flex; gap: 10px; max-width: 85%; }
+  .msg.user { align-self: flex-end; flex-direction: row-reverse; }
+  .msg-avatar { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; flex-shrink: 0; }
+  .msg.ai .msg-avatar { background: var(--brand-light); color: var(--brand); }
+  .msg.user .msg-avatar { background: var(--brand); color: white; }
+  .msg-bubble { padding: 11px 14px; border-radius: 12px; font-size: 13px; line-height: 1.55; }
+  .msg.ai .msg-bubble { background: white; border: 1px solid var(--border); color: var(--text); }
+  .msg.user .msg-bubble { background: var(--brand); color: white; }
+  .msg-evidence { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .msg-evidence-pill { font-size: 11px; background: var(--brand-light); color: var(--brand); padding: 3px 8px; border-radius: 5px; font-weight: 600; cursor: pointer; }
+  .chat-input-row { padding: 14px 16px; border-top: 1px solid var(--border); display: flex; gap: 10px; }
+  .chat-input { flex: 1; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 9px; font-size: 14px; }
+
+  /* ── STEP PROGRESS BAR (top of app) ── */
+  .step-progress {
+    background: white; border-bottom: 1px solid var(--border);
+    padding: 0 28px; display: flex; align-items: center; gap: 0;
+    height: 50px;
+  }
+  .sp-item { display: flex; align-items: center; gap: 8px; padding: 0 16px; position: relative; }
+  .sp-num { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 800; flex-shrink: 0; }
+  .sp-num.done { background: var(--emerald); color: white; }
+  .sp-num.active { background: var(--brand); color: white; }
+  .sp-num.idle { background: var(--border); color: var(--text-4); }
+  .sp-label { font-size: 12px; font-weight: 600; }
+  .sp-label.active { color: var(--brand); }
+  .sp-label.done { color: var(--text-4); }
+  .sp-label.idle { color: var(--text-4); }
+  .sp-line { flex: 1; height: 2px; background: var(--border); min-width: 24px; }
+  .sp-line.done { background: var(--emerald); }
+
+  /* misc */
+  .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: var(--text-4); margin-bottom: 12px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .stat-box { background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; }
+  .stat-value { font-size: 26px; font-weight: 800; letter-spacing: -1px; }
+  .stat-label { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+  .stat-delta { font-size: 12px; margin-top: 6px; font-weight: 600; }
+  .delta-up { color: var(--emerald); }
+  .delta-down { color: var(--red); }
+
+  /* annotation callouts for prototype */
+  .proto-note {
+    background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px;
+    padding: 10px 14px; font-size: 12px; color: #92400E; margin: 16px 0;
+    display: flex; gap: 8px; align-items: flex-start;
+  }
+</style>
+</head>
+<body>
+
+<!-- ── PROTOTYPE NAV ── -->
+<nav class="proto-nav">
+  <span class="logo">◈ SME Financial AI</span>
+  <button class="active" onclick="show('s1')">① Landing</button>
+  <button onclick="show('s2')">② Auth</button>
+  <button onclick="show('s3')">③ Upload</button>
+  <button onclick="show('s4')">④ Ontology</button>
+  <button onclick="show('s5')">⑤ Agents</button>
+  <button onclick="show('s6')">⑥ Reports</button>
+  <div class="spacer"></div>
+  <span class="tag">Design Prototype v1.0</span>
+</nav>
+
+<div class="canvas">
+
+<!-- ═══════════════════════════════════════
+     SCREEN 1 — LANDING PAGE
+══════════════════════════════════════════ -->
+<div id="s1" class="screen active">
+<div class="device">
+  <!-- Topbar -->
+  <div class="topbar">
+    <a class="brand" href="#">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24"><path d="M3 3h18v2H3V3zm2 4h14v2H5V7zm-2 4h18v2H3v-2zm2 4h8v2H5v-2z"/></svg>
+      </div>
+      FinanceAI
+    </a>
+    <nav class="nav-links">
+      <a href="#">How it works</a>
+      <a href="#">Pricing</a>
+      <a href="#">Docs</a>
+    </nav>
+    <div class="spacer"></div>
+    <button class="topbar btn-ghost" style="margin-right:8px">Sign in</button>
+    <button class="topbar btn-primary" onclick="show('s2')">Get started free</button>
+  </div>
+
+  <!-- Hero -->
+  <div class="landing-hero">
+    <div class="landing-pill"><span class="dot"></span> AI-powered · Evidence-backed · Thai/EN bilingual</div>
+    <h1 class="landing-h1">Turn messy records into<br><em>traceable financial statements</em></h1>
+    <p class="landing-sub">Upload your sales, purchase, and inventory files in any format. Our AI maps the ontology, validates 6 business processes, and produces audit-ready income statements — with a link to every source row.</p>
+    <div class="landing-cta">
+      <button class="btn btn-brand btn-lg" onclick="show('s2')">Start for free →</button>
+      <button class="btn btn-outline btn-lg">Watch 2-min demo</button>
+      <span class="note"><span>✓</span> No credit card · Thai language supported</span>
+    </div>
+  </div>
+
+  <!-- Pipeline strip -->
+  <div class="pipeline">
+    <div class="pipe-step">
+      <div class="pipe-icon" style="background:#EDE9FE">📂</div>
+      <div><div class="pipe-label">Messy Records</div><div class="pipe-sub">Any format, any language</div></div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step">
+      <div class="pipe-icon" style="background:#E0F2FE">🧠</div>
+      <div><div class="pipe-label">Business Ontology</div><div class="pipe-sub">Auto-map entities & columns</div></div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step">
+      <div class="pipe-icon" style="background:#ECFDF5">🕸</div>
+      <div><div class="pipe-label">Knowledge Graph</div><div class="pipe-sub">Branch · SKU · Supplier · Account</div></div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step">
+      <div class="pipe-icon" style="background:#FFF7ED">⚙️</div>
+      <div><div class="pipe-label">Process Validation</div><div class="pipe-sub">6 parallel business agents</div></div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step">
+      <div class="pipe-icon" style="background:#F0FDF4">📊</div>
+      <div><div class="pipe-label">Financial Statements</div><div class="pipe-sub">Income · Trial Balance</div></div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step">
+      <div class="pipe-icon" style="background:#F5F3FF">💬</div>
+      <div><div class="pipe-label">Management Chat</div><div class="pipe-sub">Ask about any figure</div></div>
+    </div>
+  </div>
+
+  <!-- Features -->
+  <div class="features">
+    <div class="feat">
+      <div class="feat-icon" style="background:#EDE9FE">🗂</div>
+      <div class="feat-title">Flexible file ingestion</div>
+      <p class="feat-desc">Upload .xlsx, .xls, .csv, or .ods — messy headers, Thai column names, mixed date formats, all handled automatically.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon" style="background:#ECFDF5">🔗</div>
+      <div class="feat-title">Evidence-backed every line</div>
+      <p class="feat-desc">Every revenue and cost figure traces back to the exact source rows that produced it. No black-box totals.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon" style="background:#FFF7ED">🤖</div>
+      <div class="feat-title">6 validation agents</div>
+      <p class="feat-desc">Sales, Procure-to-Pay, Inventory-to-COGS, Bank Rec, Tax, and Record-to-Report agents run in parallel to catch anomalies.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon" style="background:#F0F9FF">🌏</div>
+      <div class="feat-title">Thai/EN bilingual</div>
+      <p class="feat-desc">Recognises ยอดขาย, สาขา, ราคาขาย and maps them automatically — no manual column labelling needed.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon" style="background:#F5F3FF">💬</div>
+      <div class="feat-title">Ask AI anything</div>
+      <p class="feat-desc">Chat directly with your data. Ask "What drove the 30% gross margin drop?" and get source-cited answers.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon" style="background:#FEF2F2">🔐</div>
+      <div class="feat-title">Private by default</div>
+      <p class="feat-desc">JWT authentication ensures your company data is visible only to you. Zero data mixing between organisations.</p>
+    </div>
+  </div>
+
+  <!-- CTA band -->
+  <div class="cta-band">
+    <div>
+      <h2>Ready to try it on your own data?</h2>
+      <p>Takes under 5 minutes — just upload your sales and purchase files to start.</p>
+    </div>
+    <button class="btn-white" onclick="show('s2')">Create free account →</button>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SCREEN 2 — AUTH
+══════════════════════════════════════════ -->
+<div id="s2" class="screen">
+<div class="device">
+  <div class="topbar">
+    <a class="brand" href="#">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24"><path d="M3 3h18v2H3V3zm2 4h14v2H5V7zm-2 4h18v2H3v-2zm2 4h8v2H5v-2z"/></svg>
+      </div>
+      FinanceAI
+    </a>
+    <div class="spacer"></div>
+  </div>
+  <div class="auth-overlay" style="background: linear-gradient(135deg,#EEF2FF 0%,#F9FAFB 100%)">
+    <!-- left panel -->
+    <div style="flex:1;max-width:480px;padding:40px">
+      <div style="font-size:13px;font-weight:700;color:var(--brand);text-transform:uppercase;letter-spacing:.8px;margin-bottom:16px">Why FinanceAI</div>
+      <h2 style="font-size:28px;font-weight:800;line-height:1.2;letter-spacing:-.5px;margin-bottom:20px">Your company's financial memory, always traceable.</h2>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="width:32px;height:32px;background:var(--brand-light);border-radius:8px;display:grid;place-items:center;flex-shrink:0;font-size:15px">📂</div>
+          <div><div style="font-size:14px;font-weight:600;margin-bottom:2px">Upload any file format</div><div style="font-size:13px;color:var(--text-3)">Excel, CSV, ODS — Thai or English headers</div></div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="width:32px;height:32px;background:var(--emerald-light);border-radius:8px;display:grid;place-items:center;flex-shrink:0;font-size:15px">🔗</div>
+          <div><div style="font-size:14px;font-weight:600;margin-bottom:2px">Every number is traceable</div><div style="font-size:13px;color:var(--text-3)">Click any P&L line to see source rows</div></div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="width:32px;height:32px;background:#FFF7ED;border-radius:8px;display:grid;place-items:center;flex-shrink:0;font-size:15px">🤖</div>
+          <div><div style="font-size:14px;font-weight:600;margin-bottom:2px">6 validation agents</div><div style="font-size:13px;color:var(--text-3)">Catches duplicates, missing tax, timing gaps</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- auth card -->
+    <div class="auth-card">
+      <div style="text-align:center;margin-bottom:24px">
+        <div class="brand-icon" style="width:44px;height:44px;margin:0 auto 12px;border-radius:12px;font-size:20px;background:var(--brand);display:grid;place-items:center">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M3 3h18v2H3V3zm2 4h14v2H5V7zm-2 4h18v2H3v-2zm2 4h8v2H5v-2z"/></svg>
+        </div>
+        <div style="font-size:20px;font-weight:800;letter-spacing:-.3px">Create your account</div>
+        <div style="font-size:13px;color:var(--text-3);margin-top:4px">Free forever · No credit card needed</div>
+      </div>
+      <div class="auth-tabs">
+        <div class="auth-tab active">Register</div>
+        <div class="auth-tab">Sign in</div>
+      </div>
+      <label class="form-label">Full name</label>
+      <input class="form-input" type="text" placeholder="e.g. Somchai Jaidee" value="Tin Krupatiwittayakul">
+      <label class="form-label">Email address</label>
+      <input class="form-input" type="email" placeholder="you@company.com" value="tin@company.com">
+      <label class="form-label">Password</label>
+      <input class="form-input" type="password" value="••••••••">
+      <div class="form-hint">Minimum 6 characters</div>
+      <button class="btn btn-brand" style="width:100%;justify-content:center;padding:12px;font-size:15px;border-radius:9px" onclick="show('s3')">Create account →</button>
+      <div class="divider"><div class="divider-line"></div><span class="divider-text">already have an account?</span><div class="divider-line"></div></div>
+      <button class="btn btn-outline" style="width:100%;justify-content:center">Sign in instead</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SCREEN 3 — STEP 1: UPLOAD + COMPANY
+══════════════════════════════════════════ -->
+<div id="s3" class="screen">
+<div class="device">
+  <div class="topbar">
+    <a class="brand" href="#"><div class="brand-icon"><svg viewBox="0 0 24 24"><path fill="white" d="M3 3h18v2H3V3zm2 4h14v2H5V7zm-2 4h18v2H3v-2zm2 4h8v2H5v-2z"/></svg></div>FinanceAI</a>
+    <div class="spacer"></div>
+    <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-3)">
+      <div style="width:28px;height:28px;background:var(--brand);border-radius:50%;display:grid;place-items:center;color:white;font-size:12px;font-weight:700">T</div>
+      Tin K.
+    </div>
+  </div>
+
+  <!-- step progress -->
+  <div class="step-progress">
+    <div class="sp-item"><div class="sp-num active">1</div><span class="sp-label active">Upload & Profile</span></div>
+    <div class="sp-line"></div>
+    <div class="sp-item"><div class="sp-num idle">2</div><span class="sp-label idle">Ontology Map</span></div>
+    <div class="sp-line"></div>
+    <div class="sp-item"><div class="sp-num idle">3</div><span class="sp-label idle">Agent Validation</span></div>
+    <div class="sp-line"></div>
+    <div class="sp-item"><div class="sp-num idle">4</div><span class="sp-label idle">Reports</span></div>
+  </div>
+
+  <div style="display:flex">
+    <!-- sidebar -->
+    <div class="app-sidebar">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text-4);margin-bottom:12px;padding:0 12px">Step 1 of 4</div>
+      <div class="sidebar-step active">
+        <div class="step-num">1</div>
+        <div><div class="step-title">Upload Files</div><div class="step-desc">Sales, purchase, inventory</div></div>
+      </div>
+      <div class="sidebar-step">
+        <div class="step-num">2</div>
+        <div><div class="step-title">Company Profile</div><div class="step-desc">Name, industry, period</div></div>
+      </div>
+      <div style="margin-top:24px;padding:0 12px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text-4);margin-bottom:10px">Accepted formats</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px">
+          <span class="upload-tag">.xlsx</span><span class="upload-tag">.xls</span><span class="upload-tag">.csv</span><span class="upload-tag">.ods</span><span class="upload-tag">.tsv</span>
+        </div>
+        <div style="margin-top:16px;font-size:12px;color:var(--text-4);line-height:1.5">Thai column names are detected automatically (ยอดขาย, สาขา, ราคาขาย…)</div>
+      </div>
+    </div>
+
+    <!-- content -->
+    <div class="app-content">
+      <div class="content-header">
+        <h2>Upload your business data</h2>
+        <p>Drop as many files as you have — Sales, Purchase orders, Inventory movements, Chart of accounts</p>
+      </div>
+
+      <div class="proto-note">📌 <div>You can upload multiple files across different types. The AI will classify each one automatically (Sales / Purchase / Inventory / CoA).</div></div>
+
+      <!-- upload zone -->
+      <div class="upload-zone" onclick="show('s3')">
+        <div class="upload-icon">📂</div>
+        <div class="upload-title">Drop files here or click to browse</div>
+        <div class="upload-sub">Supports .xlsx, .xls, .csv, .ods, .tsv · Up to 50 MB per file</div>
+        <div class="upload-tags"><span class="upload-tag">Sales</span><span class="upload-tag">Purchases</span><span class="upload-tag">Inventory</span><span class="upload-tag">Chart of Accounts</span></div>
+      </div>
+
+      <!-- uploaded files -->
+      <div class="section-label">Uploaded files (3)</div>
+      <div class="file-row">
+        <div class="file-icon">📊</div>
+        <div style="flex:1"><div class="file-name">Sales_Jan_2026.xlsx</div><div class="file-meta">2,847 rows · uploaded just now</div></div>
+        <span class="badge badge-emerald">✓ Sales</span>
+      </div>
+      <div class="file-row">
+        <div class="file-icon">🧾</div>
+        <div style="flex:1"><div class="file-name">ใบสั่งซื้อ_Q1.xlsx</div><div class="file-meta">1,203 rows · Thai headers detected</div></div>
+        <span class="badge badge-brand">✓ Purchase</span>
+      </div>
+      <div class="file-row">
+        <div class="file-icon">📦</div>
+        <div style="flex:1"><div class="file-name">inventory_movements.csv</div><div class="file-meta">4,512 rows · uploaded just now</div></div>
+        <span class="badge badge-amber">✓ Inventory</span>
+      </div>
+
+      <!-- company profile section -->
+      <div style="margin-top:32px">
+        <div class="content-header"><h2>Company profile</h2><p>This scopes all reports and journal entries to your organisation</p></div>
+        <div class="card">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Company name</label>
+              <input class="form-input" type="text" value="Tin Trading Co., Ltd.">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Industry</label>
+              <input class="form-input" type="text" value="Retail / FMCG">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Period label</label>
+              <input class="form-input" type="text" value="January 2026">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Currency</label>
+              <input class="form-input" type="text" value="THB">
+            </div>
+            <div class="form-group full">
+              <label class="form-label">Date range</label>
+              <div style="display:flex;gap:10px">
+                <input class="form-input" type="text" value="2026-01-01" style="margin:0;flex:1">
+                <input class="form-input" type="text" value="2026-01-31" style="margin:0;flex:1">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:28px;display:flex;justify-content:flex-end;gap:12px">
+        <button class="btn btn-outline">Save draft</button>
+        <button class="btn btn-brand" onclick="show('s4')">Process files & map ontology →</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SCREEN 4 — STEP 2: ONTOLOGY GRAPH
+══════════════════════════════════════════ -->
+<div id="s4" class="screen">
+<div class="device">
+  <div class="topbar">
+    <a class="brand" href="#"><div class="brand-icon"><svg viewBox="0 0 24 24"><path fill="white" d="M3 3h18v2H3V3zm2 4h14v2H5V7zm-2 4h18v2H3v-2zm2 4h8v2H5v-2z"/></svg></div>FinanceAI</a>
+    <div class="spacer"></div>
+    <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-3)">
+      <div style="width:28px;height:28px;background:var(--brand);border-radius:50%;display:grid;place-items:center;color:white;font-size:12px;font-weight:700">T</div>
+      Tin K.
+    </div>
+  </div>
+  <div class="step-progress">
+    <div class="sp-item"><div class="sp-num done">✓</div><span class="sp-label done">Upload & Profile</span></div>
+    <div class="sp-line done"></div>
+    <div class="sp-item"><div class="sp-num active">2</div><span class="sp-label active">Ontology Map</span></div>
+    <div class="sp-line"></div>
+    <div class="sp-item"><div class="sp-num idle">3</div><span class="sp-label idle">Agent Validation</span></div>
+    <div class="sp-line"></div>
+    <div class="sp-item"><div class="sp-num idle">4</div><span class="sp-label idle">Reports</span></div>
+  </div>
+
+  <div class="app-content" style="padding:0">
+    <!-- header bar -->
+    <div style="padding:20px 28px;border-bottom:1px solid var(--border);background:white;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <h2 style="font-size:18px;font-weight:800;letter-spacing:-.3px">Business Ontology Map</h2>
+        <p style="font-size:13px;color:var(--text-3);margin-top:2px">Click any node to reassign its category. Edges show accounting relationships.</p>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <span class="badge badge-emerald">47 entities mapped</span>
+        <button class="btn btn-outline btn-sm">Reset layout</button>
+        <button class="btn btn-brand btn-sm" onclick="show('s5')">Confirm & run agents →</button>
+      </div>
+    </div>
+
+    <div class="graph-layout">
+      <!-- graph canvas -->
+      <div class="graph-canvas">
+        <svg class="graph-svg" viewBox="0 0 900 540" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 z" fill="#CBD5E1"/>
+            </marker>
+            <filter id="glow"><feGaussianBlur stdDeviation="3" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+
+          <!-- grid dots -->
+          <pattern id="dots" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
+            <circle cx="1" cy="1" r="1" fill="#E2E8F0"/>
+          </pattern>
+          <rect width="900" height="540" fill="url(#dots)"/>
+
+          <!-- edges -->
+          <!-- Sales → Branch -->
+          <line x1="450" y1="180" x2="220" y2="280" stroke="#A5B4FC" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+          <!-- Sales → SKU -->
+          <line x1="450" y1="180" x2="680" y2="280" stroke="#A5B4FC" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+          <!-- Sales → Customer -->
+          <line x1="450" y1="180" x2="450" y2="310" stroke="#6EE7B7" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+          <!-- Purchase → Supplier -->
+          <line x1="180" y1="120" x2="120" y2="260" stroke="#FCD34D" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+          <!-- Purchase → SKU -->
+          <line x1="180" y1="120" x2="680" y2="280" stroke="#FCD34D" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+          <!-- Inventory → SKU -->
+          <line x1="720" y1="120" x2="680" y2="280" stroke="#FCA5A5" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+          <!-- Revenue → Account -->
+          <line x1="300" y1="420" x2="580" y2="420" stroke="#C4B5FD" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+          <!-- COGS → Account -->
+          <line x1="600" y1="420" x2="640" y2="420" stroke="#C4B5FD" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+
+          <!-- File source nodes (top) -->
+          <!-- Sales file -->
+          <rect x="390" y="130" width="120" height="40" rx="8" fill="#EDE9FE" stroke="#A5B4FC" stroke-width="1.5"/>
+          <text x="450" y="150" text-anchor="middle" font-size="11" font-weight="700" fill="#5B21B6">📊 Sales File</text>
+          <text x="450" y="163" text-anchor="middle" font-size="9" fill="#7C3AED">2,847 rows</text>
+
+          <!-- Purchase file -->
+          <rect x="120" y="90" width="120" height="40" rx="8" fill="#FEF9C3" stroke="#FDE047" stroke-width="1.5"/>
+          <text x="180" y="110" text-anchor="middle" font-size="11" font-weight="700" fill="#713F12">🧾 Purchase</text>
+          <text x="180" y="123" text-anchor="middle" font-size="9" fill="#A16207">1,203 rows</text>
+
+          <!-- Inventory file -->
+          <rect x="660" y="90" width="120" height="40" rx="8" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.5"/>
+          <text x="720" y="110" text-anchor="middle" font-size="11" font-weight="700" fill="#991B1B">📦 Inventory</text>
+          <text x="720" y="123" text-anchor="middle" font-size="9" fill="#DC2626">4,512 rows</text>
+
+          <!-- Entity nodes (middle) -->
+          <!-- Branch -->
+          <ellipse cx="220" cy="290" rx="52" ry="26" fill="#EFF6FF" stroke="#93C5FD" stroke-width="2"/>
+          <text x="220" y="287" text-anchor="middle" font-size="11" font-weight="700" fill="#1D4ED8">🏪 Branch</text>
+          <text x="220" y="300" text-anchor="middle" font-size="9" fill="#3B82F6">8 entities</text>
+
+          <!-- SKU -->
+          <ellipse cx="680" cy="290" rx="52" ry="26" fill="#ECFDF5" stroke="#6EE7B7" stroke-width="2" filter="url(#glow)"/>
+          <text x="680" y="287" text-anchor="middle" font-size="11" font-weight="700" fill="#065F46">📦 SKU</text>
+          <text x="680" y="300" text-anchor="middle" font-size="9" fill="#059669">142 items</text>
+
+          <!-- Customer -->
+          <ellipse cx="450" cy="325" rx="52" ry="26" fill="#F0FDF4" stroke="#86EFAC" stroke-width="2"/>
+          <text x="450" y="322" text-anchor="middle" font-size="11" font-weight="700" fill="#14532D">👤 Customer</text>
+          <text x="450" y="335" text-anchor="middle" font-size="9" fill="#16A34A">1,024 entities</text>
+
+          <!-- Supplier -->
+          <ellipse cx="120" cy="275" rx="52" ry="26" fill="#FFFBEB" stroke="#FDE68A" stroke-width="2"/>
+          <text x="120" y="272" text-anchor="middle" font-size="11" font-weight="700" fill="#78350F">🏭 Supplier</text>
+          <text x="120" y="285" text-anchor="middle" font-size="9" fill="#D97706">37 vendors</text>
+
+          <!-- Account nodes (bottom) -->
+          <rect x="220" y="400" width="110" height="36" rx="8" fill="#F5F3FF" stroke="#C4B5FD" stroke-width="1.5"/>
+          <text x="275" y="417" text-anchor="middle" font-size="11" font-weight="700" fill="#5B21B6">💰 Revenue</text>
+          <text x="275" y="430" text-anchor="middle" font-size="9" fill="#7C3AED">4100 · 4200</text>
+
+          <rect x="560" y="400" width="110" height="36" rx="8" fill="#FFF1F2" stroke="#FDA4AF" stroke-width="1.5"/>
+          <text x="615" y="417" text-anchor="middle" font-size="11" font-weight="700" fill="#881337">📉 COGS</text>
+          <text x="615" y="430" text-anchor="middle" font-size="9" fill="#E11D48">5100</text>
+
+          <rect x="730" y="400" width="110" height="36" rx="8" fill="#F0F9FF" stroke="#BAE6FD" stroke-width="1.5"/>
+          <text x="785" y="417" text-anchor="middle" font-size="11" font-weight="700" fill="#0C4A6E">🏦 Expense</text>
+          <text x="785" y="430" text-anchor="middle" font-size="9" fill="#0284C7">6xxx</text>
+
+          <!-- selected node highlight -->
+          <ellipse cx="680" cy="290" rx="60" ry="32" fill="none" stroke="#4F46E5" stroke-width="2" stroke-dasharray="4,2"/>
+          <text x="680" y="335" text-anchor="middle" font-size="10" font-weight="600" fill="#4F46E5">selected</text>
+        </svg>
+      </div>
+
+      <!-- right panel -->
+      <div class="graph-panel">
+        <div style="font-size:14px;font-weight:800;margin-bottom:16px">Selected: SKU node</div>
+        <div style="background:var(--brand-light);border-radius:9px;padding:14px;margin-bottom:16px">
+          <div style="font-size:12px;font-weight:700;color:var(--brand);margin-bottom:8px">Current mapping</div>
+          <div style="font-size:13px;color:var(--text)">Entity type: <strong>SKU / Product</strong></div>
+          <div style="font-size:13px;color:var(--text);margin-top:4px">Account: <strong>5100 · COGS</strong></div>
+          <div style="font-size:13px;color:var(--text);margin-top:4px">Confidence: <strong style="color:var(--emerald)">97%</strong></div>
+        </div>
+        <div style="font-size:12px;font-weight:700;color:var(--text-4);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Reassign category</div>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px">
+          <button class="btn btn-outline btn-sm" style="justify-content:flex-start">📦 SKU / Product</button>
+          <button class="btn btn-brand btn-sm" style="justify-content:flex-start">✓ Currently selected</button>
+          <button class="btn btn-outline btn-sm" style="justify-content:flex-start">🏪 Branch / Location</button>
+          <button class="btn btn-outline btn-sm" style="justify-content:flex-start">👤 Customer</button>
+          <button class="btn btn-outline btn-sm" style="justify-content:flex-start">🏭 Supplier</button>
+          <button class="btn btn-outline btn-sm" style="justify-content:flex-start">💰 Revenue Account</button>
+        </div>
+        <div class="graph-legend">
+          <div style="font-size:12px;font-weight:700;color:var(--text-4);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">Legend</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#A5B4FC"></div>Sales relationship</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#FDE68A"></div>Purchase relationship</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#FCA5A5"></div>Inventory relationship</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#C4B5FD"></div>Account mapping</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#6EE7B7"></div>Customer link</div>
+        </div>
+        <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;padding:12px;font-size:12px;color:#92400E;line-height:1.5">
+          ⚠️ <strong>2 unmapped columns</strong> detected in purchase file. Click to resolve before running agents.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SCREEN 5 — STEP 3: AGENT SIMULATION
+══════════════════════════════════════════ -->
+<div id="s5" class="screen">
+<div class="device">
+  <div class="topbar">
+    <a class="brand" href="#"><div class="brand-icon"><svg viewBox="0 0 24 24"><path fill="white" d="M3 3h18v2H3V3zm2 4h14v2H5V7zm-2 4h18v2H3v-2zm2 4h8v2H5v-2z"/></svg></div>FinanceAI</a>
+    <div class="spacer"></div>
+    <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-3)">
+      <div style="width:28px;height:28px;background:var(--brand);border-radius:50%;display:grid;place-items:center;color:white;font-size:12px;font-weight:700">T</div>Tin K.
+    </div>
+  </div>
+  <div class="step-progress">
+    <div class="sp-item"><div class="sp-num done">✓</div><span class="sp-label done">Upload & Profile</span></div>
+    <div class="sp-line done"></div>
+    <div class="sp-item"><div class="sp-num done">✓</div><span class="sp-label done">Ontology Map</span></div>
+    <div class="sp-line done"></div>
+    <div class="sp-item"><div class="sp-num active">3</div><span class="sp-label active">Agent Validation</span></div>
+    <div class="sp-line"></div>
+    <div class="sp-item"><div class="sp-num idle">4</div><span class="sp-label idle">Reports</span></div>
+  </div>
+
+  <div class="app-content">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+      <div>
+        <h2 style="font-size:22px;font-weight:800;letter-spacing:-.4px">6 Agents running in parallel</h2>
+        <p style="font-size:14px;color:var(--text-3);margin-top:4px">Each agent validates a distinct business process and posts journal entries</p>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <span class="badge badge-emerald">5 complete</span>
+        <span class="badge badge-brand">1 running</span>
+        <button class="btn btn-brand btn-sm" onclick="show('s6')">View reports →</button>
+      </div>
+    </div>
+
+    <!-- 6 agent cards -->
+    <div class="agents-grid">
+      <!-- Agent 1 -->
+      <div class="agent-card done">
+        <div class="agent-header">
+          <div class="agent-icon" style="background:#ECFDF5;font-size:20px">💰</div>
+          <span class="badge badge-emerald">✓ Done</span>
+        </div>
+        <div class="agent-name">Sales / Order-to-Cash</div>
+        <div class="agent-sub">Revenue recognition & AR</div>
+        <div class="progress-bar"><div class="progress-fill done" style="width:100%"></div></div>
+        <div class="agent-stats">
+          <div class="agent-stat">Records: <span>2,847</span></div>
+          <div class="agent-stat">Entries: <span>2,847</span></div>
+        </div>
+        <div class="agent-log done">✓ Dr Accounts Receivable / Cr Revenue 4100</div>
+      </div>
+
+      <!-- Agent 2 -->
+      <div class="agent-card done">
+        <div class="agent-header">
+          <div class="agent-icon" style="background:#FFFBEB;font-size:20px">🧾</div>
+          <span class="badge badge-emerald">✓ Done</span>
+        </div>
+        <div class="agent-name">Procure-to-Pay</div>
+        <div class="agent-sub">Supplier invoices & AP</div>
+        <div class="progress-bar"><div class="progress-fill done" style="width:100%"></div></div>
+        <div class="agent-stats">
+          <div class="agent-stat">Invoices: <span>1,203</span></div>
+          <div class="agent-stat">Entries: <span>1,203</span></div>
+        </div>
+        <div class="agent-log done">✓ Dr Purchases / Cr Accounts Payable</div>
+      </div>
+
+      <!-- Agent 3 -->
+      <div class="agent-card done">
+        <div class="agent-header">
+          <div class="agent-icon" style="background:#F0F9FF;font-size:20px">📦</div>
+          <span class="badge badge-emerald">✓ Done</span>
+        </div>
+        <div class="agent-name">Inventory-to-COGS</div>
+        <div class="agent-sub">Stock movements & cost</div>
+        <div class="progress-bar"><div class="progress-fill done" style="width:100%"></div></div>
+        <div class="agent-stats">
+          <div class="agent-stat">Movements: <span>4,512</span></div>
+          <div class="agent-stat">SKUs: <span>142</span></div>
+        </div>
+        <div class="agent-log done">✓ Dr COGS 5100 / Cr Inventory 1300</div>
+      </div>
+
+      <!-- Agent 4 -->
+      <div class="agent-card warn">
+        <div class="agent-header">
+          <div class="agent-icon" style="background:#FFF7ED;font-size:20px">🏦</div>
+          <span class="badge badge-amber">⚠ 2 gaps</span>
+        </div>
+        <div class="agent-name">Bank Reconciliation</div>
+        <div class="agent-sub">Cash flow verification</div>
+        <div class="progress-bar"><div class="progress-fill warn" style="width:100%"></div></div>
+        <div class="agent-stats">
+          <div class="agent-stat">Transactions: <span>—</span></div>
+          <div class="agent-stat">Unmatched: <span style="color:var(--amber)">2</span></div>
+        </div>
+        <div class="agent-log warn">⚠ No bank statement uploaded — skipped</div>
+      </div>
+
+      <!-- Agent 5 -->
+      <div class="agent-card done">
+        <div class="agent-header">
+          <div class="agent-icon" style="background:#FEF2F2;font-size:20px">🧮</div>
+          <span class="badge badge-emerald">✓ Done</span>
+        </div>
+        <div class="agent-name">Tax Agent</div>
+        <div class="agent-sub">VAT & withholding tax</div>
+        <div class="progress-bar"><div class="progress-fill done" style="width:100%"></div></div>
+        <div class="agent-stats">
+          <div class="agent-stat">Taxable rows: <span>3,847</span></div>
+          <div class="agent-stat">Zero-tax: <span style="color:var(--amber)">12</span></div>
+        </div>
+        <div class="agent-log done">✓ Dr VAT Input / Cr Tax Payable · 12 flagged</div>
+      </div>
+
+      <!-- Agent 6 (running) -->
+      <div class="agent-card running">
+        <div class="agent-header">
+          <div class="agent-icon" style="background:var(--brand-light);font-size:20px">📒</div>
+          <span class="badge badge-brand">⟳ Running</span>
+        </div>
+        <div class="agent-name">Record-to-Report</div>
+        <div class="agent-sub">Closing entries & statements</div>
+        <div class="progress-bar"><div class="progress-fill" style="width:72%"></div></div>
+        <div class="agent-stats">
+          <div class="agent-stat">Accounts: <span>28</span></div>
+          <div class="agent-stat">Progress: <span style="color:var(--brand)">72%</span></div>
+        </div>
+        <div class="agent-log">⟳ Aggregating income statement lines…</div>
+      </div>
+    </div>
+
+    <!-- Exceptions -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
+      <div class="exceptions-panel">
+        <div class="exc-title">⚠️ Exceptions detected <span class="badge badge-amber" style="font-size:11px">4</span></div>
+        <div class="exc-row"><div class="exc-icon">🔴</div><div><div class="exc-text">12 rows with zero tax amount</div><div class="exc-detail">Purchase file · rows 145–156 · may indicate missing VAT</div></div></div>
+        <div class="exc-row"><div class="exc-icon">🟡</div><div><div class="exc-text">Duplicate entity name: "สาขา 3" vs "Branch 3"</div><div class="exc-detail">Ontology map · treated as same branch — verify</div></div></div>
+        <div class="exc-row"><div class="exc-icon">🟡</div><div><div class="exc-text">Missing SKU code on 8 inventory rows</div><div class="exc-detail">Inventory file · rows 2301–2308 · COGS estimated</div></div></div>
+        <div class="exc-row"><div class="exc-icon">🔵</div><div><div class="exc-text">No bank statement — Bank Rec agent skipped</div><div class="exc-detail">Upload a bank CSV to enable reconciliation</div></div></div>
+      </div>
+      <div class="card" style="background:var(--emerald-light);border-color:#A7F3D0">
+        <div style="font-size:14px;font-weight:800;color:var(--emerald);margin-bottom:10px">✓ Validation summary</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div><div style="font-size:22px;font-weight:800;color:var(--emerald)">8,562</div><div style="font-size:12px;color:var(--text-3)">Records processed</div></div>
+          <div><div style="font-size:22px;font-weight:800;color:var(--emerald)">4,050</div><div style="font-size:12px;color:var(--text-3)">Journal entries posted</div></div>
+          <div><div style="font-size:22px;font-weight:800;color:var(--amber)">4</div><div style="font-size:12px;color:var(--text-3)">Exceptions (review)</div></div>
+          <div><div style="font-size:22px;font-weight:800;color:var(--brand)">5/6</div><div style="font-size:12px;color:var(--text-3)">Agents complete</div></div>
+        </div>
+        <div style="margin-top:14px;font-size:12px;color:var(--text-3)">
+          ℹ️ LLM assists with explanation only. All debit-credit entries follow deterministic IFRS rules.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SCREEN 6 — STEP 4: REPORTS
+══════════════════════════════════════════ -->
+<div id="s6" class="screen">
+<div class="device">
+  <div class="topbar">
+    <a class="brand" href="#"><div class="brand-icon"><svg viewBox="0 0 24 24"><path fill="white" d="M3 3h18v2H3V3zm2 4h14v2H5V7zm-2 4h18v2H3v-2zm2 4h8v2H5v-2z"/></svg></div>FinanceAI</a>
+    <div class="spacer"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-outline btn-sm">⬇ Export Excel</button>
+      <button class="btn btn-outline btn-sm">⬇ Export PDF</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-3);margin-left:16px">
+      <div style="width:28px;height:28px;background:var(--brand);border-radius:50%;display:grid;place-items:center;color:white;font-size:12px;font-weight:700">T</div>Tin K.
+    </div>
+  </div>
+  <div class="step-progress">
+    <div class="sp-item"><div class="sp-num done">✓</div><span class="sp-label done">Upload & Profile</span></div>
+    <div class="sp-line done"></div>
+    <div class="sp-item"><div class="sp-num done">✓</div><span class="sp-label done">Ontology Map</span></div>
+    <div class="sp-line done"></div>
+    <div class="sp-item"><div class="sp-num done">✓</div><span class="sp-label done">Agent Validation</span></div>
+    <div class="sp-line done"></div>
+    <div class="sp-item"><div class="sp-num done">✓</div><span class="sp-label done">Reports</span></div>
+  </div>
+
+  <div class="app-content">
+    <!-- summary KPIs -->
+    <div class="three-col" style="margin-bottom:24px">
+      <div class="stat-box">
+        <div style="font-size:12px;color:var(--text-4);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Revenue</div>
+        <div class="stat-value" style="color:var(--emerald)">฿4,287,560</div>
+        <div class="stat-delta delta-up">↑ 12.4% vs prior period</div>
+      </div>
+      <div class="stat-box">
+        <div style="font-size:12px;color:var(--text-4);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Gross Profit</div>
+        <div class="stat-value">฿1,712,824</div>
+        <div class="stat-delta delta-up">GM 39.9% · ↑ 2.1pp</div>
+      </div>
+      <div class="stat-box">
+        <div style="font-size:12px;color:var(--text-4);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Net Profit</div>
+        <div class="stat-value" style="color:var(--brand)">฿642,134</div>
+        <div class="stat-delta delta-up">NPM 15.0% · ↑ 1.8pp</div>
+      </div>
+    </div>
+
+    <!-- tabs -->
+    <div class="report-tabs">
+      <div class="report-tab active" id="tab-is" onclick="switchTab('is')">Income Statement</div>
+      <div class="report-tab" id="tab-tb" onclick="switchTab('tb')">Trial Balance</div>
+      <div class="report-tab" id="tab-exc" onclick="switchTab('exc')">Exceptions <span class="badge badge-amber" style="font-size:10px;margin-left:4px">4</span></div>
+      <div class="report-tab" id="tab-ai" onclick="switchTab('ai')">Ask AI</div>
+    </div>
+
+    <!-- Income Statement -->
+    <div id="pane-is">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div style="font-size:15px;font-weight:800">Income Statement — January 2026 · Tin Trading Co., Ltd.</div>
+        <span style="font-size:12px;color:var(--text-4)">Currency: THB · All amounts in Thai Baht</span>
+      </div>
+      <table class="statement-table">
+        <thead>
+          <tr><th style="width:50%">Line item</th><th>Account</th><th class="amount-col">Amount (฿)</th><th style="width:100px">Evidence</th></tr>
+        </thead>
+        <tbody>
+          <tr class="row-section"><td colspan="4">REVENUE</td></tr>
+          <tr><td>Product sales — retail</td><td style="color:var(--text-4);font-size:12px">4100</td><td class="amount-col amount-pos">3,842,110</td><td><a class="evidence-link">⟶ 2,847 rows</a></td></tr>
+          <tr><td>Product sales — wholesale</td><td style="color:var(--text-4);font-size:12px">4200</td><td class="amount-col amount-pos">445,450</td><td><a class="evidence-link">⟶ 312 rows</a></td></tr>
+          <tr class="row-total"><td><strong>Total Revenue</strong></td><td></td><td class="amount-col amount-pos"><strong>4,287,560</strong></td><td></td></tr>
+
+          <tr class="row-section"><td colspan="4">COST OF GOODS SOLD</td></tr>
+          <tr><td>Cost of goods sold</td><td style="color:var(--text-4);font-size:12px">5100</td><td class="amount-col amount-neg">(2,574,736)</td><td><a class="evidence-link">⟶ 4,512 rows</a></td></tr>
+          <tr class="row-total"><td><strong>Gross Profit</strong></td><td></td><td class="amount-col amount-pos"><strong>1,712,824</strong></td><td></td></tr>
+
+          <tr class="row-section"><td colspan="4">OPERATING EXPENSES</td></tr>
+          <tr><td>Selling & distribution</td><td style="color:var(--text-4);font-size:12px">6100</td><td class="amount-col amount-neg">(612,400)</td><td><a class="evidence-link">⟶ 88 rows</a></td></tr>
+          <tr><td>General & administrative</td><td style="color:var(--text-4);font-size:12px">6200</td><td class="amount-col amount-neg">(328,290)</td><td><a class="evidence-link">⟶ 54 rows</a></td></tr>
+          <tr><td>Depreciation</td><td style="color:var(--text-4);font-size:12px">6300</td><td class="amount-col amount-neg">(130,000)</td><td><a class="evidence-link">⟶ estimated</a></td></tr>
+          <tr class="row-total"><td><strong>Operating Profit</strong></td><td></td><td class="amount-col amount-pos"><strong>642,134</strong></td><td></td></tr>
+
+          <tr class="row-section"><td colspan="4">OTHER</td></tr>
+          <tr><td>Interest expense</td><td style="color:var(--text-4);font-size:12px">7100</td><td class="amount-col amount-neg">(0)</td><td><a class="evidence-link">⟶ no data</a></td></tr>
+          <tr class="row-total" style="font-size:16px"><td><strong>Net Profit</strong></td><td></td><td class="amount-col amount-pos" style="font-size:17px;color:var(--brand)"><strong>฿642,134</strong></td><td></td></tr>
+        </tbody>
+      </table>
+      <div style="margin-top:12px;font-size:12px;color:var(--text-4);font-style:italic">
+        ℹ️ All journal entries produced by deterministic double-entry rules. LLM used only for column interpretation and evidence explanations.
+      </div>
+    </div>
+
+    <!-- Trial Balance (hidden) -->
+    <div id="pane-tb" style="display:none">
+      <table class="statement-table">
+        <thead>
+          <tr><th>Account</th><th>Name</th><th class="amount-col">Debit (฿)</th><th class="amount-col">Credit (฿)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td style="color:var(--text-4)">1100</td><td>Cash & bank</td><td class="amount-col">180,000</td><td class="amount-col">—</td></tr>
+          <tr><td style="color:var(--text-4)">1200</td><td>Accounts receivable</td><td class="amount-col">4,287,560</td><td class="amount-col">—</td></tr>
+          <tr><td style="color:var(--text-4)">1300</td><td>Inventory</td><td class="amount-col">920,400</td><td class="amount-col">—</td></tr>
+          <tr><td style="color:var(--text-4)">2100</td><td>Accounts payable</td><td class="amount-col">—</td><td class="amount-col">1,203,000</td></tr>
+          <tr><td style="color:var(--text-4)">2200</td><td>VAT payable</td><td class="amount-col">—</td><td class="amount-col">300,130</td></tr>
+          <tr><td style="color:var(--text-4)">4100</td><td>Revenue — retail</td><td class="amount-col">—</td><td class="amount-col">3,842,110</td></tr>
+          <tr><td style="color:var(--text-4)">4200</td><td>Revenue — wholesale</td><td class="amount-col">—</td><td class="amount-col">445,450</td></tr>
+          <tr><td style="color:var(--text-4)">5100</td><td>Cost of goods sold</td><td class="amount-col">2,574,736</td><td class="amount-col">—</td></tr>
+          <tr><td style="color:var(--text-4)">6100</td><td>Selling expenses</td><td class="amount-col">612,400</td><td class="amount-col">—</td></tr>
+          <tr><td style="color:var(--text-4)">6200</td><td>G&A expenses</td><td class="amount-col">328,290</td><td class="amount-col">—</td></tr>
+          <tr class="row-total"><td colspan="2"><strong>TOTALS</strong></td><td class="amount-col"><strong>8,903,386</strong></td><td class="amount-col"><strong>5,790,690</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Exceptions (hidden) -->
+    <div id="pane-exc" style="display:none">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="card" style="border-left:4px solid var(--red)">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:18px">🔴</span><div style="font-size:14px;font-weight:700">12 rows with zero VAT amount</div><span class="badge badge-red">Critical</span></div>
+          <div style="font-size:13px;color:var(--text-2);line-height:1.55">Found in Purchase file, rows 145–156. These rows have ราคาสินค้า > 0 but no tax column present. May indicate missing input VAT — review with your accountant.</div>
+          <div style="margin-top:10px"><a class="evidence-link">⟶ View affected rows</a></div>
+        </div>
+        <div class="card" style="border-left:4px solid var(--amber)">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:18px">🟡</span><div style="font-size:14px;font-weight:700">Duplicate entity: "สาขา 3" vs "Branch 3"</div><span class="badge badge-amber">Warning</span></div>
+          <div style="font-size:13px;color:var(--text-2);line-height:1.55">Both names appear in Sales file and Inventory file respectively and resolve to the same branch. System treated them as identical. Verify the ontology map if this is incorrect.</div>
+          <div style="margin-top:10px"><a class="evidence-link">⟶ Open ontology map</a></div>
+        </div>
+        <div class="card" style="border-left:4px solid var(--amber)">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:18px">🟡</span><div style="font-size:14px;font-weight:700">8 inventory rows missing SKU code</div><span class="badge badge-amber">Warning</span></div>
+          <div style="font-size:13px;color:var(--text-2);line-height:1.55">Rows 2301–2308 in inventory_movements.csv have no product code. COGS was estimated using average cost. Actual COGS may differ slightly.</div>
+          <div style="margin-top:10px"><a class="evidence-link">⟶ View rows</a></div>
+        </div>
+        <div class="card" style="border-left:4px solid var(--sky)">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:18px">🔵</span><div style="font-size:14px;font-weight:700">Bank statement not uploaded — Bank Rec skipped</div><span class="badge badge-gray">Info</span></div>
+          <div style="font-size:13px;color:var(--text-2);line-height:1.55">The Bank Reconciliation agent requires a bank statement CSV. Upload one in Step 1 to enable cash flow validation and unmatched transaction detection.</div>
+          <div style="margin-top:10px"><button class="btn btn-outline btn-sm">Upload bank statement</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ask AI (hidden) -->
+    <div id="pane-ai" style="display:none">
+      <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
+        <div class="chat-box">
+          <div class="chat-messages">
+            <div class="msg ai">
+              <div class="msg-avatar">🤖</div>
+              <div>
+                <div class="msg-bubble">Hi Tin! I've processed <strong>8,562 records</strong> across your Sales, Purchase, and Inventory files for January 2026. The income statement is ready with full evidence trails. What would you like to explore?</div>
+                <div class="msg-evidence">
+                  <span class="msg-evidence-pill">📊 Revenue breakdown</span>
+                  <span class="msg-evidence-pill">📉 COGS analysis</span>
+                  <span class="msg-evidence-pill">⚠️ Exceptions</span>
+                </div>
+              </div>
+            </div>
+            <div class="msg user">
+              <div class="msg-avatar">T</div>
+              <div class="msg-bubble">What drove the revenue this month? Which branch performed best?</div>
+            </div>
+            <div class="msg ai">
+              <div class="msg-avatar">🤖</div>
+              <div>
+                <div class="msg-bubble">
+                  Revenue of <strong>฿4,287,560</strong> came from 3,159 sales transactions across 8 branches.<br><br>
+                  <strong>Top branches:</strong><br>
+                  • สาขา 1 (Branch 1): ฿1,842,300 — 43% of revenue<br>
+                  • สาขา 2 (Branch 2): ฿1,108,900 — 26%<br>
+                  • สาขา 5 (Branch 5): ฿728,440 — 17%<br><br>
+                  Branch 1 shows highest transaction volume (1,203 orders) with average ticket size ฿1,531. Branch 5 had highest average order value at ฿2,104.
+                </div>
+                <div class="msg-evidence">
+                  <span class="msg-evidence-pill">⟶ Sales file rows 1–2847</span>
+                  <span class="msg-evidence-pill">⟶ Branch entity map</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="chat-input-row">
+            <input class="chat-input" placeholder="Ask about any figure, line, or exception…" value="Why is gross margin 39.9%? Is that normal for retail?">
+            <button class="btn btn-brand">Send →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+</div><!-- /canvas -->
+
+<script>
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.proto-nav button').forEach((b,i) => {
+    const ids = ['s1','s2','s3','s4','s5','s6'];
+    b.classList.toggle('active', ids[i] === id);
+  });
+  window.scrollTo(0, 52);
+}
+
+function switchTab(tab) {
+  ['is','tb','exc','ai'].forEach(t => {
+    document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+    document.getElementById('pane-' + t).style.display = t === tab ? 'block' : 'none';
+  });
+}
+</script>
+</body>
+</html>

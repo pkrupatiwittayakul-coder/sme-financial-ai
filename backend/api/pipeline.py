@@ -323,4 +323,90 @@ def run_pipeline_internal(period_id: int, db: Session) -> dict:
     log.append("Income statement generated")
     pp_update(period_id, stage="generate", pct=92, message="Income statement generated")
 
-    # ─�
+    # ── Step 6: Ontology (entities) ───────────────────────────────────────────
+    db.query(Entity).filter(Entity.period_id == period_id).delete()
+    db.commit()
+
+    entity_dicts = extract_entities_from_records(all_records, period_id)
+    for ed in entity_dicts:
+        db.add(Entity(
+            period_id=ed["period_id"],
+            entity_type=ed["entity_type"],
+            entity_name=ed["entity_name"],
+            attributes=ed["attributes"],
+        ))
+    db.commit()
+
+    entity_counts = {}
+    for ed in entity_dicts:
+        entity_counts[ed["entity_type"]] = entity_counts.get(ed["entity_type"], 0) + 1
+
+    log.append(f"Ontology: {len(entity_dicts)} entities extracted")
+    pp_update(period_id, stage="generate", pct=100, status="completed",
+              message=f"Ontology: {len(entity_dicts)} entities; pipeline complete")
+
+    val_summary = summarize_validations(all_validations)
+
+    result = {
+        "period_id": period_id,
+        "period_label": detected_label,
+        "pipeline_log": log,
+        "records_extracted": total_extracted,
+        "journal_entries": len(journal_entries),
+        "validation_summary": val_summary,
+        "income_statement": income_statement,
+        "trial_balance": trial_balance,
+        "entity_counts": entity_counts,
+    }
+    pp_update(period_id, result=result)
+    return result
+
+
+@router.post("/{period_id}")
+def run_pipeline(period_id: int, db: Session = Depends(get_db)):
+    files = db.query(FileModel).filter(FileModel.period_id == period_id).all()
+    if not files:
+        raise HTTPException(404, "No files found for this period. Upload files first.")
+    return run_pipeline_internal(period_id, db)
+
+
+@router.get("/{period_id}/progress")
+async def pipeline_progress(period_id: int, request: Request):
+    """
+    Server-Sent Events stream of the pipeline's current stage / pct / log.
+    The dashboard opens an EventSource right before triggering an upload, then
+    closes the stream when it receives an event with status='completed' or 'error'.
+    Times out after 120 seconds if nothing happens.
+    """
+    async def event_gen():
+        last_payload = None
+        last_emit = 0
+        # Up to 120 seconds; bail early once pipeline reports a terminal state
+        for _ in range(480):
+            if await request.is_disconnected():
+                break
+            snap = pp_snapshot(period_id)
+            payload = json.dumps(snap, default=str)
+            if payload != last_payload:
+                yield f"event: progress\ndata: {payload}\n\n"
+                last_payload = payload
+                last_emit = 0
+            else:
+                last_emit += 1
+                # Heartbeat every ~5s so proxies don't close the connection
+                if last_emit >= 20:
+                    yield ": keepalive\n\n"
+                    last_emit = 0
+            if snap.get("status") in ("completed", "error"):
+                break
+            await asyncio.sleep(0.25)
+        # One final snapshot so the client always sees the end state
+        snap = pp_snapshot(period_id)
+        yield f"event: progress\ndata: {json.dumps(snap, default=str)}\n\n"
+
+    headers = {
+        "Cache-Control": "no-cache, no-transform",
+        "X-Accel-Buffering": "no",  # disables nginx/Render buffering
+        "Connection": "keep-alive",
+    }
+    return StreamingResponse(event_gen(), media_type="text/event-stream", headers=headers)

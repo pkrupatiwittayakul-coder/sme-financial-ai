@@ -98,4 +98,4 @@ The sandbox proxy blocks outbound traffic to Render. To verify deployment after 
 4. **Auth the SSE endpoint** — accept JWT via query param or use short-lived signed URLs.
 5. **Add pytest coverage** for `run_pipeline_internal` against `sample_data/`.
 6. **Delete `frontend/app.py`** — legacy Streamlit, no longer referenced in `render.yaml`.
-7. **Google OAuth production** — 
+7. **Google OAuth production** — set `GOOGLE_CLIENT_ID` in Render and register the Render domain in GCP.

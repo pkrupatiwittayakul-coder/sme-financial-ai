@@ -1842,4 +1842,221 @@ let GRAPH_NODES=[
   {id:'prod',  type:'Product',     label:'Product',       x:480,y:360,conf:0.92,color:'#10B981',count:0,attrs:[{k:'sku',t:'PK·string'},{k:'name',t:'string'},{k:'unit_price',t:'decimal'}]},
   {id:'invl',  type:'Invoice',     label:'InvoiceLine',   x:480,y:540,conf:0.88,color:'#FF7A59',count:0,attrs:[{k:'invoice_no',t:'FK'},{k:'sku',t:'FK'},{k:'qty',t:'int'},{k:'amount',t:'decimal'}]},
   {id:'je',    type:'JournalEntry',label:'JournalEntry',  x:860,y:200,conf:0.99,color:'#1E293B',count:0,attrs:[{k:'entry_id',t:'PK·int'},{k:'date',t:'date'},{k:'debit_total',t:'decimal'},{k:'credit_total',t:'decimal'}]},
-  {id:'acct',  type:'Account',     label:'Account',       x:1020,y:440,conf:0.95,color:'#EC4899',count:8,attrs:[{k:'code',t:'PK·string'},{k
+  {id:'acct',  type:'Account',     label:'Account',       x:1020,y:440,conf:0.95,color:'#EC4899',count:8,attrs:[{k:'code',t:'PK·string'},{k:'name',t:'string'},{k:'type',t:'enum'}]},
+  {id:'vend',  type:'Vendor',      label:'Vendor',        x:130,y:540,conf:0.86,color:'#F59E0B',count:0,attrs:[{k:'vendor_id',t:'PK·int'},{k:'name',t:'string'},{k:'tax_id',t:'string'}]},
+  {id:'po',    type:'Purchase',    label:'PurchaseOrder', x:860,y:560,conf:0.90,color:'#0EA5A5',count:0,attrs:[{k:'po_no',t:'PK·string'},{k:'vendor_id',t:'FK'},{k:'date',t:'date'}]},
+];
+let GRAPH_EDGES=[
+  {id:'e1',from:'cust',to:'inv',  label:'places',   card:'1—N',dashed:false},
+  {id:'e2',from:'inv', to:'invl', label:'contains', card:'1—N',dashed:false},
+  {id:'e3',from:'prod',to:'invl', label:'sold_as',  card:'1—N',dashed:false},
+  {id:'e4',from:'inv', to:'je',   label:'generates',card:'1—1',dashed:false},
+  {id:'e5',from:'je',  to:'acct', label:'posts_to', card:'N—N',dashed:false},
+  {id:'e6',from:'vend',to:'po',   label:'supplies', card:'1—N',dashed:false},
+  {id:'e7',from:'po',  to:'je',   label:'generates',card:'1—1',dashed:true},
+  {id:'e8',from:'prod',to:'acct', label:'revenue_to',card:'N—1',dashed:true},
+];
+
+/* Replace placeholder graph with live data from the backend. Safe no-op until a
+ * company is selected and a period exists. */
+async function loadOntology() {
+  if (!S.companyId) return;
+  const data = await api('GET', '/companies/' + S.companyId + '/ontology');
+  if (data && !data.error && Array.isArray(data.nodes) && data.nodes.length) {
+    GRAPH_NODES = data.nodes.map(n => Object.assign({}, n));
+    GRAPH_EDGES = (data.edges || []).map(e => Object.assign({}, e));
+    if (data.summary) {
+      const ec = document.getElementById('graphEntityCount');
+      const rc = document.getElementById('graphRelCount');
+      if (ec) ec.textContent = data.summary.node_count + ' entities';
+      if (rc) rc.textContent = data.summary.edge_count + ' relations';
+      const kpi = document.getElementById('gKpiEntities');
+      if (kpi) kpi.textContent = data.summary.node_count;
+    }
+    if (data.period && data.period.status === 'confirmed') {
+      S.ontologyConfirmed = true;
+    }
+    buildGraph();
+  }
+}
+const NW=194, NH_HEADER=30, ATTR_H=19;
+function nodeH(n){return NH_HEADER+10+n.attrs.length*ATTR_H+14;}
+
+let gZoom=0.78, gSelectedId=null;
+function buildGraph(){
+  const nodesG=document.getElementById('graphNodes');
+  const edgesG=document.getElementById('graphEdges');
+  if(!nodesG||!edgesG) return;
+  nodesG.innerHTML=''; edgesG.innerHTML='';
+  // Edges first
+  GRAPH_EDGES.forEach(e=>{
+    const a=GRAPH_NODES.find(n=>n.id===e.from), b=GRAPH_NODES.find(n=>n.id===e.to);
+    if(!a||!b) return;
+    const aw=NW,ah=nodeH(a),bw=NW,bh=nodeH(b);
+    const dx=(b.x+bw/2)-(a.x+aw/2);
+    const fromX=a.x+(dx>0?aw:0), fromY=a.y+ah/2;
+    const toX=b.x+(dx>0?0:bw), toY=b.y+bh/2;
+    const mx=(fromX+toX)/2;
+    const d=`M${fromX},${fromY} C${mx},${fromY} ${mx},${toY} ${toX},${toY}`;
+    const midX=(fromX+toX)/2, midY=(fromY+toY)/2-8;
+    const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.setAttribute('class','edge-hit');g.style.cursor='pointer';
+    g.onclick=()=>selectEdge(e.id);
+    const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d',d);path.setAttribute('fill','none');path.setAttribute('stroke','var(--ink-2)');path.setAttribute('stroke-width','1.8');
+    if(e.dashed) path.setAttribute('stroke-dasharray','6 5');
+    path.setAttribute('marker-end','url(#arrow)');
+    const hit=document.createElementNS('http://www.w3.org/2000/svg','path');
+    hit.setAttribute('d',d);hit.setAttribute('fill','none');hit.setAttribute('stroke','transparent');hit.setAttribute('stroke-width','14');
+    const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.setAttribute('x',midX);lbl.setAttribute('y',midY);lbl.setAttribute('text-anchor','middle');lbl.setAttribute('font-size','10.5');lbl.setAttribute('font-family','var(--mono)');lbl.setAttribute('font-weight','600');lbl.setAttribute('fill','var(--ink-2)');lbl.setAttribute('paint-order','stroke');lbl.setAttribute('stroke','white');lbl.setAttribute('stroke-width','4');lbl.textContent=e.label;
+    const card=document.createElementNS('http://www.w3.org/2000/svg','text');
+    card.setAttribute('x',midX);card.setAttribute('y',midY+13);card.setAttribute('text-anchor','middle');card.setAttribute('font-size','10');card.setAttribute('font-family','var(--mono)');card.setAttribute('fill','var(--ink-3)');card.setAttribute('paint-order','stroke');card.setAttribute('stroke','white');card.setAttribute('stroke-width','4');card.textContent=e.card;
+    g.appendChild(path);g.appendChild(hit);g.appendChild(lbl);g.appendChild(card);
+    edgesG.appendChild(g);
+  });
+  // Nodes
+  GRAPH_NODES.forEach(n=>{
+    const h=nodeH(n);
+    const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.setAttribute('class','node-group');g.setAttribute('transform',`translate(${n.x},${n.y})`);g.style.cursor='pointer';
+    g.onclick=()=>selectNode(n.id);
+    // Shadow rect
+    const shadow=document.createElementNS('http://www.w3.org/2000/svg','rect');
+    shadow.setAttribute('width',NW);shadow.setAttribute('height',h);shadow.setAttribute('rx',12);shadow.setAttribute('ry',12);shadow.setAttribute('fill','rgba(27,23,48,.06)');shadow.setAttribute('transform','translate(2,3)');
+    // Main rect
+    const rect=document.createElementNS('http://www.w3.org/2000/svg','rect');
+    rect.setAttribute('id','nr_'+n.id);rect.setAttribute('width',NW);rect.setAttribute('height',h);rect.setAttribute('rx',12);rect.setAttribute('ry',12);rect.setAttribute('fill','white');rect.setAttribute('stroke','var(--line)');rect.setAttribute('stroke-width','1.5');rect.setAttribute('filter','drop-shadow(0 4px 12px rgba(27,23,48,.08))');
+    // Header
+    const hdrRect=document.createElementNS('http://www.w3.org/2000/svg','rect');
+    hdrRect.setAttribute('width',NW);hdrRect.setAttribute('height',NH_HEADER);hdrRect.setAttribute('rx',12);hdrRect.setAttribute('ry',12);hdrRect.setAttribute('fill',n.color);
+    const hdrFill=document.createElementNS('http://www.w3.org/2000/svg','rect');
+    hdrFill.setAttribute('width',NW);hdrFill.setAttribute('height',14);hdrFill.setAttribute('y',NH_HEADER-14);hdrFill.setAttribute('fill',n.color);
+    // Type label
+    const typeText=document.createElementNS('http://www.w3.org/2000/svg','text');
+    typeText.setAttribute('x',12);typeText.setAttribute('y',20);typeText.setAttribute('font-size',11);typeText.setAttribute('font-weight',700);typeText.setAttribute('font-family','var(--sans)');typeText.setAttribute('fill','white');typeText.setAttribute('letter-spacing','.04em');typeText.textContent=n.type.toUpperCase();
+    // Confidence
+    const confText=document.createElementNS('http://www.w3.org/2000/svg','text');
+    confText.setAttribute('x',NW-12);confText.setAttribute('y',20);confText.setAttribute('text-anchor','end');confText.setAttribute('font-size',10);confText.setAttribute('font-family','var(--mono)');confText.setAttribute('fill','rgba(255,255,255,.85)');confText.textContent=(n.conf*100).toFixed(0)+'%';
+    // Label
+    const labelText=document.createElementNS('http://www.w3.org/2000/svg','text');
+    labelText.setAttribute('x',12);labelText.setAttribute('y',NH_HEADER+22);labelText.setAttribute('font-size',13.5);labelText.setAttribute('font-weight',700);labelText.setAttribute('font-family','var(--sans)');labelText.setAttribute('fill','var(--ink)');labelText.textContent=n.label;
+    // Low confidence warning
+    if(n.conf<0.9){
+      const warnC=document.createElementNS('http://www.w3.org/2000/svg','circle');
+      warnC.setAttribute('cx',NW-16);warnC.setAttribute('cy',NH_HEADER+14);warnC.setAttribute('r',9);warnC.setAttribute('fill','var(--amber-soft)');warnC.setAttribute('stroke','var(--amber)');
+      const warnT=document.createElementNS('http://www.w3.org/2000/svg','text');
+      warnT.setAttribute('x',NW-16);warnT.setAttribute('y',NH_HEADER+18);warnT.setAttribute('text-anchor','middle');warnT.setAttribute('font-size',12);warnT.setAttribute('font-weight',700);warnT.setAttribute('fill','var(--amber)');warnT.textContent='!';
+      g.appendChild(warnC);g.appendChild(warnT);
+    }
+    // Attrs
+    n.attrs.forEach((a,i)=>{
+      const y=NH_HEADER+36+i*ATTR_H;
+      const kText=document.createElementNS('http://www.w3.org/2000/svg','text');
+      kText.setAttribute('x',12);kText.setAttribute('y',y);kText.setAttribute('font-size',11.5);kText.setAttribute('font-family','var(--mono)');kText.setAttribute('fill','var(--ink-2)');kText.textContent=a.k;
+      const tText=document.createElementNS('http://www.w3.org/2000/svg','text');
+      tText.setAttribute('x',NW-12);tText.setAttribute('y',y);tText.setAttribute('text-anchor','end');tText.setAttribute('font-size',11.5);tText.setAttribute('font-family','var(--mono)');tText.setAttribute('fill','var(--ink-3)');tText.textContent=a.t;
+      g.appendChild(kText);g.appendChild(tText);
+    });
+    g.appendChild(shadow);g.appendChild(rect);g.appendChild(hdrRect);g.appendChild(hdrFill);g.appendChild(typeText);g.appendChild(confText);g.appendChild(labelText);
+    nodesG.appendChild(g);
+  });
+}
+
+function selectNode(id){
+  gSelectedId='node:'+id;
+  document.querySelectorAll('.node-group').forEach(g=>g.querySelector('rect')?.setAttribute('stroke-width','1.5'));
+  const n=GRAPH_NODES.find(x=>x.id===id); if(!n) return;
+  const g=document.getElementById('graphNodes').querySelectorAll('.node-group');
+  g.forEach(el=>{ if(el.getAttribute('transform')===`translate(${n.x},${n.y})`) el.querySelector('rect')?.setAttribute('stroke-width','2.5'); });
+  const insp=document.getElementById('graphInspector');
+  insp.innerHTML=`
+    <div class="row" style="gap:8px;margin-bottom:10px">
+      <span style="width:10px;height:10px;border-radius:3px;background:${n.color}"></span>
+      <span style="font-size:11px;font-weight:700;color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase">${n.type}</span>
+    </div>
+    <h3 style="font-size:17px;font-weight:700">${escHtml(n.label)}</h3>
+    <p style="font-size:12px;color:var(--ink-3);margin-top:2px">LLM extracted from column headers and sample rows.</p>
+    <div class="insp-field">
+      <label>Entity name</label>
+      <input value="${escHtml(n.label)}" oninput="GRAPH_NODES.find(x=>x.id==='${n.id}').label=this.value" />
+    </div>
+    <div class="insp-field">
+      <label>LLM confidence</label>
+      <div class="conf-bar"><div style="width:${n.conf*100}%;background:${n.conf>=0.9?'var(--mint)':'var(--amber)'}"></div></div>
+      <div class="row" style="justify-content:space-between;margin-top:6px">
+        <span class="mono" style="font-size:11px;color:var(--ink-3)">${(n.conf*100).toFixed(1)}%</span>
+        <span class="mono" style="font-size:11px;color:var(--ink-3)">${n.conf>=0.95?'high':n.conf>=0.9?'good':'review'}</span>
+      </div>
+    </div>
+    <div class="insp-field">
+      <div class="row" style="justify-content:space-between"><label style="margin:0">Attributes (${n.attrs.length})</label></div>
+      <div style="margin-top:8px;display:flex;flex-direction:column;gap:4px">
+        ${n.attrs.map(a=>`<div style="display:grid;grid-template-columns:1fr 90px;gap:6px">
+          <div class="mono" style="font-size:11.5px;color:var(--ink-2);padding:5px 8px;background:var(--surface-2);border-radius:6px">${escHtml(a.k)}</div>
+          <div class="mono" style="font-size:11px;color:var(--ink-3);padding:5px 8px;background:var(--surface-2);border-radius:6px">${escHtml(a.t)}</div>
+        </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+function selectEdge(id){
+  gSelectedId='edge:'+id;
+  const e=GRAPH_EDGES.find(x=>x.id===id); if(!e) return;
+  const fromN=GRAPH_NODES.find(n=>n.id===e.from), toN=GRAPH_NODES.find(n=>n.id===e.to);
+  document.getElementById('graphInspector').innerHTML=`
+    <span style="font-size:11px;font-weight:700;color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase">Relation</span>
+    <h3 style="margin-top:6px;font-size:17px;font-weight:700">${fromN?.label||''} → ${toN?.label||''}</h3>
+    <p style="font-size:12px;color:var(--ink-3);margin-top:4px">${e.dashed?'Inferred by Spark — confirm if correct.':'Confirmed from sample data.'}</p>
+    <div class="insp-field"><label>Label</label><input value="${escHtml(e.label)}" oninput="GRAPH_EDGES.find(x=>x.id==='${e.id}').label=this.value"/></div>
+    <div class="insp-field"><label>Cardinality</label><select>
+      <option ${e.card==='1—1'?'selected':''}>1—1</option><option ${e.card==='1—N'?'selected':''}>1—N</option>
+      <option ${e.card==='N—1'?'selected':''}>N—1</option><option ${e.card==='N—N'?'selected':''}>N—N</option>
+    </select></div>
+    <div class="insp-field"><label>Status</label><select>
+      <option value="confirmed" ${!e.dashed?'selected':''}>Confirmed</option>
+      <option value="inferred" ${e.dashed?'selected':''}>Inferred</option>
+    </select></div>
+    <div class="row" style="gap:8px;margin-top:14px">
+      <button class="btn btn-outline btn-sm" style="flex:1;justify-content:center" onclick="GRAPH_EDGES.find(x=>x.id==='${e.id}').dashed=false;buildGraph();selectEdge('${e.id}')">Confirm</button>
+    </div>`;
+}
+
+function setGraphTool(t) {
+  document.getElementById('toolFlow').classList.toggle('active',t==='flow');
+  document.getElementById('toolGrid').classList.toggle('active',t==='grid');
+}
+function graphZoom(d) {
+  gZoom=Math.max(0.4,Math.min(1.8,gZoom+d));
+  document.getElementById('graphG').setAttribute('transform',`scale(${gZoom})`);
+  document.getElementById('zoomLabel').textContent=Math.round(gZoom*100)+'%';
+}
+function graphReset() { gZoom=0.78; document.getElementById('graphG').setAttribute('transform','scale(0.78)'); document.getElementById('zoomLabel').textContent='78%'; }
+
+async function confirmOntology() {
+  if (!S.periodId) { S.ontologyConfirmed=true; goScreen('app'); gotoTab('reports'); return; }
+  const res = await api('POST', '/pipeline/' + S.periodId + '/confirm');
+  if (res && !res.error) {
+    S.ontologyConfirmed = true;
+    const ob = document.getElementById('ontologyBanner');
+    if (ob) ob.style.display = 'none';
+    goScreen('app'); gotoTab('reports');
+  } else {
+    alert('Could not confirm: ' + (res && res.error ? res.error : 'unknown error'));
+  }
+}
+
+/* ════════ UTILS ════════ */
+function showAlert(id,type,msg){const el=document.getElementById(id);if(!el)return;el.className='alert alert-'+type+' show';el.textContent=msg;}
+function clearAlert(id){const el=document.getElementById(id);if(el){el.className='alert';el.textContent='';}}
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+/* ════════ BOOT ════════ */
+window.addEventListener('DOMContentLoaded',()=>{
+  if(S.token){ showApp(); }
+  else{ goScreen('landing'); initGoogleSignIn(); }
+  buildGraph();
+});
+</script>
+</body>
+</html>

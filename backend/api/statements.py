@@ -142,4 +142,88 @@ def get_exceptions(period_id: int, db: Session = Depends(get_db)):
     sorted_results = sorted(results, key=lambda r: severity_order.get(r.severity, 3))
     return [
         {"id": r.id, "validation_type": r.validation_type, "status": r.status,
-         "severity": r.s
+         "severity": r.severity, "message": r.message,
+         "business_record_id": r.business_record_id}
+        for r in sorted_results
+    ]
+
+
+# ── Balance Sheet ─────────────────────────────────────────────────────────────
+
+def _load_entries(period_id: int, db: Session):
+    entries_orm = db.query(JournalEntry).filter(JournalEntry.period_id == period_id).all()
+    if not entries_orm:
+        raise HTTPException(404, "No journal entries found. Run the pipeline first.")
+    entries = []
+    for e in entries_orm:
+        lines = db.query(JournalLine).filter(JournalLine.entry_id == e.id).all()
+        entries.append({
+            "source_record_id": e.source_record_id,
+            "lines": [{"account_code": l.account_code, "account_name": l.account_name,
+                       "debit": l.debit, "credit": l.credit} for l in lines],
+        })
+    return entries
+
+
+@router.get("/balance-sheet/{period_id}")
+def get_balance_sheet(period_id: int, db: Session = Depends(get_db)):
+    """Derive a Balance Sheet from journal entries for the given period."""
+    period = db.query(Period).get(period_id)
+    if not period:
+        raise HTTPException(404, "Period not found")
+
+    entries = _load_entries(period_id, db)
+
+    # Need net profit — compute from IS
+    is_data = generate_income_statement(entries, period.label)
+    net_profit = is_data["summary"]["net_profit"]
+
+    bs = generate_balance_sheet(entries, period.label, net_profit)
+    return {"period_id": period_id, **bs}
+
+
+# ── PDF Export ────────────────────────────────────────────────────────────────
+
+@router.get("/export-pdf/{period_id}")
+def export_pdf(
+    period_id: int,
+    type: str = "income_statement",
+    db: Session = Depends(get_db),
+):
+    """
+    Generate and stream a PDF for the given statement type.
+    ?type = income_statement | balance_sheet | trial_balance
+    """
+    period = db.query(Period).get(period_id)
+    if not period:
+        raise HTTPException(404, "Period not found")
+
+    # Resolve company name + currency
+    company = db.query(Company).filter(Company.id == period.company_id).first()
+    company_name = company.name if company else "Your Company"
+    currency = company.currency if company else "THB"
+
+    entries = _load_entries(period_id, db)
+
+    if type == "income_statement":
+        is_data = generate_income_statement(entries, period.label)
+        data = {"period_label": period.label, "lines": is_data["lines"]}
+    elif type == "balance_sheet":
+        is_data = generate_income_statement(entries, period.label)
+        data = generate_balance_sheet(entries, period.label, is_data["summary"]["net_profit"])
+    elif type == "trial_balance":
+        data = generate_trial_balance(entries)
+    else:
+        raise HTTPException(400, f"Unknown statement type: {type}")
+
+    try:
+        pdf_bytes = generate_pdf_report(type, data, company_name, currency)
+    except RuntimeError as e:
+        raise HTTPException(500, str(e))
+
+    filename = f"{company_name.replace(' ','_')}_{period.label.replace(' ','_')}_{type}.pdf"
+    return StreamingResponse(
+        io.BytesIO(pdf_bytes),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
