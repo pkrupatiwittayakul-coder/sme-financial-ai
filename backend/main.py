@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from backend.database import init_db
-from backend.api import companies, upload, classify, schema, records, statements, chat, auth, pipeline, ontology
+from backend.api import companies, upload, classify, schema, records, statements, chat, auth, pipeline, ontology, entity_design
 
 app = FastAPI(
     title="SME Financial Intelligence System",
@@ -32,6 +32,8 @@ app.include_router(chat.router,      prefix="/api/chat",      tags=["Chat"])
 app.include_router(pipeline.router,  prefix="/api/pipeline",  tags=["Pipeline"])
 # Ontology router exposes /api/companies/{id}/ontology and /api/pipeline/{id}/confirm
 app.include_router(ontology.router,  prefix="/api",           tags=["Ontology"])
+# Entity-Design router — Sequence 1 (LLM design) + Sequence 2 (graph) + user edits
+app.include_router(entity_design.router, prefix="/api/design", tags=["Entity Design"])
 
 # Load dashboard HTML once at startup
 _DASHBOARD_HTML = (Path(__file__).parent / "dashboard.html").read_text(encoding="utf-8")

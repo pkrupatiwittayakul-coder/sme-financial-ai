@@ -13,7 +13,7 @@ from backend.database import (
     get_db, File as FileModel, RawRecord, ColumnMapping,
     BusinessRecord, ValidationResult, ImportanceScore,
     JournalEntry, JournalLine, FinancialStatement, StatementLine,
-    Period, Entity, Relationship
+    Period, Entity, Relationship, Company,
 )
 from backend.services.schema_mapper import map_columns_rule_based, map_columns_with_llm, merge_mappings
 from backend.services.record_extractor import extract_records
@@ -22,6 +22,8 @@ from backend.services.importance_scorer import score_all_records
 from backend.services.accounting_mapper import map_all_records
 from backend.services.statement_generator import generate_income_statement, generate_trial_balance
 from backend.services.entity_resolver import extract_entities_from_records, normalize_name
+from backend.services.entity_designer import design_from_file, merge_designs
+from backend.services.graph_assembler import persist_design
 from backend.services.pipeline_progress import (
     reset as pp_reset, update as pp_update, snapshot as pp_snapshot,
 )
@@ -72,16 +74,10 @@ def pipeline_schema(file_id: int, db: Session = Depends(get_db)):
 
 
 def run_pipeline_internal(period_id: int, db: Session) -> dict:
-    """
-    Full pipeline for a period (called by both the endpoint and upload/auto).
-    1. Extract business records from all files with confirmed mappings
-    2. Validate + score + create journal entries
-    3. Detect date range → update period label
-    4. Generate income statement
-    5. Build ontology (entities)
-    """
+    """Full pipeline. Sequence 1 (LLM design) -> Sequence 2 (graph) ->
+    extract -> validate -> journal -> statements."""
     pp_reset(period_id)
-    pp_update(period_id, stage="extract", pct=2, message="Pipeline started")
+    pp_update(period_id, stage="design", pct=2, message="Pipeline started")
 
     files = db.query(FileModel).filter(FileModel.period_id == period_id).all()
     if not files:
@@ -96,9 +92,52 @@ def run_pipeline_internal(period_id: int, db: Session) -> dict:
         }
 
     log = []
+    # Sequence 1: LLM-driven entity design
+    pp_update(period_id, stage="design", pct=4,
+              message="Sequence 1 - designing entities with LLM")
+    period_obj = db.query(Period).get(period_id)
+    company = db.query(Company).get(period_obj.company_id) if period_obj else None
+    user_id = company.user_id if company and company.user_id else None
+
+    per_file_designs = []
+    mem_hits = llm_calls = fallback_calls = 0
+    for f in files:
+        sample_rows = db.query(RawRecord).filter(RawRecord.file_id == f.id).limit(5).all()
+        if not sample_rows:
+            continue
+        cols = list(sample_rows[0].raw_data.keys())
+        sample_dicts = [r.raw_data for r in sample_rows]
+        design = design_from_file(
+            db=db, file_type=f.file_type or "unknown",
+            columns=cols, sample_rows=sample_dicts,
+            user_id=user_id, file_id=f.id,
+        )
+        src = design.get("source", "fallback")
+        if src == "memory":
+            mem_hits += 1
+        elif src == "llm":
+            llm_calls += 1
+        else:
+            fallback_calls += 1
+        per_file_designs.append(design)
+
+    if per_file_designs:
+        combined = merge_designs(per_file_designs)
+        info = persist_design(
+            db, period_id, combined,
+            source="llm" if llm_calls else ("memory" if mem_hits else "fallback"),
+        )
+        log.append(
+            f"Sequence 1: {info['entities_persisted']} entities, "
+            f"{info['relations_persisted']} relations "
+            f"(memory hits={mem_hits}, llm={llm_calls}, fallback={fallback_calls})"
+        )
+        pp_update(period_id, stage="design", pct=7,
+                  message=f"Sequence 1 done - {info['entities_persisted']} entities proposed")
+
     pp_update(period_id, stage="extract", pct=8, message=f"Found {len(files)} file(s)")
 
-    # ── Step 1: Extract business records ─────────────────────────────────────
+    # Step 1: Extract business records
     total_extracted = 0
     for f in files:
         mappings = db.query(ColumnMapping).filter(
@@ -165,7 +204,7 @@ def run_pipeline_internal(period_id: int, db: Session) -> dict:
             message=f"Extracted {len(extracted)} records from {f.filename}",
         )
 
-    # ── Step 2: Collect all records ───────────────────────────────────────────
+    # Step 2: Collect all records
     all_records = []
     for f in files:
         recs = db.query(BusinessRecord).filter(BusinessRecord.file_id == f.id).all()
@@ -191,7 +230,7 @@ def run_pipeline_internal(period_id: int, db: Session) -> dict:
     pp_update(period_id, stage="validate", pct=38,
               message=f"Validating {len(all_records)} records")
 
-    # ── Step 3: Auto-detect date range → update period ────────────────────────
+    # Step 3: Auto-detect date range -> update period
     period = db.query(Period).get(period_id)
     period_label = period.label if period else str(period_id)
     detected_label = period_label
@@ -208,11 +247,11 @@ def run_pipeline_internal(period_id: int, db: Session) -> dict:
             if sd.year == ed.year and sd.month == ed.month:
                 detected_label = sd.strftime("%b %Y")
             elif sd.year == ed.year:
-                detected_label = f"{sd.strftime('%b')}–{ed.strftime('%b %Y')}"
+                detected_label = f"{sd.strftime('%b')}-{ed.strftime('%b %Y')}"
             else:
-                detected_label = f"{sd.strftime('%b %Y')}–{ed.strftime('%b %Y')}"
+                detected_label = f"{sd.strftime('%b %Y')}-{ed.strftime('%b %Y')}"
         except Exception:
-            detected_label = f"{start_date} – {end_date}"
+            detected_label = f"{start_date} - {end_date}"
 
         if period:
             period.label = detected_label
@@ -220,9 +259,9 @@ def run_pipeline_internal(period_id: int, db: Session) -> dict:
             period.end_date = end_date
             db.commit()
 
-        log.append(f"Period detected: {detected_label} ({start_date} → {end_date})")
+        log.append(f"Period detected: {detected_label} ({start_date} -> {end_date})")
 
-    # ── Step 4: Validate + score + journal entries ────────────────────────────
+    # Step 4: Validate + score + journal entries
     file_type_map = {f.id: f.file_type for f in files}
 
     old_je_ids = [je.id for je in db.query(JournalEntry).filter(JournalEntry.period_id == period_id).all()]
@@ -288,7 +327,7 @@ def run_pipeline_internal(period_id: int, db: Session) -> dict:
     pp_update(period_id, stage="map", pct=78,
               message=f"Created {len(journal_entries)} journal entries")
 
-    # ── Step 5: Generate statements ───────────────────────────────────────────
+    # Step 5: Generate statements
     pp_update(period_id, stage="generate", pct=82, message="Generating financial statements")
     entries_for_stmt = []
     for je in db.query(JournalEntry).filter(JournalEntry.period_id == period_id).all():
@@ -323,7 +362,7 @@ def run_pipeline_internal(period_id: int, db: Session) -> dict:
     log.append("Income statement generated")
     pp_update(period_id, stage="generate", pct=92, message="Income statement generated")
 
-    # ── Step 6: Ontology (entities) ───────────────────────────────────────────
+    # Step 6: Ontology instances (legacy entity_resolver — kept for backwards compat)
     db.query(Entity).filter(Entity.period_id == period_id).delete()
     db.commit()
 
@@ -341,9 +380,9 @@ def run_pipeline_internal(period_id: int, db: Session) -> dict:
     for ed in entity_dicts:
         entity_counts[ed["entity_type"]] = entity_counts.get(ed["entity_type"], 0) + 1
 
-    log.append(f"Ontology: {len(entity_dicts)} entities extracted")
+    log.append(f"Sequence 2: {len(entity_dicts)} instance entities resolved")
     pp_update(period_id, stage="generate", pct=100, status="completed",
-              message=f"Ontology: {len(entity_dicts)} entities; pipeline complete")
+              message=f"Pipeline complete - {len(entity_dicts)} instances resolved")
 
     val_summary = summarize_validations(all_validations)
 
@@ -357,6 +396,11 @@ def run_pipeline_internal(period_id: int, db: Session) -> dict:
         "income_statement": income_statement,
         "trial_balance": trial_balance,
         "entity_counts": entity_counts,
+        "design_summary": {
+            "memory_hits": mem_hits,
+            "llm_calls": llm_calls,
+            "fallback_calls": fallback_calls,
+        },
     }
     pp_update(period_id, result=result)
     return result
@@ -372,16 +416,10 @@ def run_pipeline(period_id: int, db: Session = Depends(get_db)):
 
 @router.get("/{period_id}/progress")
 async def pipeline_progress(period_id: int, request: Request):
-    """
-    Server-Sent Events stream of the pipeline's current stage / pct / log.
-    The dashboard opens an EventSource right before triggering an upload, then
-    closes the stream when it receives an event with status='completed' or 'error'.
-    Times out after 120 seconds if nothing happens.
-    """
+    """Server-Sent Events stream of the pipeline's current stage / pct / log."""
     async def event_gen():
         last_payload = None
         last_emit = 0
-        # Up to 120 seconds; bail early once pipeline reports a terminal state
         for _ in range(480):
             if await request.is_disconnected():
                 break
@@ -393,20 +431,18 @@ async def pipeline_progress(period_id: int, request: Request):
                 last_emit = 0
             else:
                 last_emit += 1
-                # Heartbeat every ~5s so proxies don't close the connection
                 if last_emit >= 20:
                     yield ": keepalive\n\n"
                     last_emit = 0
             if snap.get("status") in ("completed", "error"):
                 break
             await asyncio.sleep(0.25)
-        # One final snapshot so the client always sees the end state
         snap = pp_snapshot(period_id)
         yield f"event: progress\ndata: {json.dumps(snap, default=str)}\n\n"
 
     headers = {
         "Cache-Control": "no-cache, no-transform",
-        "X-Accel-Buffering": "no",  # disables nginx/Render buffering
+        "X-Accel-Buffering": "no",
         "Connection": "keep-alive",
     }
     return StreamingResponse(event_gen(), media_type="text/event-stream", headers=headers)

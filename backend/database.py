@@ -5,15 +5,11 @@ from datetime import datetime
 from backend.config import DATABASE_URL
 
 # Engine options differ between SQLite (single-file dev DB) and Postgres (prod).
-# Detect the dialect from the URL so the same code runs locally and on Render.
 _engine_kwargs = {}
 if DATABASE_URL.startswith("sqlite"):
-    # SQLite needs check_same_thread=False so FastAPI's threadpool can share the connection
     _engine_kwargs["connect_args"] = {"check_same_thread": False}
 else:
-    # Postgres / other: enable pre-ping so dropped connections are recycled
     _engine_kwargs["pool_pre_ping"] = True
-    # Render's free Postgres can sit idle and drop connections; small recycle is safe
     _engine_kwargs["pool_recycle"] = 300
 
 engine = create_engine(DATABASE_URL, **_engine_kwargs)
@@ -57,7 +53,7 @@ class Period(Base):
     __tablename__ = "periods"
     id = Column(Integer, primary_key=True, index=True)
     company_id = Column(Integer, ForeignKey("companies.id"))
-    label = Column(String)          # e.g. "Jan 2026"
+    label = Column(String)
     start_date = Column(String)
     end_date = Column(String)
     status = Column(String, default="open")
@@ -71,7 +67,7 @@ class File(Base):
     period_id = Column(Integer, ForeignKey("periods.id"))
     filename = Column(String)
     path = Column(String)
-    file_type = Column(String)          # sales / purchase / inventory / coa / unknown
+    file_type = Column(String)
     business_process = Column(String)
     classification_confidence = Column(Float, default=0.0)
     row_count = Column(Integer, default=0)
@@ -88,7 +84,7 @@ class ColumnMapping(Base):
     raw_column = Column(String)
     standard_field = Column(String)
     confidence = Column(Float, default=0.0)
-    approved = Column(Integer, default=0)   # 0=pending, 1=approved, -1=rejected
+    approved = Column(Integer, default=0)
     file = relationship("File", back_populates="column_mappings")
 
 
@@ -106,7 +102,7 @@ class BusinessRecord(Base):
     id = Column(Integer, primary_key=True, index=True)
     file_id = Column(Integer, ForeignKey("files.id"))
     raw_record_id = Column(Integer, ForeignKey("raw_records.id"), nullable=True)
-    record_type = Column(String)    # SalesTransaction / SupplierInvoice / InventoryMovement
+    record_type = Column(String)
     date = Column(String)
     amount = Column(Float, default=0.0)
     normalized_data = Column(JSON)
@@ -117,7 +113,7 @@ class Entity(Base):
     __tablename__ = "entities"
     id = Column(Integer, primary_key=True, index=True)
     period_id = Column(Integer, ForeignKey("periods.id"))
-    entity_type = Column(String)    # Branch / SKU / Supplier / Account / Customer
+    entity_type = Column(String)
     entity_name = Column(String)
     attributes = Column(JSON)
 
@@ -132,14 +128,66 @@ class Relationship(Base):
     business_record_id = Column(Integer, ForeignKey("business_records.id"), nullable=True)
 
 
+# ── LLM-designed entity blueprints (Sequence 1 + 2 of the MVP v2) ───────────
+class EntityDesign(Base):
+    __tablename__ = "entity_designs"
+    id = Column(Integer, primary_key=True, index=True)
+    period_id = Column(Integer, ForeignKey("periods.id"))
+    source_file_id = Column(Integer, ForeignKey("files.id"), nullable=True)
+    entity_key = Column(String, index=True)
+    label = Column(String)
+    category = Column(String)
+    objective = Column(Text)
+    department = Column(String)
+    constraints = Column(JSON)
+    attributes = Column(JSON)
+    confidence = Column(Float, default=0.0)
+    status = Column(String, default="proposed")
+    user_notes = Column(Text)
+    position_x = Column(Float, default=200.0)
+    position_y = Column(Float, default=200.0)
+    color = Column(String, default="#5B4BFB")
+    source = Column(String, default="llm")
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow)
+
+
+class EntityRelationDesign(Base):
+    __tablename__ = "entity_relation_designs"
+    id = Column(Integer, primary_key=True, index=True)
+    period_id = Column(Integer, ForeignKey("periods.id"))
+    from_key = Column(String)
+    to_key = Column(String)
+    label = Column(String)
+    cardinality = Column(String)
+    objective = Column(Text)
+    confidence = Column(Float, default=0.0)
+    status = Column(String, default="proposed")
+    source = Column(String, default="llm")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class DesignMemory(Base):
+    __tablename__ = "design_memory"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    fingerprint = Column(String, index=True)
+    file_type = Column(String)
+    columns_signature = Column(Text)
+    payload = Column(JSON)
+    hit_count = Column(Integer, default=0)
+    last_used = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class ValidationResult(Base):
     __tablename__ = "validation_results"
     id = Column(Integer, primary_key=True, index=True)
     period_id = Column(Integer, ForeignKey("periods.id"))
     business_record_id = Column(Integer, ForeignKey("business_records.id"), nullable=True)
     validation_type = Column(String)
-    status = Column(String)         # passed / warning / failed
-    severity = Column(String)       # info / warning / critical
+    status = Column(String)
+    severity = Column(String)
     message = Column(Text)
 
 
@@ -149,7 +197,7 @@ class ImportanceScore(Base):
     object_type = Column(String)
     object_id = Column(Integer)
     total_score = Column(Float, default=0.0)
-    level = Column(String)          # Low / Medium / High / Critical
+    level = Column(String)
     reason = Column(Text)
 
 
@@ -159,8 +207,8 @@ class Account(Base):
     period_id = Column(Integer, ForeignKey("periods.id"))
     account_code = Column(String)
     account_name = Column(String)
-    account_type = Column(String)   # Asset / Liability / Equity / Revenue / Expense
-    statement_type = Column(String) # IS / BS
+    account_type = Column(String)
+    statement_type = Column(String)
 
 
 class JournalEntry(Base):
@@ -190,7 +238,7 @@ class FinancialStatement(Base):
     __tablename__ = "financial_statements"
     id = Column(Integer, primary_key=True, index=True)
     period_id = Column(Integer, ForeignKey("periods.id"))
-    statement_type = Column(String)  # income_statement / trial_balance
+    statement_type = Column(String)
     generated_at = Column(DateTime, default=datetime.utcnow)
     lines = relationship("StatementLine", back_populates="statement")
 
@@ -202,7 +250,7 @@ class StatementLine(Base):
     line_name = Column(String)
     amount = Column(Float, default=0.0)
     account_code = Column(String)
-    line_type = Column(String)      # revenue / cogs / gross_profit / expense / net_profit
+    line_type = Column(String)
     evidence_count = Column(Integer, default=0)
     statement = relationship("FinancialStatement", back_populates="lines")
 
@@ -219,7 +267,7 @@ class ChatMessage(Base):
     __tablename__ = "chat_messages"
     id = Column(Integer, primary_key=True, index=True)
     session_id = Column(Integer, ForeignKey("chat_sessions.id"))
-    role = Column(String)           # user / assistant
+    role = Column(String)
     content = Column(Text)
     evidence = Column(JSON)
     created_at = Column(DateTime, default=datetime.utcnow)

@@ -13,33 +13,23 @@ dist/
 build/
 .eggs/
 
-# Virtual environments
+# Virtual envs
 venv/
 .venv/
 env/
 
-# Database
+# Database (runtime artefacts — never commit)
 *.db
+*.db-journal
 *.db-wal
 *.db-shm
 *.sqlite
+sme_financial.db*
 
-# Uploads / reports (generated at runtime)
+# Uploads / generated reports
 backend/storage/uploads/
 backend/storage/reports/
+sme_reports/
+sme_uploads/
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-
-# Push script (contains secrets)
-push_to_github.ps1
+#

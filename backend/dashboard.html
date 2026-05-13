@@ -1119,6 +1119,7 @@ a{color:inherit;text-decoration:none}
             <span class="tool-chip" id="toolGrid" onclick="setGraphTool('grid')">Grid</span>
           </div>
           <div class="spacer"></div>
+          <span class="tool-chip" onclick="runEntityDesigner()" title="Re-run LLM entity designer">⟳ Re-design</span>
           <span class="tool-chip" onclick="graphZoom(-0.1)">&#8722;</span>
           <span class="tool-chip mono" id="zoomLabel" style="min-width:52px;justify-content:center">78%</span>
           <span class="tool-chip" onclick="graphZoom(0.1)">&#43;</span>
@@ -1967,20 +1968,57 @@ function selectNode(id){
   gSelectedId='node:'+id;
   document.querySelectorAll('.node-group').forEach(g=>g.querySelector('rect')?.setAttribute('stroke-width','1.5'));
   const n=GRAPH_NODES.find(x=>x.id===id); if(!n) return;
+  // If user is in "link mode" capture the second click as a new relation
+  if(window.__linkFrom){
+    if(window.__linkFrom===n.id){ window.__linkFrom=null; return; }
+    createRelation(window.__linkFrom, n.id);
+    window.__linkFrom=null; return;
+  }
   const g=document.getElementById('graphNodes').querySelectorAll('.node-group');
   g.forEach(el=>{ if(el.getAttribute('transform')===`translate(${n.x},${n.y})`) el.querySelector('rect')?.setAttribute('stroke-width','2.5'); });
   const insp=document.getElementById('graphInspector');
+  const objective = n.objective || '';
+  const department = n.department || 'Finance';
+  const sourceTag = (n.source||'llm').toLowerCase();
+  const sourceBadge = sourceTag==='memory'
+      ? '<span style="font-size:10px;padding:2px 6px;border-radius:4px;background:#E0FBE6;color:#067A47;font-weight:600">memory</span>'
+    : sourceTag==='user'
+      ? '<span style="font-size:10px;padding:2px 6px;border-radius:4px;background:#EDE9FE;color:#5B4BFB;font-weight:600">edited</span>'
+    : sourceTag==='fallback'
+      ? '<span style="font-size:10px;padding:2px 6px;border-radius:4px;background:#FEF3C7;color:#92400E;font-weight:600">fallback</span>'
+      : '<span style="font-size:10px;padding:2px 6px;border-radius:4px;background:#DBEAFE;color:#1D4ED8;font-weight:600">llm</span>';
   insp.innerHTML=`
     <div class="row" style="gap:8px;margin-bottom:10px">
       <span style="width:10px;height:10px;border-radius:3px;background:${n.color}"></span>
-      <span style="font-size:11px;font-weight:700;color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase">${n.type}</span>
+      <span style="font-size:11px;font-weight:700;color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase">${escHtml(n.type||n.category||'Entity')}</span>
+      ${sourceBadge}
     </div>
     <h3 style="font-size:17px;font-weight:700">${escHtml(n.label)}</h3>
-    <p style="font-size:12px;color:var(--ink-3);margin-top:2px">LLM extracted from column headers and sample rows.</p>
+    <p style="font-size:12px;color:var(--ink-3);margin-top:2px">Designed by the LLM from column headers + sample rows.</p>
+
     <div class="insp-field">
-      <label>Entity name</label>
-      <input value="${escHtml(n.label)}" oninput="GRAPH_NODES.find(x=>x.id==='${n.id}').label=this.value" />
+      <label>Entity label</label>
+      <input id="ed_label" value="${escHtml(n.label)}" />
     </div>
+
+    <div class="insp-field">
+      <label>Department / Owner</label>
+      <select id="ed_dept">
+        ${['Sales','Finance','Operations','Procurement','Inventory','HR'].map(d=>
+          `<option ${d===department?'selected':''}>${d}</option>`).join('')}
+      </select>
+    </div>
+
+    <div class="insp-field">
+      <label>Objective — what this data is used for</label>
+      <textarea id="ed_obj" rows="3" style="width:100%;font-size:12.5px;font-family:var(--sans);padding:8px;border:1px solid var(--line);border-radius:8px">${escHtml(objective)}</textarea>
+    </div>
+
+    <div class="insp-field">
+      <label>Constraints (JSON)</label>
+      <textarea id="ed_cons" rows="3" style="width:100%;font-size:11.5px;font-family:var(--mono);padding:8px;border:1px solid var(--line);border-radius:8px">${escHtml(JSON.stringify(n.constraints||{},null,2))}</textarea>
+    </div>
+
     <div class="insp-field">
       <label>LLM confidence</label>
       <div class="conf-bar"><div style="width:${n.conf*100}%;background:${n.conf>=0.9?'var(--mint)':'var(--amber)'}"></div></div>
@@ -1989,74 +2027,35 @@ function selectNode(id){
         <span class="mono" style="font-size:11px;color:var(--ink-3)">${n.conf>=0.95?'high':n.conf>=0.9?'good':'review'}</span>
       </div>
     </div>
+
     <div class="insp-field">
-      <div class="row" style="justify-content:space-between"><label style="margin:0">Attributes (${n.attrs.length})</label></div>
+      <label>Attributes (${(n.attrs||[]).length})</label>
       <div style="margin-top:8px;display:flex;flex-direction:column;gap:4px">
-        ${n.attrs.map(a=>`<div style="display:grid;grid-template-columns:1fr 90px;gap:6px">
+        ${(n.attrs||[]).map(a=>`<div style="display:grid;grid-template-columns:1fr 110px;gap:6px">
           <div class="mono" style="font-size:11.5px;color:var(--ink-2);padding:5px 8px;background:var(--surface-2);border-radius:6px">${escHtml(a.k)}</div>
           <div class="mono" style="font-size:11px;color:var(--ink-3);padding:5px 8px;background:var(--surface-2);border-radius:6px">${escHtml(a.t)}</div>
         </div>`).join('')}
       </div>
-    </div>`;
-}
+    </div>
 
-function selectEdge(id){
-  gSelectedId='edge:'+id;
-  const e=GRAPH_EDGES.find(x=>x.id===id); if(!e) return;
-  const fromN=GRAPH_NODES.find(n=>n.id===e.from), toN=GRAPH_NODES.find(n=>n.id===e.to);
-  document.getElementById('graphInspector').innerHTML=`
-    <span style="font-size:11px;font-weight:700;color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase">Relation</span>
-    <h3 style="margin-top:6px;font-size:17px;font-weight:700">${fromN?.label||''} → ${toN?.label||''}</h3>
-    <p style="font-size:12px;color:var(--ink-3);margin-top:4px">${e.dashed?'Inferred by Spark — confirm if correct.':'Confirmed from sample data.'}</p>
-    <div class="insp-field"><label>Label</label><input value="${escHtml(e.label)}" oninput="GRAPH_EDGES.find(x=>x.id==='${e.id}').label=this.value"/></div>
-    <div class="insp-field"><label>Cardinality</label><select>
-      <option ${e.card==='1—1'?'selected':''}>1—1</option><option ${e.card==='1—N'?'selected':''}>1—N</option>
-      <option ${e.card==='N—1'?'selected':''}>N—1</option><option ${e.card==='N—N'?'selected':''}>N—N</option>
-    </select></div>
-    <div class="insp-field"><label>Status</label><select>
-      <option value="confirmed" ${!e.dashed?'selected':''}>Confirmed</option>
-      <option value="inferred" ${e.dashed?'selected':''}>Inferred</option>
-    </select></div>
     <div class="row" style="gap:8px;margin-top:14px">
-      <button class="btn btn-outline btn-sm" style="flex:1;justify-content:center" onclick="GRAPH_EDGES.find(x=>x.id==='${e.id}').dashed=false;buildGraph();selectEdge('${e.id}')">Confirm</button>
-    </div>`;
+      <button class="btn btn-primary btn-sm" style="flex:1;justify-content:center" onclick="saveEntityEdits('${n.id}', ${n.design_id||'null'})">Save edits</button>
+      <button class="btn btn-outline btn-sm" style="flex:1;justify-content:center" onclick="startLink('${n.id}')">Link to…</button>
+    </div>
+    <p style="font-size:11px;color:var(--ink-3);margin-top:8px">In Link mode, click another node to create a relationship from this one.</p>`;
 }
 
-function setGraphTool(t) {
-  document.getElementById('toolFlow').classList.toggle('active',t==='flow');
-  document.getElementById('toolGrid').classList.toggle('active',t==='grid');
-}
-function graphZoom(d) {
-  gZoom=Math.max(0.4,Math.min(1.8,gZoom+d));
-  document.getElementById('graphG').setAttribute('transform',`scale(${gZoom})`);
-  document.getElementById('zoomLabel').textContent=Math.round(gZoom*100)+'%';
-}
-function graphReset() { gZoom=0.78; document.getElementById('graphG').setAttribute('transform','scale(0.78)'); document.getElementById('zoomLabel').textContent='78%'; }
-
-async function confirmOntology() {
-  if (!S.periodId) { S.ontologyConfirmed=true; goScreen('app'); gotoTab('reports'); return; }
-  const res = await api('POST', '/pipeline/' + S.periodId + '/confirm');
-  if (res && !res.error) {
-    S.ontologyConfirmed = true;
-    const ob = document.getElementById('ontologyBanner');
-    if (ob) ob.style.display = 'none';
-    goScreen('app'); gotoTab('reports');
-  } else {
-    alert('Could not confirm: ' + (res && res.error ? res.error : 'unknown error'));
-  }
+function startLink(fromId){
+  window.__linkFrom = fromId;
+  const ins = document.getElementById('graphInspector');
+  if(ins) ins.insertAdjacentHTML('beforeend',
+    '<p style="margin-top:10px;padding:8px;background:#FFF4ED;border:1px dashed #FF7A59;border-radius:6px;font-size:12px;color:#9A3E1A">Link mode — click another node to create a relationship.</p>');
 }
 
-/* ════════ UTILS ════════ */
-function showAlert(id,type,msg){const el=document.getElementById(id);if(!el)return;el.className='alert alert-'+type+' show';el.textContent=msg;}
-function clearAlert(id){const el=document.getElementById(id);if(el){el.className='alert';el.textContent='';}}
-function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-
-/* ════════ BOOT ════════ */
-window.addEventListener('DOMContentLoaded',()=>{
-  if(S.token){ showApp(); }
-  else{ goScreen('landing'); initGoogleSignIn(); }
-  buildGraph();
-});
-</script>
-</body>
-</html>
+async function createRelation(fromKey, toKey){
+  if(!S.periodId){ alert('No period — upload a file first.'); return; }
+  const label = prompt('Relationship label (e.g. "places", "issues", "generates")','links_to') || 'links_to';
+  const card  = prompt('Cardinality (1—1 / 1—N / N—N)','1—N') || '1—N';
+  const obj   = prompt('Business reason for this link?','') || '';
+  const res = await api('POST', '/design/' + S.periodId + '/relation',
+                        { from_key: fromKey, to_key: toKey, label, cardinality: card, 
