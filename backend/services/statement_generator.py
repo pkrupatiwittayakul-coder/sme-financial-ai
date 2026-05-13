@@ -2,6 +2,11 @@
 from typing import List, Dict, Tuple
 from collections import defaultdict
 
+# Account classification for Balance Sheet derivation
+_BS_ASSET_PREFIXES = ("1",)          # 1xxx = Asset accounts
+_BS_LIABILITY_PREFIXES = ("2",)      # 2xxx = Liability accounts
+_IS_PREFIXES = ("4", "5")            # 4xxx revenue, 5xxx expenses → close to equity
+
 
 def generate_trial_balance(journal_entries: List[Dict]) -> List[Dict]:
     """
@@ -145,10 +150,4 @@ def generate_exception_report(
              "record_id": v.get("business_record_id")}
             for v in critical[:20]
         ],
-        "warning_issues": [
-            {"type": v["validation_type"], "message": v["message"],
-             "record_id": v.get("business_record_id")}
-            for v in warnings[:20]
-        ],
-        "top_risk_records": sorted(high_risk, key=lambda x: -x["total_score"])[:10],
-    }
+        "warning_iss

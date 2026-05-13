@@ -15,9 +15,10 @@ router = APIRouter()
 
 
 class ChatRequest(BaseModel):
-    period_id: int
+    period_id: Optional[int] = None
     session_id: Optional[int] = None
     message: str
+    history: Optional[list] = None
 
 
 @router.post("/")
@@ -116,6 +117,18 @@ def chat(data: ChatRequest, db: Session = Depends(get_db)):
     }
 
 
+@router.post("/{period_id}")
+def chat_by_period(period_id: int, data: ChatRequest, db: Session = Depends(get_db)):
+    """Convenience: POST /api/chat/{period_id} with {message, history} body."""
+    merged = ChatRequest(
+        period_id=period_id,
+        session_id=data.session_id,
+        message=data.message,
+        history=data.history,
+    )
+    return chat(merged, db)
+
+
 @router.get("/history/{session_id}")
 def get_history(session_id: int, db: Session = Depends(get_db)):
     messages = db.query(ChatMessage).filter(
@@ -123,20 +136,3 @@ def get_history(session_id: int, db: Session = Depends(get_db)):
     ).order_by(ChatMessage.id).all()
     return [{"role": m.role, "content": m.content, "evidence": m.evidence,
              "timestamp": str(m.created_at)} for m in messages]
-
-
-class ChatByPeriodRequest(BaseModel):
-    message: str
-    history: Optional[list] = None
-    session_id: Optional[int] = None
-
-
-@router.post("/{period_id}")
-def chat_by_period(period_id: int, data: ChatByPeriodRequest, db: Session = Depends(get_db)):
-    """Convenience: POST /api/chat/{period_id} with {message} body."""
-    merged = ChatRequest(
-        period_id=period_id,
-        session_id=data.session_id,
-        message=data.message,
-    )
-    return chat(merged, db)

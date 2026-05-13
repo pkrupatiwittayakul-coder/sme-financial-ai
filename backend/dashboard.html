@@ -944,11 +944,13 @@ a{color:inherit;text-decoration:none}
       <div id="reportsContent" style="display:none">
         <div class="report-tabs">
           <div class="report-tab active" onclick="switchReportTab('is')">Income Statement</div>
+          <div class="report-tab" onclick="switchReportTab('bs')">Balance Sheet</div>
           <div class="report-tab" onclick="switchReportTab('tb')">Trial Balance</div>
           <div class="report-tab" onclick="switchReportTab('ontology')">Ontology</div>
           <div class="report-tab" onclick="switchReportTab('exceptions')">Exceptions</div>
         </div>
         <div id="tabIs"></div>
+        <div id="tabBs" style="display:none"></div>
         <div id="tabTb" style="display:none"></div>
         <div id="tabOntology" style="display:none"></div>
         <div id="tabExceptions" style="display:none"></div>
@@ -1200,7 +1202,7 @@ function goScreen(name) {
       }
     }
   });
-  if (name === 'graph') syncGraphSidebar();
+  if (name === 'graph') { syncGraphSidebar(); loadOntology(); }
 }
 
 function syncGraphSidebar() {
@@ -1353,7 +1355,7 @@ async function loadSummary() {
   if (data.period && data.period.label) { document.getElementById('periodLabel').textContent = data.period.label; S.periodId = data.period.id; }
   renderOverview(data);
   renderFileList(data.files || []);
-  if (data.income_statement) renderReports(data);
+  if (data.income_statement) await renderReports(data);
 }
 
 /* ════════ VIEWS ════════ */
@@ -1503,24 +1505,95 @@ async function uploadFile(file) {
   document.getElementById('procSpinner').style.cssText = 'width:20px;height:20px;border:2.5px solid var(--mint);border-radius:50%;flex-shrink:0';
   document.getElementById('ontologyBanner').style.display = 'block';
   await loadSummary();
+  // Pre-fetch the ontology so the graph screen is ready when the user clicks through
+  await loadOntology();
   document.getElementById('toReportsBtn').style.display = 'flex';
 }
 
-let _animTimer=null, _stageIdx=0, _stageIntvs=[];
+/* Real-time pipeline progress driven by SSE from /api/pipeline/{id}/progress.
+ * Stage mapping mirrors backend/services/pipeline_progress.STAGE_BRACKETS:
+ *   stg0 = extract (5–35%), stg1 = validate (35–55%),
+ *   stg2 = map (55–80%),    stg3 = generate (80–100%). */
+const STAGE_TO_IDX = { extract:0, validate:1, map:2, generate:3 };
+const STAGE_BRACKETS = [[5,35],[35,55],[55,80],[80,100]];
+let _es = null, _esFallbackTimer = null, _lastLogMsg = '';
+
 function animatePipeline() {
-  _stageIdx=0; _stageIntvs.forEach(clearInterval); _stageIntvs=[];
   for(let i=0;i<4;i++){document.getElementById('stg'+i).className='stage idle';document.getElementById('stg'+i+'bar').style.width='0%';}
-  _animTimer=setInterval(()=>{
-    if(_stageIdx>=4){clearInterval(_animTimer);return;}
-    const idx=_stageIdx++;
-    document.getElementById('stg'+idx).className='stage run';
-    let prog=0;
-    const t=setInterval(()=>{prog+=0.035;const w=Math.min(prog,0.88)*100;document.getElementById('stg'+idx+'bar').style.width=w+'%';if(prog>=0.88)clearInterval(t);},80);
-    _stageIntvs.push(t);
-  },900);
+  if (_es) { try{_es.close()}catch(e){} _es = null; }
+  if (_esFallbackTimer) { clearInterval(_esFallbackTimer); _esFallbackTimer = null; }
+  if (!S.periodId) { _runFakeProgress(); return; }
+  try {
+    _es = new EventSource('/api/pipeline/' + S.periodId + '/progress');
+    let gotAny = false;
+    _es.addEventListener('progress', ev => {
+      gotAny = true;
+      try {
+        const data = JSON.parse(ev.data);
+        applyProgress(data);
+        if (data.status === 'completed' || data.status === 'error') {
+          try { _es.close() } catch(e){}
+          _es = null;
+        }
+      } catch(e){}
+    });
+    _es.onerror = () => {
+      try{_es.close()}catch(e){}
+      _es = null;
+      if (!gotAny) _runFakeProgress();
+    };
+  } catch(e) {
+    _runFakeProgress();
+  }
 }
+
+function applyProgress(p) {
+  const idx = STAGE_TO_IDX[p.stage];
+  if (idx == null) return;
+  for (let i = 0; i < 4; i++) {
+    const el = document.getElementById('stg' + i);
+    const bar = document.getElementById('stg' + i + 'bar');
+    if (!el || !bar) continue;
+    if (i < idx) { el.className = 'stage done'; bar.style.width = '100%'; }
+    else if (i === idx) {
+      el.className = (p.status === 'error') ? 'stage error' : 'stage run';
+      const [s, e] = STAGE_BRACKETS[i];
+      const localPct = Math.max(0, Math.min(1, ((p.pct || 0) - s) / Math.max(1, e - s)));
+      bar.style.width = (localPct * 100) + '%';
+    } else { el.className = 'stage idle'; bar.style.width = '0%'; }
+  }
+  if (Array.isArray(p.log) && p.log.length) {
+    const msg = p.log[p.log.length - 1].msg;
+    if (msg && msg !== _lastLogMsg) {
+      logConsole(p.status === 'error' ? 'err' : 'info', '· ' + msg);
+      _lastLogMsg = msg;
+    }
+  }
+}
+
+/* Fallback: if SSE is unavailable, fall back to the original timer animation
+ * so the user still sees feedback while the synchronous upload completes. */
+function _runFakeProgress() {
+  let idx = 0;
+  let stageIntvs = [];
+  _esFallbackTimer = setInterval(() => {
+    if (idx >= 4) { clearInterval(_esFallbackTimer); _esFallbackTimer = null; return; }
+    const i = idx++;
+    document.getElementById('stg'+i).className = 'stage run';
+    let prog = 0;
+    const t = setInterval(() => {
+      prog += 0.035;
+      const w = Math.min(prog, 0.88) * 100;
+      document.getElementById('stg'+i+'bar').style.width = w + '%';
+      if (prog >= 0.88) clearInterval(t);
+    }, 80);
+    stageIntvs.push(t);
+  }, 900);
+}
+
 function stopPipelineAnim(success) {
-  clearInterval(_animTimer); _stageIntvs.forEach(clearInterval);
+  if (_es) { try{_es.close()}catch(e){} _es = null; }
+  if (_esFallbackTimer) { clearInterval(_esFallbackTimer); _esFallbackTimer = null; }
   for(let i=0;i<4;i++){document.getElementById('stg'+i+'bar').style.width='100%';document.getElementById('stg'+i).className='stage '+(success?'done':'error');}
 }
 let _consoleLogs=[];
@@ -1533,7 +1606,16 @@ function logConsole(kind, msg) {
 }
 
 /* ════════ REPORTS ════════ */
-function renderReports(data) {
+function pdfBtn(type,label){
+  return `<a href="/api/statements/export-pdf/${S.periodId}?type=${type}" target="_blank" download
+    style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:9px;font-size:12.5px;font-weight:600;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-2);cursor:pointer;text-decoration:none"
+    title="Download PDF">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+    ${label||'Export PDF'}
+  </a>`;
+}
+
+async function renderReports(data) {
   document.getElementById('reportsEmpty').style.display='none';
   document.getElementById('reportsContent').style.display='block';
   document.getElementById('reportsSub').textContent=(data.period.label||'')+' · '+(data.company.currency||'THB');
@@ -1542,10 +1624,15 @@ function renderReports(data) {
   const lines=inc.lines||[], revLines=lines.filter(l=>l.line_type==='revenue'), cogsLines=lines.filter(l=>l.line_type==='cogs'), expLines=lines.filter(l=>l.line_type==='expense');
   const gpPct=inc.revenue>0?((inc.gross_profit/inc.revenue)*100).toFixed(1):'0';
   const npPos=(inc.net_profit||0)>=0;
+
+  /* ── Income Statement ── */
   document.getElementById('tabIs').innerHTML=`
     <div style="display:grid;grid-template-columns:1.15fr .85fr;gap:18px">
       <div class="stmt-card">
-        <div class="stmt-head"><div><span class="chip chip-mint">${CHECK_SVG} Ready</span><h3 style="margin-top:8px">Income Statement</h3></div><span class="stmt-meta">${escHtml(data.period.label||'')} &middot; ${cur}</span></div>
+        <div class="stmt-head">
+          <div><span class="chip chip-mint">${CHECK_SVG} Ready</span><h3 style="margin-top:8px">Income Statement</h3></div>
+          <div class="row" style="gap:8px"><span class="stmt-meta">${escHtml(data.period.label||'')} &middot; ${cur}</span>${pdfBtn('income_statement','PDF')}</div>
+        </div>
         <div class="stmt-section-head">Revenue</div>
         ${revLines.length?revLines.map(l=>`<div class="stmt-row indent"><span class="lbl">${escHtml(l.line_name)}</span><span class="amt">${fmt(l.amount)}</span></div>`).join(''):`<div class="stmt-row indent"><span class="lbl">Revenue</span><span class="amt">${fmt(inc.revenue)}</span></div>`}
         <div class="stmt-row" style="font-weight:700"><span class="lbl" style="color:var(--ink)">Total Revenue</span><span class="amt">${fmt(inc.revenue)}</span></div>
@@ -1576,17 +1663,146 @@ function renderReports(data) {
         </div>
       </div>
     </div>`;
+
+  /* ── Balance Sheet (async fetch) ── */
+  document.getElementById('tabBs').innerHTML=`<div style="padding:48px;text-align:center;color:var(--ink-3)"><div class="dot dot-pulse" style="color:var(--brand);display:inline-block;margin-bottom:12px"></div><p>Loading balance sheet…</p></div>`;
+  api('GET','/statements/balance-sheet/'+S.periodId).then(bs=>{
+    if(bs&&!bs.error){
+      const t=bs.totals||{}, bsRows=(sec,items)=>items.map(r=>`<div class="stmt-row indent"><span class="lbl">${escHtml(r.account_name)}</span><span class="amt">${fmt(r.amount)}</span></div>`).join('');
+      const balanced=t.balanced, color=balanced?'var(--mint)':'var(--rose)';
+      document.getElementById('tabBs').innerHTML=`
+        <div style="display:grid;grid-template-columns:1.15fr .85fr;gap:18px">
+          <div class="stmt-card">
+            <div class="stmt-head">
+              <div><span class="chip ${balanced?'chip-mint':'chip-amber'}">${balanced?CHECK_SVG+'&nbsp;Balanced':'⚠ Unbalanced'}</span><h3 style="margin-top:8px">Balance Sheet</h3></div>
+              <div class="row" style="gap:8px"><span class="stmt-meta">${escHtml(bs.period_label||'')} &middot; ${cur}</span>${pdfBtn('balance_sheet','PDF')}</div>
+            </div>
+            <div class="stmt-section-head">Assets</div>
+            ${bsRows('assets',bs.assets||[])}
+            <div class="stmt-row" style="font-weight:700"><span class="lbl" style="color:var(--ink)">Total Assets</span><span class="amt">${curSym}${fmt(t.total_assets||0)}</span></div>
+            <div class="stmt-section-head" style="margin-top:14px">Liabilities</div>
+            ${bsRows('liab',bs.liabilities||[])}
+            <div class="stmt-row" style="font-weight:700;color:var(--rose)"><span class="lbl" style="color:var(--rose)">Total Liabilities</span><span class="amt">${fmt(t.total_liabilities||0)}</span></div>
+            <div class="stmt-section-head" style="margin-top:14px">Equity</div>
+            ${(bs.equity||[]).map(e=>`<div class="stmt-row indent"><span class="lbl">${escHtml(e.account_name)}</span><span class="amt">${fmt(e.amount)}</span></div>`).join('')}
+            <div class="stmt-row" style="font-weight:700;color:var(--brand)"><span class="lbl" style="color:var(--brand)">Total Equity</span><span class="amt">${fmt(t.total_equity||0)}</span></div>
+            <div class="stmt-total" style="border-top:2px solid var(--ink)"><span>Total Liabilities &amp; Equity</span><span class="amt" style="color:${color}">${curSym}${fmt(t.total_liabilities_and_equity||0)}</span></div>
+          </div>
+          <div class="col" style="gap:18px">
+            <div class="card card-pad">
+              <h3 style="font-size:15px;font-weight:700;margin-bottom:14px">Summary</h3>
+              <div class="col" style="gap:8px">
+                ${[['Total Assets',fmt(t.total_assets||0),'var(--ink)'],['Total Liabilities',fmt(t.total_liabilities||0),'var(--rose)'],['Total Equity',fmt(t.total_equity||0),'var(--brand)']].map(([lbl,val,col])=>`
+                  <div class="row" style="justify-content:space-between;font-size:13px"><span class="mono" style="color:var(--ink-3)">${lbl}</span><span class="mono" style="font-weight:700;color:${col}">${val}</span></div>`).join('')}
+                <div class="row" style="justify-content:space-between;font-size:13px;padding-top:8px;border-top:1px solid var(--line)">
+                  <span style="font-size:12.5px;font-weight:600;color:var(--ink-3)">Accounting equation</span>
+                  <span class="chip ${balanced?'chip-mint':'chip-amber'}" style="font-size:11px">${balanced?'✓ Balanced':'⚠ Check entries'}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>`;
+    } else {
+      document.getElementById('tabBs').innerHTML=`<div class="card card-pad" style="text-align:center;padding:48px;color:var(--ink-3)"><p>Could not load balance sheet. Run the pipeline first.</p></div>`;
+    }
+  });
+
+  /* ── Trial Balance ── */
+  api('GET','/statements/trial-balance/'+S.periodId).then(tbRes=>{
+    const tb=tbRes&&tbRes.trial_balance?tbRes.trial_balance:[];
+    if(!tb.length){
+      document.getElementById('tabTb').innerHTML=`<div class="card card-pad" style="text-align:center;padding:40px;color:var(--ink-3)"><p>No trial balance data. Run the pipeline first.</p></div>`;
+      return;
+    }
+    const totalDr=tb.reduce((s,r)=>s+r.total_debit,0);
+    const totalCr=tb.reduce((s,r)=>s+r.total_credit,0);
+    const balanced=Math.abs(totalDr-totalCr)<0.02;
+    document.getElementById('tabTb').innerHTML=`
+      <div>
+        <div class="row" style="justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+          <div>
+            <h3 style="font-size:16px;font-weight:700">Trial Balance</h3>
+            <p style="font-size:13px;color:var(--ink-3);margin-top:2px">${escHtml(data.period.label||'')} &middot; ${tb.length} accounts</p>
+          </div>
+          <div class="row" style="gap:8px">
+            <span class="chip ${balanced?'chip-mint':'chip-amber'}">${balanced?CHECK_SVG+' Balanced':'⚠ Unbalanced'}</span>
+            ${pdfBtn('trial_balance','Export PDF')}
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead>
+              <tr style="background:var(--brand);color:white">
+                <th style="padding:9px 12px;text-align:left;font-weight:600;border-radius:8px 0 0 0">Code</th>
+                <th style="padding:9px 12px;text-align:left;font-weight:600">Account</th>
+                <th style="padding:9px 12px;text-align:right;font-weight:600">Debit</th>
+                <th style="padding:9px 12px;text-align:right;font-weight:600">Credit</th>
+                <th style="padding:9px 12px;text-align:right;font-weight:600;border-radius:0 8px 0 0">Net Balance</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tb.map((r,i)=>`<tr style="background:${i%2?'var(--canvas)':'white'}">
+                <td class="mono" style="padding:8px 12px;color:var(--ink-3)">${escHtml(r.account_code)}</td>
+                <td style="padding:8px 12px">${escHtml(r.account_name)}</td>
+                <td class="mono" style="padding:8px 12px;text-align:right;color:var(--brand)">${fmt(r.total_debit)}</td>
+                <td class="mono" style="padding:8px 12px;text-align:right;color:var(--rose)">${fmt(r.total_credit)}</td>
+                <td class="mono" style="padding:8px 12px;text-align:right;font-weight:600;color:${r.net_balance>=0?'var(--ink)':'var(--rose)'}">${r.net_balance>=0?'':'-'}${fmt(Math.abs(r.net_balance))}</td>
+              </tr>`).join('')}
+            </tbody>
+            <tfoot>
+              <tr style="background:var(--surface-2);font-weight:700;border-top:2px solid var(--ink)">
+                <td colspan="2" style="padding:10px 12px">Totals</td>
+                <td class="mono" style="padding:10px 12px;text-align:right;color:var(--brand)">${fmt(totalDr)}</td>
+                <td class="mono" style="padding:10px 12px;text-align:right;color:var(--rose)">${fmt(totalCr)}</td>
+                <td class="mono" style="padding:10px 12px;text-align:right;color:${balanced?'var(--mint)':'var(--rose)'}">${balanced?'—':fmt(totalDr-totalCr)}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>`;
+  });
+
+  /* ── Ontology tab ── */
   const ec=data.entity_counts||{};
   const entityDefs=[{type:'Branch',icon:'🎪',color:'var(--brand)'},{type:'SKU',icon:'📦',color:'var(--amber)'},{type:'Supplier',icon:'🏭',color:'var(--mint)'},{type:'Customer',icon:'👤',color:'var(--spark)'}];
   document.getElementById('tabOntology').innerHTML=`<div>
     <div style="margin-bottom:20px"><h3 style="font-size:16px;font-weight:700;margin-bottom:6px">Entity Map</h3><p style="font-size:13px;color:var(--ink-3)">Entities extracted from your source files.</p></div>
     <div class="entity-grid">${entityDefs.map(e=>`<div class="entity-card"><div style="font-size:28px;margin-bottom:8px">${e.icon}</div><div class="entity-count" style="color:${e.color}">${ec[e.type]||0}</div><div class="entity-label">${e.type}s</div></div>`).join('')}</div>
     <div style="margin-top:20px"><button class="btn btn-spark btn-sm" onclick="goScreen('graph')">Open full ontology graph →</button></div></div>`;
-  document.getElementById('tabExceptions').innerHTML=`<div class="card card-pad" style="text-align:center;padding:48px;color:var(--ink-3)"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--mint)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="margin:0 auto 14px;display:block"><polyline points="20 6 9 17 4 12"/></svg><h3 style="font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px">No exceptions</h3><p style="font-size:13.5px">All validation checks passed.</p></div>`;
+
+  /* ── Exceptions tab (real data) ── */
+  api('GET','/statements/exceptions/'+S.periodId).then(exList=>{
+    const excs=Array.isArray(exList)?exList:[];
+    if(!excs.length){
+      document.getElementById('tabExceptions').innerHTML=`<div class="card card-pad" style="text-align:center;padding:48px;color:var(--ink-3)"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--mint)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="margin:0 auto 14px;display:block"><polyline points="20 6 9 17 4 12"/></svg><h3 style="font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px">No exceptions</h3><p style="font-size:13.5px">All validation checks passed.</p></div>`;
+      return;
+    }
+    const sevColor={critical:'var(--rose)',warning:'var(--amber)',info:'var(--brand)'};
+    const sevBg={critical:'var(--rose-soft)',warning:'var(--amber-soft)',info:'var(--brand-soft)'};
+    document.getElementById('tabExceptions').innerHTML=`<div>
+      <div class="row" style="justify-content:space-between;margin-bottom:16px">
+        <div><h3 style="font-size:16px;font-weight:700">Validation Exceptions</h3><p style="font-size:13px;color:var(--ink-3);margin-top:2px">${excs.length} issue${excs.length!==1?'s':''} found</p></div>
+        <div class="row" style="gap:6px">
+          ${excs.filter(e=>e.severity==='critical').length?`<span class="chip chip-rose">⛔ ${excs.filter(e=>e.severity==='critical').length} critical</span>`:''}
+          ${excs.filter(e=>e.severity==='warning').length?`<span class="chip chip-amber">⚠ ${excs.filter(e=>e.severity==='warning').length} warnings</span>`:''}
+        </div>
+      </div>
+      <div class="col" style="gap:8px">
+        ${excs.slice(0,50).map(e=>`<div style="padding:12px 14px;border-radius:10px;background:${sevBg[e.severity]||'var(--surface-2)'};border:1px solid ${sevColor[e.severity]||'var(--line)'}22">
+          <div class="row" style="justify-content:space-between;margin-bottom:4px">
+            <span style="font-size:12px;font-weight:700;color:${sevColor[e.severity]||'var(--ink-2)'};text-transform:uppercase;letter-spacing:.06em">${escHtml(e.severity||'info')}</span>
+            <span class="mono" style="font-size:11px;color:var(--ink-3)">${escHtml(e.validation_type||'')}</span>
+          </div>
+          <p style="font-size:13px;color:var(--ink-2);line-height:1.45">${escHtml(e.message||'')}</p>
+          ${e.business_record_id?`<p style="font-size:11.5px;color:var(--ink-3);margin-top:4px">Record #${e.business_record_id}</p>`:''}
+        </div>`).join('')}
+      </div>
+    </div>`;
+  });
 }
 
 function switchReportTab(tab) {
-  const tabs=['is','tb','ontology','exceptions'];
+  const tabs=['is','bs','tb','ontology','exceptions'];
   tabs.forEach(t=>{ const el=document.getElementById('tab'+t[0].toUpperCase()+t.slice(1)); if(el) el.style.display=t===tab?'block':'none'; });
   document.querySelectorAll('.report-tab').forEach((el,i)=>el.classList.toggle('active',tabs[i]===tab));
 }
@@ -1615,198 +1831,15 @@ function appendMessage(role,text){
   msgs.appendChild(div); msgs.scrollTop=msgs.scrollHeight;
 }
 
-/* ════════ GRAPH SCREEN ════════ */
-const GRAPH_NODES=[
-  {id:'cust',  type:'Customer',    label:'Customer',      x:130,y:200,conf:0.94,color:'#5B4BFB',attrs:[{k:'customer_id',t:'PK·int'},{k:'name',t:'string'},{k:'segment',t:'enum'},{k:'tax_id',t:'string?'}]},
-  {id:'inv',   type:'Invoice',     label:'Invoice',       x:480,y:130,conf:0.97,color:'#FF7A59',attrs:[{k:'invoice_no',t:'PK·string'},{k:'date',t:'date'},{k:'total',t:'decimal'},{k:'customer_id',t:'FK→Customer'}]},
-  {id:'prod',  type:'Product',     label:'Product',       x:480,y:360,conf:0.92,color:'#10B981',attrs:[{k:'sku',t:'PK·string'},{k:'name',t:'string'},{k:'unit_price',t:'decimal'}]},
-  {id:'invl',  type:'Invoice',     label:'InvoiceLine',   x:480,y:540,conf:0.88,color:'#FF7A59',attrs:[{k:'invoice_no',t:'FK'},{k:'sku',t:'FK'},{k:'qty',t:'int'},{k:'amount',t:'decimal'}]},
-  {id:'je',    type:'JournalEntry',label:'JournalEntry',  x:860,y:200,conf:0.99,color:'#1E293B',attrs:[{k:'entry_id',t:'PK·int'},{k:'date',t:'date'},{k:'debit_total',t:'decimal'},{k:'credit_total',t:'decimal'}]},
-  {id:'acct',  type:'Account',     label:'Account',       x:1020,y:440,conf:0.95,color:'#EC4899',attrs:[{k:'code',t:'PK·string'},{k:'name',t:'string'},{k:'type',t:'enum'}]},
-  {id:'vend',  type:'Vendor',      label:'Vendor',        x:130,y:540,conf:0.86,color:'#F59E0B',attrs:[{k:'vendor_id',t:'PK·int'},{k:'name',t:'string'},{k:'tax_id',t:'string'}]},
-  {id:'po',    type:'Purchase',    label:'PurchaseOrder', x:860,y:560,conf:0.90,color:'#0EA5A5',attrs:[{k:'po_no',t:'PK·string'},{k:'vendor_id',t:'FK'},{k:'date',t:'date'}]},
-];
-const GRAPH_EDGES=[
-  {id:'e1',from:'cust',to:'inv',  label:'places',   card:'1—N',dashed:false},
-  {id:'e2',from:'inv', to:'invl', label:'contains', card:'1—N',dashed:false},
-  {id:'e3',from:'prod',to:'invl', label:'sold_as',  card:'1—N',dashed:false},
-  {id:'e4',from:'inv', to:'je',   label:'generates',card:'1—1',dashed:false},
-  {id:'e5',from:'je',  to:'acct', label:'posts_to', card:'N—N',dashed:false},
-  {id:'e6',from:'vend',to:'po',   label:'supplies', card:'1—N',dashed:false},
-  {id:'e7',from:'po',  to:'je',   label:'generates',card:'1—1',dashed:true},
-  {id:'e8',from:'prod',to:'acct', label:'revenue_to',card:'N—1',dashed:true},
-];
-const NW=194, NH_HEADER=30, ATTR_H=19;
-function nodeH(n){return NH_HEADER+10+n.attrs.length*ATTR_H+14;}
-
-let gZoom=0.78, gSelectedId=null;
-function buildGraph(){
-  const nodesG=document.getElementById('graphNodes');
-  const edgesG=document.getElementById('graphEdges');
-  if(!nodesG||!edgesG) return;
-  nodesG.innerHTML=''; edgesG.innerHTML='';
-  // Edges first
-  GRAPH_EDGES.forEach(e=>{
-    const a=GRAPH_NODES.find(n=>n.id===e.from), b=GRAPH_NODES.find(n=>n.id===e.to);
-    if(!a||!b) return;
-    const aw=NW,ah=nodeH(a),bw=NW,bh=nodeH(b);
-    const dx=(b.x+bw/2)-(a.x+aw/2);
-    const fromX=a.x+(dx>0?aw:0), fromY=a.y+ah/2;
-    const toX=b.x+(dx>0?0:bw), toY=b.y+bh/2;
-    const mx=(fromX+toX)/2;
-    const d=`M${fromX},${fromY} C${mx},${fromY} ${mx},${toY} ${toX},${toY}`;
-    const midX=(fromX+toX)/2, midY=(fromY+toY)/2-8;
-    const g=document.createElementNS('http://www.w3.org/2000/svg','g');
-    g.setAttribute('class','edge-hit');g.style.cursor='pointer';
-    g.onclick=()=>selectEdge(e.id);
-    const path=document.createElementNS('http://www.w3.org/2000/svg','path');
-    path.setAttribute('d',d);path.setAttribute('fill','none');path.setAttribute('stroke','var(--ink-2)');path.setAttribute('stroke-width','1.8');
-    if(e.dashed) path.setAttribute('stroke-dasharray','6 5');
-    path.setAttribute('marker-end','url(#arrow)');
-    const hit=document.createElementNS('http://www.w3.org/2000/svg','path');
-    hit.setAttribute('d',d);hit.setAttribute('fill','none');hit.setAttribute('stroke','transparent');hit.setAttribute('stroke-width','14');
-    const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
-    lbl.setAttribute('x',midX);lbl.setAttribute('y',midY);lbl.setAttribute('text-anchor','middle');lbl.setAttribute('font-size','10.5');lbl.setAttribute('font-family','var(--mono)');lbl.setAttribute('font-weight','600');lbl.setAttribute('fill','var(--ink-2)');lbl.setAttribute('paint-order','stroke');lbl.setAttribute('stroke','white');lbl.setAttribute('stroke-width','4');lbl.textContent=e.label;
-    const card=document.createElementNS('http://www.w3.org/2000/svg','text');
-    card.setAttribute('x',midX);card.setAttribute('y',midY+13);card.setAttribute('text-anchor','middle');card.setAttribute('font-size','10');card.setAttribute('font-family','var(--mono)');card.setAttribute('fill','var(--ink-3)');card.setAttribute('paint-order','stroke');card.setAttribute('stroke','white');card.setAttribute('stroke-width','4');card.textContent=e.card;
-    g.appendChild(path);g.appendChild(hit);g.appendChild(lbl);g.appendChild(card);
-    edgesG.appendChild(g);
-  });
-  // Nodes
-  GRAPH_NODES.forEach(n=>{
-    const h=nodeH(n);
-    const g=document.createElementNS('http://www.w3.org/2000/svg','g');
-    g.setAttribute('class','node-group');g.setAttribute('transform',`translate(${n.x},${n.y})`);g.style.cursor='pointer';
-    g.onclick=()=>selectNode(n.id);
-    // Shadow rect
-    const shadow=document.createElementNS('http://www.w3.org/2000/svg','rect');
-    shadow.setAttribute('width',NW);shadow.setAttribute('height',h);shadow.setAttribute('rx',12);shadow.setAttribute('ry',12);shadow.setAttribute('fill','rgba(27,23,48,.06)');shadow.setAttribute('transform','translate(2,3)');
-    // Main rect
-    const rect=document.createElementNS('http://www.w3.org/2000/svg','rect');
-    rect.setAttribute('id','nr_'+n.id);rect.setAttribute('width',NW);rect.setAttribute('height',h);rect.setAttribute('rx',12);rect.setAttribute('ry',12);rect.setAttribute('fill','white');rect.setAttribute('stroke','var(--line)');rect.setAttribute('stroke-width','1.5');rect.setAttribute('filter','drop-shadow(0 4px 12px rgba(27,23,48,.08))');
-    // Header
-    const hdrRect=document.createElementNS('http://www.w3.org/2000/svg','rect');
-    hdrRect.setAttribute('width',NW);hdrRect.setAttribute('height',NH_HEADER);hdrRect.setAttribute('rx',12);hdrRect.setAttribute('ry',12);hdrRect.setAttribute('fill',n.color);
-    const hdrFill=document.createElementNS('http://www.w3.org/2000/svg','rect');
-    hdrFill.setAttribute('width',NW);hdrFill.setAttribute('height',14);hdrFill.setAttribute('y',NH_HEADER-14);hdrFill.setAttribute('fill',n.color);
-    // Type label
-    const typeText=document.createElementNS('http://www.w3.org/2000/svg','text');
-    typeText.setAttribute('x',12);typeText.setAttribute('y',20);typeText.setAttribute('font-size',11);typeText.setAttribute('font-weight',700);typeText.setAttribute('font-family','var(--sans)');typeText.setAttribute('fill','white');typeText.setAttribute('letter-spacing','.04em');typeText.textContent=n.type.toUpperCase();
-    // Confidence
-    const confText=document.createElementNS('http://www.w3.org/2000/svg','text');
-    confText.setAttribute('x',NW-12);confText.setAttribute('y',20);confText.setAttribute('text-anchor','end');confText.setAttribute('font-size',10);confText.setAttribute('font-family','var(--mono)');confText.setAttribute('fill','rgba(255,255,255,.85)');confText.textContent=(n.conf*100).toFixed(0)+'%';
-    // Label
-    const labelText=document.createElementNS('http://www.w3.org/2000/svg','text');
-    labelText.setAttribute('x',12);labelText.setAttribute('y',NH_HEADER+22);labelText.setAttribute('font-size',13.5);labelText.setAttribute('font-weight',700);labelText.setAttribute('font-family','var(--sans)');labelText.setAttribute('fill','var(--ink)');labelText.textContent=n.label;
-    // Low confidence warning
-    if(n.conf<0.9){
-      const warnC=document.createElementNS('http://www.w3.org/2000/svg','circle');
-      warnC.setAttribute('cx',NW-16);warnC.setAttribute('cy',NH_HEADER+14);warnC.setAttribute('r',9);warnC.setAttribute('fill','var(--amber-soft)');warnC.setAttribute('stroke','var(--amber)');
-      const warnT=document.createElementNS('http://www.w3.org/2000/svg','text');
-      warnT.setAttribute('x',NW-16);warnT.setAttribute('y',NH_HEADER+18);warnT.setAttribute('text-anchor','middle');warnT.setAttribute('font-size',12);warnT.setAttribute('font-weight',700);warnT.setAttribute('fill','var(--amber)');warnT.textContent='!';
-      g.appendChild(warnC);g.appendChild(warnT);
-    }
-    // Attrs
-    n.attrs.forEach((a,i)=>{
-      const y=NH_HEADER+36+i*ATTR_H;
-      const kText=document.createElementNS('http://www.w3.org/2000/svg','text');
-      kText.setAttribute('x',12);kText.setAttribute('y',y);kText.setAttribute('font-size',11.5);kText.setAttribute('font-family','var(--mono)');kText.setAttribute('fill','var(--ink-2)');kText.textContent=a.k;
-      const tText=document.createElementNS('http://www.w3.org/2000/svg','text');
-      tText.setAttribute('x',NW-12);tText.setAttribute('y',y);tText.setAttribute('text-anchor','end');tText.setAttribute('font-size',11.5);tText.setAttribute('font-family','var(--mono)');tText.setAttribute('fill','var(--ink-3)');tText.textContent=a.t;
-      g.appendChild(kText);g.appendChild(tText);
-    });
-    g.appendChild(shadow);g.appendChild(rect);g.appendChild(hdrRect);g.appendChild(hdrFill);g.appendChild(typeText);g.appendChild(confText);g.appendChild(labelText);
-    nodesG.appendChild(g);
-  });
-}
-
-function selectNode(id){
-  gSelectedId='node:'+id;
-  document.querySelectorAll('.node-group').forEach(g=>g.querySelector('rect')?.setAttribute('stroke-width','1.5'));
-  const n=GRAPH_NODES.find(x=>x.id===id); if(!n) return;
-  const g=document.getElementById('graphNodes').querySelectorAll('.node-group');
-  g.forEach(el=>{ if(el.getAttribute('transform')===`translate(${n.x},${n.y})`) el.querySelector('rect')?.setAttribute('stroke-width','2.5'); });
-  const insp=document.getElementById('graphInspector');
-  insp.innerHTML=`
-    <div class="row" style="gap:8px;margin-bottom:10px">
-      <span style="width:10px;height:10px;border-radius:3px;background:${n.color}"></span>
-      <span style="font-size:11px;font-weight:700;color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase">${n.type}</span>
-    </div>
-    <h3 style="font-size:17px;font-weight:700">${escHtml(n.label)}</h3>
-    <p style="font-size:12px;color:var(--ink-3);margin-top:2px">LLM extracted from column headers and sample rows.</p>
-    <div class="insp-field">
-      <label>Entity name</label>
-      <input value="${escHtml(n.label)}" oninput="GRAPH_NODES.find(x=>x.id==='${n.id}').label=this.value" />
-    </div>
-    <div class="insp-field">
-      <label>LLM confidence</label>
-      <div class="conf-bar"><div style="width:${n.conf*100}%;background:${n.conf>=0.9?'var(--mint)':'var(--amber)'}"></div></div>
-      <div class="row" style="justify-content:space-between;margin-top:6px">
-        <span class="mono" style="font-size:11px;color:var(--ink-3)">${(n.conf*100).toFixed(1)}%</span>
-        <span class="mono" style="font-size:11px;color:var(--ink-3)">${n.conf>=0.95?'high':n.conf>=0.9?'good':'review'}</span>
-      </div>
-    </div>
-    <div class="insp-field">
-      <div class="row" style="justify-content:space-between"><label style="margin:0">Attributes (${n.attrs.length})</label></div>
-      <div style="margin-top:8px;display:flex;flex-direction:column;gap:4px">
-        ${n.attrs.map(a=>`<div style="display:grid;grid-template-columns:1fr 90px;gap:6px">
-          <div class="mono" style="font-size:11.5px;color:var(--ink-2);padding:5px 8px;background:var(--surface-2);border-radius:6px">${escHtml(a.k)}</div>
-          <div class="mono" style="font-size:11px;color:var(--ink-3);padding:5px 8px;background:var(--surface-2);border-radius:6px">${escHtml(a.t)}</div>
-        </div>`).join('')}
-      </div>
-    </div>`;
-}
-
-function selectEdge(id){
-  gSelectedId='edge:'+id;
-  const e=GRAPH_EDGES.find(x=>x.id===id); if(!e) return;
-  const fromN=GRAPH_NODES.find(n=>n.id===e.from), toN=GRAPH_NODES.find(n=>n.id===e.to);
-  document.getElementById('graphInspector').innerHTML=`
-    <span style="font-size:11px;font-weight:700;color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase">Relation</span>
-    <h3 style="margin-top:6px;font-size:17px;font-weight:700">${fromN?.label||''} → ${toN?.label||''}</h3>
-    <p style="font-size:12px;color:var(--ink-3);margin-top:4px">${e.dashed?'Inferred by Spark — confirm if correct.':'Confirmed from sample data.'}</p>
-    <div class="insp-field"><label>Label</label><input value="${escHtml(e.label)}" oninput="GRAPH_EDGES.find(x=>x.id==='${e.id}').label=this.value"/></div>
-    <div class="insp-field"><label>Cardinality</label><select>
-      <option ${e.card==='1—1'?'selected':''}>1—1</option><option ${e.card==='1—N'?'selected':''}>1—N</option>
-      <option ${e.card==='N—1'?'selected':''}>N—1</option><option ${e.card==='N—N'?'selected':''}>N—N</option>
-    </select></div>
-    <div class="insp-field"><label>Status</label><select>
-      <option value="confirmed" ${!e.dashed?'selected':''}>Confirmed</option>
-      <option value="inferred" ${e.dashed?'selected':''}>Inferred</option>
-    </select></div>
-    <div class="row" style="gap:8px;margin-top:14px">
-      <button class="btn btn-outline btn-sm" style="flex:1;justify-content:center" onclick="GRAPH_EDGES.find(x=>x.id==='${e.id}').dashed=false;buildGraph();selectEdge('${e.id}')">Confirm</button>
-    </div>`;
-}
-
-function setGraphTool(t) {
-  document.getElementById('toolFlow').classList.toggle('active',t==='flow');
-  document.getElementById('toolGrid').classList.toggle('active',t==='grid');
-}
-function graphZoom(d) {
-  gZoom=Math.max(0.4,Math.min(1.8,gZoom+d));
-  document.getElementById('graphG').setAttribute('transform',`scale(${gZoom})`);
-  document.getElementById('zoomLabel').textContent=Math.round(gZoom*100)+'%';
-}
-function graphReset() { gZoom=0.78; document.getElementById('graphG').setAttribute('transform','scale(0.78)'); document.getElementById('zoomLabel').textContent='78%'; }
-
-async function confirmOntology() {
-  S.ontologyConfirmed=true;
-  document.getElementById('ontologyBanner').style.display='none';
-  goScreen('app'); gotoTab('reports');
-}
-
-/* ════════ UTILS ════════ */
-function showAlert(id,type,msg){const el=document.getElementById(id);if(!el)return;el.className='alert alert-'+type+' show';el.textContent=msg;}
-function clearAlert(id){const el=document.getElementById(id);if(el){el.className='alert';el.textContent='';}}
-function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-
-/* ════════ BOOT ════════ */
-window.addEventListener('DOMContentLoaded',()=>{
-  if(S.token){ showApp(); }
-  else{ goScreen('landing'); initGoogleSignIn(); }
-  buildGraph();
-});
-</script>
-</body>
-</html>
+/* ════════ GRAPH SCREEN ════════
+ * GRAPH_NODES / GRAPH_EDGES start with a placeholder so the screen renders even
+ * before any data has been ingested. After a successful upload (or whenever the
+ * graph screen is shown) we call loadOntology() which fetches the real schema
+ * from /api/companies/{id}/ontology and overwrites these arrays. */
+let GRAPH_NODES=[
+  {id:'cust',  type:'Customer',    label:'Customer',      x:130,y:200,conf:0.94,color:'#5B4BFB',count:0,attrs:[{k:'customer_id',t:'PK·int'},{k:'name',t:'string'},{k:'segment',t:'enum'},{k:'tax_id',t:'string?'}]},
+  {id:'inv',   type:'Invoice',     label:'Invoice',       x:480,y:130,conf:0.97,color:'#FF7A59',count:0,attrs:[{k:'invoice_no',t:'PK·string'},{k:'date',t:'date'},{k:'total',t:'decimal'},{k:'customer_id',t:'FK→Customer'}]},
+  {id:'prod',  type:'Product',     label:'Product',       x:480,y:360,conf:0.92,color:'#10B981',count:0,attrs:[{k:'sku',t:'PK·string'},{k:'name',t:'string'},{k:'unit_price',t:'decimal'}]},
+  {id:'invl',  type:'Invoice',     label:'InvoiceLine',   x:480,y:540,conf:0.88,color:'#FF7A59',count:0,attrs:[{k:'invoice_no',t:'FK'},{k:'sku',t:'FK'},{k:'qty',t:'int'},{k:'amount',t:'decimal'}]},
+  {id:'je',    type:'JournalEntry',label:'JournalEntry',  x:860,y:200,conf:0.99,color:'#1E293B',count:0,attrs:[{k:'entry_id',t:'PK·int'},{k:'date',t:'date'},{k:'debit_total',t:'decimal'},{k:'credit_total',t:'decimal'}]},
+  {id:'acct',  type:'Account',     label:'Account',       x:1020,y:440,conf:0.95,color:'#EC4899',count:8,attrs:[{k:'code',t:'PK·string'},{k

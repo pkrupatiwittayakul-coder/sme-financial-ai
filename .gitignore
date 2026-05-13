@@ -1,42 +1,34 @@
-# Environment
-.env
-.env.local
-
 # Python
 __pycache__/
 *.py[cod]
 *.pyo
-*.pyd
-.Python
+.env
 *.egg-info/
 dist/
 build/
-.eggs/
-
-# Virtual environments
-venv/
 .venv/
-env/
+venv/
 
-# Database
+# DB & uploads (ephemeral)
 *.db
-*.db-wal
-*.db-shm
-*.sqlite
+*.db-journal
+sme_reports/
+sme_uploads/
+storage/uploads/
+storage/reports/
 
-# Uploads / reports (generated at runtime)
-backend/storage/uploads/
-backend/storage/reports/
+# Large / generated PDFs (keep MVP report)
+Expanded_SME_Financial_AI_Implementation_Report.pdf
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
+# Legacy Streamlit — excluded from deploy
+frontend/app.py
 
-# OS
+# OS & IDE
 .DS_Store
 Thumbs.db
+.idea/
+.vscode/
+*.swp
 
-# Logs
-*.log
+# Push script (local only)
+push_to_github.ps1

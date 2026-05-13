@@ -1,9 +1,13 @@
 """
 Pipeline convenience endpoints.
-POST /api/pipeline/schema/{file_id}  — suggest + auto-confirm schema
-POST /api/pipeline/{period_id}       — full pipeline (also callable internally)
+POST /api/pipeline/schema/{file_id}      — suggest + auto-confirm schema
+POST /api/pipeline/{period_id}           — full pipeline (also callable internally)
+GET  /api/pipeline/{period_id}/progress  — SSE stream of stage events
 """
-from fastapi import APIRouter, Depends, HTTPException
+import asyncio
+import json
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from backend.database import (
     get_db, File as FileModel, RawRecord, ColumnMapping,
@@ -18,6 +22,9 @@ from backend.services.importance_scorer import score_all_records
 from backend.services.accounting_mapper import map_all_records
 from backend.services.statement_generator import generate_income_statement, generate_trial_balance
 from backend.services.entity_resolver import extract_entities_from_records, normalize_name
+from backend.services.pipeline_progress import (
+    reset as pp_reset, update as pp_update, snapshot as pp_snapshot,
+)
 
 router = APIRouter()
 
@@ -73,8 +80,12 @@ def run_pipeline_internal(period_id: int, db: Session) -> dict:
     4. Generate income statement
     5. Build ontology (entities)
     """
+    pp_reset(period_id)
+    pp_update(period_id, stage="extract", pct=2, message="Pipeline started")
+
     files = db.query(FileModel).filter(FileModel.period_id == period_id).all()
     if not files:
+        pp_update(period_id, pct=100, status="error", message="No files for this period")
         return {
             "period_id": period_id,
             "pipeline_log": ["No files found for this period"],
@@ -85,6 +96,7 @@ def run_pipeline_internal(period_id: int, db: Session) -> dict:
         }
 
     log = []
+    pp_update(period_id, stage="extract", pct=8, message=f"Found {len(files)} file(s)")
 
     # ── Step 1: Extract business records ─────────────────────────────────────
     total_extracted = 0
@@ -147,6 +159,11 @@ def run_pipeline_internal(period_id: int, db: Session) -> dict:
         db.commit()
         total_extracted += len(extracted)
         log.append(f"Extracted {len(extracted)} records from {f.filename}")
+        pp_update(
+            period_id, stage="extract",
+            pct=min(8 + int(27 * (files.index(f) + 1) / max(1, len(files))), 34),
+            message=f"Extracted {len(extracted)} records from {f.filename}",
+        )
 
     # ── Step 2: Collect all records ───────────────────────────────────────────
     all_records = []
@@ -160,6 +177,8 @@ def run_pipeline_internal(period_id: int, db: Session) -> dict:
             })
 
     if not all_records:
+        pp_update(period_id, pct=100, status="error",
+                  message="No business records could be extracted")
         return {
             "period_id": period_id,
             "pipeline_log": log,
@@ -168,6 +187,9 @@ def run_pipeline_internal(period_id: int, db: Session) -> dict:
             "income_statement": None,
             "trial_balance": [],
         }
+
+    pp_update(period_id, stage="validate", pct=38,
+              message=f"Validating {len(all_records)} records")
 
     # ── Step 3: Auto-detect date range → update period ────────────────────────
     period = db.query(Period).get(period_id)
@@ -227,6 +249,8 @@ def run_pipeline_internal(period_id: int, db: Session) -> dict:
             message=v["message"],
         ))
     db.commit()
+    pp_update(period_id, stage="validate", pct=52,
+              message=f"{len(all_validations)} validation results")
 
     scores = score_all_records(all_records, all_validations)
     for s in scores:
@@ -239,6 +263,7 @@ def run_pipeline_internal(period_id: int, db: Session) -> dict:
         ))
     db.commit()
 
+    pp_update(period_id, stage="map", pct=60, message="Mapping records to journal entries")
     journal_entries = map_all_records(all_records, period_id)
     for entry_data in journal_entries:
         je = JournalEntry(
@@ -260,8 +285,11 @@ def run_pipeline_internal(period_id: int, db: Session) -> dict:
             ))
     db.commit()
     log.append(f"Created {len(journal_entries)} journal entries")
+    pp_update(period_id, stage="map", pct=78,
+              message=f"Created {len(journal_entries)} journal entries")
 
     # ── Step 5: Generate statements ───────────────────────────────────────────
+    pp_update(period_id, stage="generate", pct=82, message="Generating financial statements")
     entries_for_stmt = []
     for je in db.query(JournalEntry).filter(JournalEntry.period_id == period_id).all():
         lines = db.query(JournalLine).filter(JournalLine.entry_id == je.id).all()
@@ -293,45 +321,6 @@ def run_pipeline_internal(period_id: int, db: Session) -> dict:
         ))
     db.commit()
     log.append("Income statement generated")
+    pp_update(period_id, stage="generate", pct=92, message="Income statement generated")
 
-    # ── Step 6: Ontology (entities) ───────────────────────────────────────────
-    db.query(Entity).filter(Entity.period_id == period_id).delete()
-    db.commit()
-
-    entity_dicts = extract_entities_from_records(all_records, period_id)
-    for ed in entity_dicts:
-        db.add(Entity(
-            period_id=ed["period_id"],
-            entity_type=ed["entity_type"],
-            entity_name=ed["entity_name"],
-            attributes=ed["attributes"],
-        ))
-    db.commit()
-
-    entity_counts = {}
-    for ed in entity_dicts:
-        entity_counts[ed["entity_type"]] = entity_counts.get(ed["entity_type"], 0) + 1
-
-    log.append(f"Ontology: {len(entity_dicts)} entities extracted")
-
-    val_summary = summarize_validations(all_validations)
-
-    return {
-        "period_id": period_id,
-        "period_label": detected_label,
-        "pipeline_log": log,
-        "records_extracted": total_extracted,
-        "journal_entries": len(journal_entries),
-        "validation_summary": val_summary,
-        "income_statement": income_statement,
-        "trial_balance": trial_balance,
-        "entity_counts": entity_counts,
-    }
-
-
-@router.post("/{period_id}")
-def run_pipeline(period_id: int, db: Session = Depends(get_db)):
-    files = db.query(FileModel).filter(FileModel.period_id == period_id).all()
-    if not files:
-        raise HTTPException(404, "No files found for this period. Upload files first.")
-    return run_pipeline_internal(period_id, db)
+    # ─�

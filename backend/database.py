@@ -4,7 +4,19 @@ from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
 from backend.config import DATABASE_URL
 
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+# Engine options differ between SQLite (single-file dev DB) and Postgres (prod).
+# Detect the dialect from the URL so the same code runs locally and on Render.
+_engine_kwargs = {}
+if DATABASE_URL.startswith("sqlite"):
+    # SQLite needs check_same_thread=False so FastAPI's threadpool can share the connection
+    _engine_kwargs["connect_args"] = {"check_same_thread": False}
+else:
+    # Postgres / other: enable pre-ping so dropped connections are recycled
+    _engine_kwargs["pool_pre_ping"] = True
+    # Render's free Postgres can sit idle and drop connections; small recycle is safe
+    _engine_kwargs["pool_recycle"] = 300
+
+engine = create_engine(DATABASE_URL, **_engine_kwargs)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -199,46 +211,4 @@ class ChatSession(Base):
     __tablename__ = "chat_sessions"
     id = Column(Integer, primary_key=True, index=True)
     period_id = Column(Integer, ForeignKey("periods.id"))
-    created_at = Column(DateTime, default=datetime.utcnow)
-    messages = relationship("ChatMessage", back_populates="session")
-
-
-class ChatMessage(Base):
-    __tablename__ = "chat_messages"
-    id = Column(Integer, primary_key=True, index=True)
-    session_id = Column(Integer, ForeignKey("chat_sessions.id"))
-    role = Column(String)           # user / assistant
-    content = Column(Text)
-    evidence = Column(JSON)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    session = relationship("ChatSession", back_populates="messages")
-
-
-
-class FileSheet(Base):
-    """Track individual sheets within a multi-sheet Excel file."""
-    __tablename__ = "file_sheets"
-    id = Column(Integer, primary_key=True, index=True)
-    file_id = Column(Integer, ForeignKey("files.id"))
-    sheet_name = Column(String)
-    row_count = Column(Integer, default=0)
-    columns = Column(JSON)
-
-
-class StatementEvidence(Base):
-    """
-    Evidence trail: links each StatementLine back to source BusinessRecords.
-    Satisfies: 'every statement line should answer where did this number come from'.
-    """
-    __tablename__ = "statement_evidence"
-    id = Column(Integer, primary_key=True, index=True)
-    statement_line_id = Column(Integer, ForeignKey("statement_lines.id"))
-    business_record_id = Column(Integer, ForeignKey("business_records.id"), nullable=True)
-    raw_record_id = Column(Integer, ForeignKey("raw_records.id"), nullable=True)
-    file_id = Column(Integer, ForeignKey("files.id"), nullable=True)
-    journal_entry_id = Column(Integer, ForeignKey("journal_entries.id"), nullable=True)
-    amount_contribution = Column(Float, default=0.0)
-
-
-def init_db():
-    Base.metadata.create_all(bind=engine)
+    
