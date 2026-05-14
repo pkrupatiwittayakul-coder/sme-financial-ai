@@ -274,5 +274,32 @@ class ChatMessage(Base):
     session = relationship("ChatSession", back_populates="messages")
 
 
+# ── SQ3: Native Validation Agent findings ───────────────────────────────────
+# Each row is one finding the SQ3 agent produced while cross-checking the
+# period's data + SQ2 graph against TFRS / IFRS for SMEs.
+class AgentValidation(Base):
+    __tablename__ = "agent_validations"
+    id = Column(Integer, primary_key=True, index=True)
+    period_id = Column(Integer, ForeignKey("periods.id"), index=True)
+    sequence = Column(Integer, default=3)        # which pipeline sequence produced it
+    standard = Column(String)                    # "TFRS for SMEs" / "IFRS for SMEs"
+    section_ref = Column(String)                 # e.g. "Section 23 Revenue"
+    rule_code = Column(String)                   # stable code e.g. "REV_CUTOFF"
+    rule_name = Column(String)                   # human label
+    category = Column(String)                    # revenue / inventory / cutoff / completeness / classification
+    status = Column(String, default="warning")   # pass / warning / fail
+    severity = Column(String, default="warning") # info / warning / critical
+    finding = Column(Text)                       # what the agent observed
+    recommendation = Column(Text)                # suggested fix
+    affected_entities = Column(JSON)             # list of entity_keys / record ids
+    evidence = Column(JSON)                      # supporting numbers / sample rows
+    confidence = Column(Float, default=0.0)
+    source = Column(String, default="agent")     # agent (LLM) / rule (deterministic)
+    ack_status = Column(String, default="open")  # open / acknowledged / dismissed / fixed
+    user_notes = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+
 def init_db():
     Base.metadata.create_all(bind=engine)

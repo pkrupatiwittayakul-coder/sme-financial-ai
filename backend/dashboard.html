@@ -947,12 +947,14 @@ a{color:inherit;text-decoration:none}
           <div class="report-tab" onclick="switchReportTab('bs')">Balance Sheet</div>
           <div class="report-tab" onclick="switchReportTab('tb')">Trial Balance</div>
           <div class="report-tab" onclick="switchReportTab('ontology')">Ontology</div>
+          <div class="report-tab" onclick="switchReportTab('validation')">Validation</div>
           <div class="report-tab" onclick="switchReportTab('exceptions')">Exceptions</div>
         </div>
         <div id="tabIs"></div>
         <div id="tabBs" style="display:none"></div>
         <div id="tabTb" style="display:none"></div>
         <div id="tabOntology" style="display:none"></div>
+        <div id="tabValidation" style="display:none"></div>
         <div id="tabExceptions" style="display:none"></div>
       </div>
     </div>
@@ -1800,10 +1802,111 @@ async function renderReports(data) {
       </div>
     </div>`;
   });
+
+  /* ── Sequence 3 — Validation Agent (TFRS for SMEs) ── */
+  renderValidation();
+}
+
+/* SQ3 — fetch + render the native validation-agent findings */
+async function renderValidation(){
+  const host=document.getElementById('tabValidation');
+  if(!host||!S.periodId) return;
+  host.innerHTML=`<div class="card card-pad" style="text-align:center;padding:40px;color:var(--ink-3)"><span class="dot dot-pulse" style="color:var(--brand)"></span> Loading SQ3 validation…</div>`;
+  const data=await api('GET','/validate/'+S.periodId);
+  if(!data||data.error){
+    host.innerHTML=`<div class="card card-pad" style="text-align:center;padding:40px;color:var(--ink-3)">
+      <h3 style="font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px">No validation yet</h3>
+      <p style="font-size:13.5px;margin-bottom:14px">Run Sequence 3 to validate your books against TFRS for SMEs.</p>
+      <button class="btn btn-spark btn-sm" onclick="runValidationAgent()">Run SQ3 validation</button></div>`;
+    return;
+  }
+  paintValidation(data);
+}
+
+function paintValidation(data){
+  const host=document.getElementById('tabValidation');
+  const findings=data.findings||[];
+  const s=data.summary||{};
+  if(!findings.length){
+    host.innerHTML=`<div class="card card-pad" style="text-align:center;padding:40px;color:var(--ink-3)">
+      <h3 style="font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px">No findings</h3>
+      <p style="font-size:13.5px;margin-bottom:14px">SQ3 hasn't been run for this period yet.</p>
+      <button class="btn btn-spark btn-sm" onclick="runValidationAgent()">Run SQ3 validation</button></div>`;
+    return;
+  }
+  const verdictMap={clean:['var(--mint)','var(--mint-soft)','Clean — no blocking issues'],
+                    review:['var(--amber)','var(--amber-soft)','Review — warnings to clear'],
+                    blocked:['var(--rose)','var(--rose-soft)','Blocked — critical failures']};
+  const v=verdictMap[s.verdict]||verdictMap.review;
+  const stColor={pass:'var(--mint)',warning:'var(--amber)',fail:'var(--rose)'};
+  const stBg={pass:'var(--mint-soft)',warning:'var(--amber-soft)',fail:'var(--rose-soft)'};
+  const catLabel={revenue:'Revenue recognition',inventory:'Inventory valuation',cutoff:'Period cut-off',completeness:'Completeness',classification:'Classification',structure:'Structure',general:'General'};
+  const open=findings.filter(f=>f.ack_status==='open');
+  host.innerHTML=`<div>
+    <div class="row" style="justify-content:space-between;margin-bottom:16px;align-items:flex-start">
+      <div>
+        <h3 style="font-size:16px;font-weight:700">Sequence 3 — Validation Agent</h3>
+        <p style="font-size:13px;color:var(--ink-3);margin-top:2px">Cross-checked against <strong>${escHtml(findings[0].standard||'TFRS for SMEs')}</strong> · ${findings.length} finding${findings.length!==1?'s':''} (${open.length} open)</p>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="runValidationAgent()">⟳ Re-run SQ3</button>
+    </div>
+    <div class="row" style="gap:12px;margin-bottom:18px">
+      <div style="flex:1;padding:14px 16px;border-radius:12px;background:${v[1]};border:1px solid ${v[0]}33">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:${v[0]}">Verdict</div>
+        <div style="font-size:15px;font-weight:700;color:var(--ink);margin-top:3px">${v[2]}</div>
+      </div>
+      <div style="width:160px;padding:14px 16px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line)">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)">Compliance score</div>
+        <div style="font-size:22px;font-weight:800;color:var(--ink);margin-top:2px">${(s.compliance_score!=null?s.compliance_score:0)}%</div>
+      </div>
+    </div>
+    <div class="col" style="gap:8px">
+      ${findings.map(f=>{
+        const c=stColor[f.status]||'var(--ink-2)', bg=stBg[f.status]||'var(--surface-2)';
+        const dim=f.ack_status!=='open'?'opacity:.55;':'';
+        return `<div style="padding:13px 15px;border-radius:11px;background:${bg};border:1px solid ${c}22;${dim}">
+          <div class="row" style="justify-content:space-between;margin-bottom:5px;align-items:flex-start">
+            <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap">
+              <span style="font-size:11px;font-weight:700;color:${c};text-transform:uppercase;letter-spacing:.05em">${escHtml(f.status)}</span>
+              <span style="font-size:12px;font-weight:700;color:var(--ink)">${escHtml(f.rule_name)}</span>
+              <span class="chip" style="font-size:10px;background:var(--surface);color:var(--ink-3)">${escHtml(catLabel[f.category]||f.category)}</span>
+              ${f.source==='agent'?'<span class="chip" style="font-size:10px;background:#DBEAFE;color:#1D4ED8">agent</span>':'<span class="chip" style="font-size:10px;background:var(--surface);color:var(--ink-3)">rule</span>'}
+            </div>
+            <span class="mono" style="font-size:10.5px;color:var(--ink-3);white-space:nowrap">${escHtml(f.section_ref||'')}</span>
+          </div>
+          <p style="font-size:13px;color:var(--ink-2);line-height:1.5">${escHtml(f.finding||'')}</p>
+          ${f.recommendation?`<p style="font-size:12px;color:var(--ink-3);margin-top:5px"><strong>Fix:</strong> ${escHtml(f.recommendation)}</p>`:''}
+          <div class="row" style="justify-content:space-between;margin-top:7px;align-items:center">
+            <span class="mono" style="font-size:10.5px;color:var(--ink-3)">confidence ${Math.round((f.confidence||0)*100)}%${f.affected_entities&&f.affected_entities.length?' · '+f.affected_entities.join(', '):''}</span>
+            ${f.status!=='pass'?`<div class="row" style="gap:6px">
+              ${f.ack_status==='open'?`<button class="btn btn-outline" style="font-size:11px;padding:3px 9px" onclick="ackFinding(${f.id},'acknowledged')">Acknowledge</button>
+              <button class="btn btn-outline" style="font-size:11px;padding:3px 9px" onclick="ackFinding(${f.id},'dismissed')">Dismiss</button>`:`<span class="mono" style="font-size:10.5px;color:var(--ink-3)">${escHtml(f.ack_status)}</span>
+              <button class="btn btn-outline" style="font-size:11px;padding:3px 9px" onclick="ackFinding(${f.id},'open')">Reopen</button>`}
+            </div>`:''}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+
+async function runValidationAgent(){
+  if(!S.periodId){ alert('No period — upload a file first.'); return; }
+  const host=document.getElementById('tabValidation');
+  if(host) host.innerHTML=`<div class="card card-pad" style="text-align:center;padding:40px;color:var(--ink-3)"><span class="dot dot-pulse" style="color:var(--brand)"></span> Running SQ3 validation agent…</div>`;
+  const res=await api('POST','/validate/'+S.periodId+'/run');
+  if(res&&!res.error){ paintValidation(res); }
+  else { if(host) host.innerHTML=`<div class="card card-pad" style="padding:30px;color:var(--rose)">SQ3 failed: ${escHtml((res&&res.error)||'unknown')}</div>`; }
+}
+
+async function ackFinding(id,status){
+  const res=await api('PATCH','/validate/finding/'+id,{ack_status:status});
+  if(res&&!res.error) renderValidation();
+  else alert('Could not update finding: '+((res&&res.error)||'unknown'));
 }
 
 function switchReportTab(tab) {
-  const tabs=['is','bs','tb','ontology','exceptions'];
+  const tabs=['is','bs','tb','ontology','validation','exceptions'];
   tabs.forEach(t=>{ const el=document.getElementById('tab'+t[0].toUpperCase()+t.slice(1)); if(el) el.style.display=t===tab?'block':'none'; });
   document.querySelectorAll('.report-tab').forEach((el,i)=>el.classList.toggle('active',tabs[i]===tab));
 }

@@ -24,6 +24,7 @@ from backend.services.statement_generator import generate_income_statement, gene
 from backend.services.entity_resolver import extract_entities_from_records, normalize_name
 from backend.services.entity_designer import design_from_file, merge_designs
 from backend.services.graph_assembler import persist_design
+from backend.services.validation_agent import run_validation_agent
 from backend.services.pipeline_progress import (
     reset as pp_reset, update as pp_update, snapshot as pp_snapshot,
 )
@@ -381,8 +382,27 @@ def run_pipeline_internal(period_id: int, db: Session) -> dict:
         entity_counts[ed["entity_type"]] = entity_counts.get(ed["entity_type"], 0) + 1
 
     log.append(f"Sequence 2: {len(entity_dicts)} instance entities resolved")
-    pp_update(period_id, stage="generate", pct=100, status="completed",
-              message=f"Pipeline complete - {len(entity_dicts)} instances resolved")
+    pp_update(period_id, stage="generate", pct=94,
+              message=f"Sequence 2 done - {len(entity_dicts)} instances resolved")
+
+    # -- Sequence 3: native validation agent (TFRS / IFRS for SMEs) --------
+    pp_update(period_id, stage="validate", pct=95,
+              message="Sequence 3 - validating against TFRS for SMEs")
+    sq3 = {}
+    try:
+        sq3 = run_validation_agent(db, period_id)
+        log.append(
+            f"Sequence 3: {sq3.get('findings_total', 0)} findings "
+            f"({sq3.get('rule_findings', 0)} rule, {sq3.get('agent_findings', 0)} agent) "
+            f"- verdict {sq3.get('summary', {}).get('verdict', 'n/a')}"
+        )
+    except Exception as exc:  # noqa: BLE001
+        log.append(f"Sequence 3 skipped: {exc}")
+        sq3 = {"error": str(exc)}
+
+    pp_update(period_id, stage="validate", pct=100, status="completed",
+              message=f"Pipeline complete - SQ3 verdict "
+                      f"{sq3.get('summary', {}).get('verdict', 'n/a')}")
 
     val_summary = summarize_validations(all_validations)
 
@@ -400,6 +420,13 @@ def run_pipeline_internal(period_id: int, db: Session) -> dict:
             "memory_hits": mem_hits,
             "llm_calls": llm_calls,
             "fallback_calls": fallback_calls,
+        },
+        "validation_agent": {
+            "findings_total": sq3.get("findings_total", 0),
+            "rule_findings": sq3.get("rule_findings", 0),
+            "agent_findings": sq3.get("agent_findings", 0),
+            "summary": sq3.get("summary", {}),
+            "standard": sq3.get("standard", "TFRS for SMEs"),
         },
     }
     pp_update(period_id, result=result)
