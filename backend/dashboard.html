@@ -2058,4 +2058,112 @@ async function createRelation(fromKey, toKey){
   const card  = prompt('Cardinality (1—1 / 1—N / N—N)','1—N') || '1—N';
   const obj   = prompt('Business reason for this link?','') || '';
   const res = await api('POST', '/design/' + S.periodId + '/relation',
-                        { from_key: fromKey, to_key: toKey, label, cardinality: card, 
+                        { from_key: fromKey, to_key: toKey, label, cardinality: card, objective: obj });
+  if(res && !res.error){
+    await refreshOntologyGraph();
+  } else {
+    alert('Could not add relation: ' + (res?.error || 'unknown'));
+  }
+}
+
+async function saveEntityEdits(nodeId, designId){
+  if(!designId) { alert('This node has no design_id — re-run the LLM designer.'); return; }
+  const body = {
+    label:       document.getElementById('ed_label').value,
+    department:  document.getElementById('ed_dept').value,
+    objective:   document.getElementById('ed_obj').value,
+  };
+  try { body.constraints = JSON.parse(document.getElementById('ed_cons').value || '{}'); }
+  catch(e){ alert('Constraints JSON is invalid: '+e.message); return; }
+  body.status = 'edited';
+  const res = await api('PATCH', '/design/entity/' + designId, body);
+  if(res && !res.error){
+    await refreshOntologyGraph();
+    alert('Saved.');
+  } else {
+    alert('Save failed: ' + (res?.error || 'unknown'));
+  }
+}
+
+async function refreshOntologyGraph(){
+  if(!S.companyId) return;
+  const data = await api('GET','/companies/'+S.companyId+'/ontology');
+  if(data && !data.error && Array.isArray(data.nodes)){
+    GRAPH_NODES = data.nodes.map(n=>Object.assign({},n));
+    GRAPH_EDGES = (data.edges||[]).map(e=>Object.assign({},e));
+    buildGraph();
+  }
+}
+
+async function runEntityDesigner(){
+  if(!S.periodId){ alert('No period — upload a file first.'); return; }
+  const res = await api('POST', '/design/' + S.periodId + '/run');
+  if(res && !res.error){
+    await refreshOntologyGraph();
+    alert('LLM designed ' + (res.entities_proposed||0) + ' entities '
+        + '(memory hits='+(res.memory_hits||0)+', llm='+(res.llm_calls||0)+', fallback='+(res.fallback_calls||0)+')');
+  } else {
+    alert('Designer failed: ' + (res?.error || 'unknown'));
+  }
+}
+
+function selectEdge(id){
+  gSelectedId='edge:'+id;
+  const e=GRAPH_EDGES.find(x=>x.id===id); if(!e) return;
+  const fromN=GRAPH_NODES.find(n=>n.id===e.from), toN=GRAPH_NODES.find(n=>n.id===e.to);
+  document.getElementById('graphInspector').innerHTML=`
+    <span style="font-size:11px;font-weight:700;color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase">Relation</span>
+    <h3 style="margin-top:6px;font-size:17px;font-weight:700">${fromN?.label||''} → ${toN?.label||''}</h3>
+    <p style="font-size:12px;color:var(--ink-3);margin-top:4px">${e.dashed?'Inferred by Spark — confirm if correct.':'Confirmed from sample data.'}</p>
+    <div class="insp-field"><label>Label</label><input value="${escHtml(e.label)}" oninput="GRAPH_EDGES.find(x=>x.id==='${e.id}').label=this.value"/></div>
+    <div class="insp-field"><label>Cardinality</label><select>
+      <option ${e.card==='1—1'?'selected':''}>1—1</option><option ${e.card==='1—N'?'selected':''}>1—N</option>
+      <option ${e.card==='N—1'?'selected':''}>N—1</option><option ${e.card==='N—N'?'selected':''}>N—N</option>
+    </select></div>
+    <div class="insp-field"><label>Status</label><select>
+      <option value="confirmed" ${!e.dashed?'selected':''}>Confirmed</option>
+      <option value="inferred" ${e.dashed?'selected':''}>Inferred</option>
+    </select></div>
+    <div class="row" style="gap:8px;margin-top:14px">
+      <button class="btn btn-outline btn-sm" style="flex:1;justify-content:center" onclick="GRAPH_EDGES.find(x=>x.id==='${e.id}').dashed=false;buildGraph();selectEdge('${e.id}')">Confirm</button>
+    </div>`;
+}
+
+function setGraphTool(t) {
+  document.getElementById('toolFlow').classList.toggle('active',t==='flow');
+  document.getElementById('toolGrid').classList.toggle('active',t==='grid');
+}
+function graphZoom(d) {
+  gZoom=Math.max(0.4,Math.min(1.8,gZoom+d));
+  document.getElementById('graphG').setAttribute('transform',`scale(${gZoom})`);
+  document.getElementById('zoomLabel').textContent=Math.round(gZoom*100)+'%';
+}
+function graphReset() { gZoom=0.78; document.getElementById('graphG').setAttribute('transform','scale(0.78)'); document.getElementById('zoomLabel').textContent='78%'; }
+
+async function confirmOntology() {
+  if (!S.periodId) { S.ontologyConfirmed=true; goScreen('app'); gotoTab('reports'); return; }
+  const res = await api('POST', '/pipeline/' + S.periodId + '/confirm');
+  if (res && !res.error) {
+    S.ontologyConfirmed = true;
+    const ob = document.getElementById('ontologyBanner');
+    if (ob) ob.style.display = 'none';
+    goScreen('app'); gotoTab('reports');
+  } else {
+    alert('Could not confirm: ' + (res && res.error ? res.error : 'unknown error'));
+  }
+}
+
+/* ════════ UTILS ════════ */
+function showAlert(id,type,msg){const el=document.getElementById(id);if(!el)return;el.className='alert alert-'+type+' show';el.textContent=msg;}
+function clearAlert(id){const el=document.getElementById(id);if(el){el.className='alert';el.textContent='';}}
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+/* ════════ BOOT ════════ */
+window.addEventListener('DOMContentLoaded',()=>{
+  if(S.token){ showApp(); }
+  else{ goScreen('landing'); initGoogleSignIn(); }
+  buildGraph();
+});
+</script>
+</body>
+</html>
